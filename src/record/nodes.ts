@@ -126,6 +126,7 @@ function build(): RecordNode[] {
   // ── the gate ──
   const channels = [
     { id: "email", label: "Email", sub: player.links.email },
+    { id: "phone", label: "Phone", sub: player.links.phone },
     { id: "linkedin", label: "LinkedIn", sub: player.links.linkedin.replace(/^https?:\/\/(www\.)?/, "") },
     { id: "github", label: "GitHub", sub: player.links.github.replace(/^https?:\/\//, "") },
   ];

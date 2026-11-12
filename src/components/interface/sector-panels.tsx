@@ -11,10 +11,12 @@ import {
   Lock,
   Mail,
   MapPin,
+  Phone,
 } from "lucide-react";
 import { achievements, chronicle } from "@/config/chronicle.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
+import { findGuild, guilds } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skillSets, skills } from "@/config/skills.config";
 import { systemConfig } from "@/config/system.config";
@@ -154,7 +156,7 @@ export function StatusPanel() {
 
       <motion.div variants={rise} className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
         {[
-          { k: "GUILD", v: player.guild },
+          { k: "GUILDS", v: guilds.map((g) => `${g.name} (${g.role})`).join(" · ") },
           { k: "BASE", v: player.location },
           { k: "TONGUES", v: player.languages.map((l) => l.name).join(" · ") },
         ].map((f) => (
@@ -284,9 +286,9 @@ function QuestCard({ quest }: { quest: Quest }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-bold leading-tight text-white">{quest.name}</h4>
-            <Chip tone={quest.status === "ongoing" ? "gold" : "system"}>{quest.status === "ongoing" ? "ONGOING" : "CLEARED"}</Chip>
+            <Chip tone={quest.stage === "released" ? "system" : quest.status === "ongoing" ? "gold" : "system"}>{(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "cleared")).toUpperCase()}</Chip>
           </div>
-          {quest.period && <p className="font-mono text-[11px] text-muted-foreground">{quest.period}</p>}
+          <p className="font-mono text-[11px] text-muted-foreground">{[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
       <p className="mt-3 text-[15px] leading-relaxed text-foreground/80">{quest.summary}</p>
@@ -374,13 +376,20 @@ export function ShadowsPanel() {
           ))}
         </div>
       </Section>
-      <Section title="Side Quests">
-        <div className="space-y-3">
-          {side.map((q) => (
-            <QuestCard key={q.id} quest={q} />
-          ))}
-        </div>
-      </Section>
+      {guilds
+        .filter((g) => side.some((q) => q.guild === g.id))
+        .map((g) => (
+          <Section key={g.id} title={`${g.name} · ${g.role}`}>
+            <p className="-mt-1 mb-3 text-sm text-muted-foreground">{g.summary}</p>
+            <div className="space-y-3">
+              {side
+                .filter((q) => q.guild === g.id)
+                .map((q) => (
+                  <QuestCard key={q.id} quest={q} />
+                ))}
+            </div>
+          </Section>
+        ))}
     </Stack>
   );
 }
@@ -510,6 +519,7 @@ export function GatePanel() {
   const [copied, setCopied] = useState(false);
   const channels = [
     { id: "email", label: "Send a message", value: player.links.email, href: `mailto:${player.links.email}`, icon: Mail, tone: "text-arcane-hot" },
+    { id: "phone", label: "Call", value: player.links.phone, href: `tel:${player.links.phone.replace(/[^+\d]/g, "")}`, icon: Phone, tone: "text-rank-s" },
     { id: "linkedin", label: "LinkedIn", value: player.links.linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: player.links.linkedin, icon: LinkedinMark, tone: "text-system" },
     { id: "github", label: "GitHub", value: player.links.github.replace(/^https?:\/\//, ""), href: player.links.github, icon: GithubMark, tone: "text-foreground" },
   ];
@@ -523,7 +533,7 @@ export function GatePanel() {
           <a
             key={c.id}
             href={c.href}
-            target={c.id === "email" ? undefined : "_blank"}
+            target={c.id === "email" || c.id === "phone" ? undefined : "_blank"}
             rel="noreferrer"
             onPointerEnter={() => play("hover")}
             onClick={() => play("portal")}

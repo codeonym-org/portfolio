@@ -1,4 +1,5 @@
 import { achievements, chronicle } from "@/config/chronicle.config";
+import { findGuild, guilds } from "@/config/guilds.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
 import { quests } from "@/config/quests.config";
@@ -20,6 +21,7 @@ export interface PlainEntry {
   points?: string[];
   tags?: string[];
   link?: string;
+  docs?: string;
 }
 
 export interface PlainSection {
@@ -41,6 +43,7 @@ export const plainHeader = {
     { label: "GitHub", href: player.links.github },
     { label: "LinkedIn", href: player.links.linkedin },
     { label: "Email", href: `mailto:${player.links.email}` },
+    { label: `Phone ${player.links.phone}`, href: `tel:${player.links.phone.replace(/[^+\d]/g, "")}` },
     { label: "CV (PDF)", href: "/cv.pdf" },
   ],
   languages: player.languages.map((l) => `${l.name} (${l.grade})`).join(" · "),
@@ -53,16 +56,23 @@ export const plainSections: PlainSection[] = [
     entries: chronicle.map((c) => ({ id: c.id, title: `${c.role} — ${c.organization}`, meta: c.period, body: c.summary, points: c.highlights })),
   },
   {
+    id: "guilds",
+    title: "Guilds",
+    note: "The organizations he works in. Engineer = employed there; Guild Master = founded and runs it.",
+    entries: guilds.map((g) => ({ id: g.id, title: `${g.name} — ${g.role}`, meta: g.kind, body: g.summary, link: g.link })),
+  },
+  {
     id: "projects",
     title: "Projects",
     entries: quests.map((q) => ({
       id: q.id,
       title: q.name,
-      meta: [q.period, q.status === "ongoing" ? "ongoing" : "shipped", q.type === "main" ? "main work" : "side project"].filter(Boolean).join(" · "),
+      meta: [findGuild(q.guild)?.name, q.period, q.stage ?? (q.status === "ongoing" ? "ongoing" : "shipped"), q.type === "main" ? "main work" : "personal project"].filter(Boolean).join(" · "),
       body: q.summary,
       points: q.details,
       tags: q.rewards,
       link: q.link,
+      docs: q.docs,
     })),
   },
   {
@@ -124,6 +134,7 @@ export function plainMarkdown(site: string): string {
       if (e.points?.length) out.push(...e.points.map((p) => `- ${p}`), "");
       if (e.tags?.length) out.push(e.tags.join(", "), "");
       if (e.link) out.push(`Link: ${e.link}`, "");
+      if (e.docs) out.push(`Docs: ${e.docs}`, "");
     }
   }
   return out.join("\n").replace(/\n{3,}/g, "\n\n");

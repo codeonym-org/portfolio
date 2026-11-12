@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Download, ExternalLink, X } from "lucide-react";
 import { findItem, inventoryCategories } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
+import { findGuild } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { findSkill, skillCategories } from "@/config/skills.config";
 import type { InspectTarget, Rarity } from "@/config/types";
@@ -105,9 +106,9 @@ function Body({ target }: { target: InspectTarget }) {
       <Header
         icon={<span className="font-display text-2xl">{quest.rank}</span>}
         rarity={quest.rank === "S" ? "legendary" : quest.rank === "A" ? "epic" : "rare"}
-        kind={`${quest.type.toUpperCase()} QUEST · ${quest.status.toUpperCase()}`}
+        kind={`${quest.type.toUpperCase()} QUEST · ${(quest.stage ?? quest.status).toUpperCase()}`}
         title={quest.name}
-        sub={quest.period}
+        sub={[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}
       />
       <p className="text-[15px] leading-relaxed text-foreground/85">{quest.summary}</p>
       <ul className="space-y-1 text-sm text-foreground/80">
@@ -122,6 +123,11 @@ function Body({ target }: { target: InspectTarget }) {
       {quest.link && (
         <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
           <ExternalLink className="size-4" /> View source
+        </a>
+      )}
+      {quest.docs && (
+        <a href={quest.docs} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
+          <ExternalLink className="size-4" /> Read the docs
         </a>
       )}
     </>

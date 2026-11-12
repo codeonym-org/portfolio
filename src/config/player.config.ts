@@ -36,6 +36,12 @@ export const player: Player = {
         "Grounds agents in enterprise systems through MCP — opening gates between AI and legacy realms.",
     },
     {
+      id: "guild-master",
+      name: "Guild Master",
+      description:
+        "Founded and runs two guilds: codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
+    },
+    {
       id: "voice-of-three-tongues",
       name: "Voice of Three Tongues",
       description:
@@ -61,6 +67,7 @@ export const player: Player = {
     github: "https://github.com/codeonym",
     linkedin: "https://www.linkedin.com/in/codeonym/",
     email: "bouarourayoub0@gmail.com",
+    phone: "+212 627 049 264",
   },
   languages: [
     { name: "Arabic", grade: "Native" },

@@ -8,7 +8,6 @@ import {
   Container,
   Database,
   Ear,
-  FlaskConical,
   Flag,
   GitBranch,
   Globe,
@@ -197,16 +196,6 @@ export const skills: SkillDetail[] = [
     tags: ["human-ai", "frontend"],
   },
   {
-    id: "keras",
-    name: "Keras / Deep Learning",
-    icon: FlaskConical,
-    category: "agent-stack",
-    rarity: "rare",
-    mastery: 78,
-    lore: "Alchemist's kit. BiLSTM taggers and CNN vision pipelines were brewed with this in earlier arcs.",
-    tags: ["ml", "nlp", "cnn"],
-  },
-  {
     id: "document-ai",
     name: "Document AI (LandingAI · Textract)",
     icon: ScanText,
@@ -292,7 +281,7 @@ export const skills: SkillDetail[] = [
   },
   {
     id: "state-management",
-    name: "Zustand / Redux Toolkit",
+    name: "Zustand / Redux Toolkit / Context API",
     icon: Boxes,
     category: "web",
     rarity: "rare",
@@ -446,7 +435,7 @@ export const skills: SkillDetail[] = [
   },
   {
     id: "observability",
-    name: "Prometheus / Grafana / OTel",
+    name: "Prometheus / Grafana / Jaeger / OTel",
     icon: Radar,
     category: "ops",
     rarity: "rare",

@@ -14,7 +14,7 @@ const index: BrainIndex = {
   ],
   quests: [
     { id: "pharma-mas", name: "Multi-Agent Pharmaceutical Catalog System", summary: "A multi-agent system.", stack: ["LangGraph"] },
-    { id: "brikool", name: "Brikool", summary: "A marketplace.", stack: ["Next.js"] },
+    { id: "mediary", name: "Mediary", summary: "A mediator library.", stack: ["Python"] },
   ],
   skills: [
     { id: "langgraph", name: "LangGraph" },
@@ -41,7 +41,7 @@ test("contact opens the gate and shows the channels", () => {
 });
 
 test("a named project or skill is inspected, not just its sector", () => {
-  assert.deepEqual(actions("tell me about brikool"), [{ name: "inspect_entity", args: { kind: "quest", id: "brikool" } }]);
+  assert.deepEqual(actions("tell me about mediary"), [{ name: "inspect_entity", args: { kind: "quest", id: "mediary" } }]);
   assert.deepEqual(actions("the pharmaceutical project"), [{ name: "inspect_entity", args: { kind: "quest", id: "pharma-mas" } }]);
   assert.deepEqual(actions("does he know LangGraph?"), [{ name: "inspect_entity", args: { kind: "skill", id: "langgraph" } }]);
 });

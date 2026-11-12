@@ -204,7 +204,7 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "copy_contact",
-    description: "Copy one of the Player's channels (email address, GitHub, LinkedIn) or this portfolio's link to the visitor's clipboard.",
+    description: "Copy one of the Player's channels (email address, phone number, GitHub, LinkedIn) or this portfolio's link to the visitor's clipboard.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: async ({ channel }) => {
       const { label, text } = channelTarget(channel, player.links, window.location.origin);
@@ -221,13 +221,13 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "open_link",
     description:
-      "Open one of the Player's channels for the visitor: GitHub or LinkedIn in a new tab, email in their mail app (a new message to the Player), or this portfolio's link.",
+      "Open one of the Player's channels for the visitor: GitHub or LinkedIn in a new tab, email in their mail app (a new message to the Player), the phone number in their dialer, or this portfolio's link.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: ({ channel }) => {
       const { label, href } = channelTarget(channel, player.links, window.location.origin);
-      if (channel === "email") {
+      if (channel === "email" || channel === "phone") {
         window.location.href = href;
-        return "Opened a new email to the Player in the visitor's mail app.";
+        return channel === "email" ? "Opened a new email to the Player in the visitor's mail app." : "Handed the Player's phone number to the visitor's dialer.";
       }
       const tab = window.open(href, "_blank");
       if (!tab) {

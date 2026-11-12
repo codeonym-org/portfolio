@@ -34,7 +34,7 @@ function CommandTool({ command }: { command: SystemCommand }) {
 
 const linksSchema = z.object({
   links: z
-    .array(z.enum(["github", "linkedin", "email", "cv"]))
+    .array(z.enum(["email", "phone", "linkedin", "github", "cv"]))
     .optional()
     .describe("Which channels to show; omit for all."),
 });
@@ -48,7 +48,7 @@ function PresentationTools() {
   useFrontendTool({
     name: "show_contact_card",
     description:
-      "Draw a contact card under your reply with clickable GitHub / LinkedIn / email / CV buttons. Use when the visitor wants to reach, hire or follow the Player.",
+      "Draw a contact card under your reply with clickable email / phone / LinkedIn / GitHub / CV buttons. Use when the visitor wants to reach, hire or follow the Player.",
     parameters: linksSchema,
     handler: async ({ links }) =>
       `Contact card shown (${links?.join(", ") || "all channels"}). The visitor sees the buttons — do not list the links or address in text; reply with one short line.`,

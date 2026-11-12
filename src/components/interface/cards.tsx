@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Mail, Waypoints } from "lucide-react";
+import { FileText, Mail, Phone, Waypoints } from "lucide-react";
 import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
 import { player } from "@/config/player.config";
 import { findSkill } from "@/config/skills.config";
@@ -12,6 +12,7 @@ import { useWorldStore } from "@/store/world-store";
 
 const LINKS = [
   { id: "email", label: "Email", icon: Mail, href: `mailto:${player.links.email}` },
+  { id: "phone", label: player.links.phone, icon: Phone, href: `tel:${player.links.phone.replace(/[^+\d]/g, "")}` },
   { id: "linkedin", label: "LinkedIn", icon: LinkedinMark, href: player.links.linkedin },
   { id: "github", label: "GitHub", icon: GithubMark, href: player.links.github },
   { id: "cv", label: "CV (PDF)", icon: FileText, href: "/cv.pdf" },
@@ -25,7 +26,7 @@ function ContactCard({ ids }: { ids?: string[] }) {
         <a
           key={l.id}
           href={l.href}
-          target={l.id === "email" ? undefined : "_blank"}
+          target={l.id === "email" || l.id === "phone" ? undefined : "_blank"}
           rel="noreferrer noopener"
           onClick={() => play("click")}
           className="hud-chip px-3.5 py-2 text-sm"
