@@ -60,7 +60,7 @@ export interface Gate {
   id: string;
   name: string;
   rank: GateRank;
-  /** sealed = listed in the catalog, not built yet */
+  /** sealed = shown in the Gate Realm, not built yet */
   state: "open" | "sealed";
   tagline: string;
   description: string;
@@ -69,6 +69,29 @@ export interface Gate {
   audience: string;
   /** how much the device has to work: Light or Heavy */
   cost: string;
+}
+
+/** what a planet of the Gate Realm is made of: each kind has its own shader branch */
+export type PlanetKind = "ocean" | "cracked" | "gas" | "ice" | "lava" | "crystal" | "barren";
+
+/** one world of the Gate Realm; a planet that holds a gate is charted */
+export interface Planet {
+  id: string;
+  /** the gate this planet holds; none = uncharted */
+  gate?: string;
+  kind: PlanetKind;
+  /** distance from the star, in scene units */
+  orbit: number;
+  /** radius, in scene units */
+  size: number;
+  /** where on its orbit it starts, in turns (0–1) */
+  phase: number;
+  /** low ground, high ground, glow */
+  palette: [string, string, string];
+  ring?: "full" | "broken";
+  moons?: number;
+  /** axial tilt, radians */
+  tilt: number;
 }
 
 /** an organization the Player works in */

@@ -204,11 +204,11 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "open_gates",
     description:
-      "Leave this gate for the catalog of gates (the page /gates): every named, ranked way into the record, open or sealed. Use only when the visitor asks for the gates, the catalog, other realms or tiers, or The Deep.",
+      "Leave this gate for the Gate Realm (the page /gates): a star system where every gate into the record is a world — this one is First Light (rank C); Erebus (rank S) is sealed; five more are uncharted. Use only when the visitor asks for the gates, the realm, other worlds or tiers, or Erebus.",
     parameters: z.object({}),
     handler: () => {
       window.setTimeout(() => window.location.assign("/gates"), 600);
-      return "Taking the visitor to the catalog of gates. Say one short line of farewell; this page is about to close.";
+      return "Taking the visitor to the Gate Realm. Say one short line of farewell; this page is about to close.";
     },
   }),
   define({
