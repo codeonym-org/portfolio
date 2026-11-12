@@ -56,9 +56,9 @@ Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `imp
 
 | Ticket | What | State |
 |---|---|---|
-| #58 | The Gate Realm: `/gates` as seven planets; gates renamed First Light and Erebus | not started |
-| #59 | The System font (Rajdhani) and the System window: notices and prompts | not started |
-| #60 | The System persuades: one next step per answer, the `offer` tool | not started |
+| #58 | The Gate Realm: `/gates` as seven planets; gates renamed First Light and Erebus | done, merged into `40-gates` |
+| #59 | The System font (Rajdhani) and the System window: notices and prompts | done, merged into `40-gates` |
+| #60 | The System persuades: one next step per answer, the `offer` tool | done, merged into `40-gates` |
 | #61 | The index as a wheel from the left edge | not started |
 | #62 | A pulse on screen while the voice is live | not started |
 | #63 | A holographic map: globe to city, data shipped with the site | not started |
