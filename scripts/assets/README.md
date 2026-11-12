@@ -48,3 +48,11 @@ and sets the title in the site's own fonts:
 URL=http://localhost:3000/ node scripts/assets/social-card.mjs src/app/opengraph-image.png
 cp src/app/opengraph-image.png src/app/twitter-image.png
 ```
+
+## `world-map.mjs`
+
+Turns Natural Earth 1:110m land (public domain) into one SVG path, `src/record/world-map.ts`, for the map card.
+
+```bash
+node scripts/assets/world-map.mjs <ne_110m_land.geojson>
+```

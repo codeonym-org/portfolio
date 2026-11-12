@@ -11,6 +11,7 @@ export const player: Player = {
   title: "AI Agent Engineer",
   job: "Software Engineer",
   location: "Oujda, Morocco",
+  base: { city: "Oujda", country: "Morocco", lat: 34.68, lon: -1.91, timeZone: "Africa/Casablanca" },
   guild: "OpenSNZ-Technology",
   // months of XP since the journey began (2019)
   level: 82,

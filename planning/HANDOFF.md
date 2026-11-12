@@ -27,13 +27,14 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #40 | Epic: Gates | open |
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
-| #43 | Story 3: live GitHub data + a map | see `stories/GH-43-…/history/CHANGES.md` |
+| #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
 | #44 | Story 4: The Deep (rank S gate) | drafted only |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
 What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight personal, by guild); new CV and
 the phone number as a contact channel; the gate registry (`src/config/gates.config.ts`), the catalog `/gates`,
-`/gates/the-surface` (same as `/`), `/gates/the-deep` (sealed screen); the one-minute brief (`open_brief`).
+`/gates/the-surface` (same as `/`), `/gates/the-deep` (sealed screen); the one-minute brief (`open_brief`); live GitHub data
+(`github_live`, `/api/github/<project id>`, optional `GITHUB_TOKEN`); the map card (`show_map`).
 
 ## Waiting for the owner (nothing blocks the work)
 
@@ -42,11 +43,12 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 2. The gate names "The Surface" and "The Deep", and whether the brief answers "too minimal" for the rank C gate
    (story GH-42, decision 001).
 3. The phone number is public once the epic reaches `main` (story GH-41, decision 008).
-4. Not checked by the agent anywhere: voice (hold V), real phones, Safari, Firefox.
+4. Optional: add a read-only `GITHUB_TOKEN` on Vercel if GitHub rate limits ever show (story GH-43, decision 001).
+5. Not checked by the agent anywhere: voice (hold V), real phones, Safari, Firefox.
 
 ## Next
 
-Story GH-43 (live data), then GH-44 (The Deep). For The Deep, the owner's brief: "fully functional gameplay with
+Story GH-44 (The Deep) is the only story left. For The Deep, the owner's brief: "fully functional gameplay with
 extended 3d elems and gamified experience with reward models"; it must build on the shared progress (epic
 decision 006) and must not slow The Surface. When it opens, set its `state` to `open` in `gates.config.ts` and
 give `/gates/[gate]/page.tsx` its component.

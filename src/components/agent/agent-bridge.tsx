@@ -46,12 +46,13 @@ function reach(name: string, args: Record<string, unknown>) {
     if (sector && isSectorId(sector)) pulse(`sector:${sector}`);
   } else if (name === "present_skills" && Array.isArray(args.ids)) {
     args.ids.slice(0, 12).forEach((id) => pulse(`skill:${String(id)}`));
-  } else if (name === "show_contact_card") {
+  } else if (name === "show_contact_card" || name === "show_map") {
     pulse("sector:contact");
   }
 }
 
 function cardOf(name: string, args: Record<string, unknown>): Card | null {
+  if (name === "show_map") return { type: "map" };
   if (name === "show_contact_card") return { type: "contact", links: Array.isArray(args.links) ? args.links.map(String) : undefined };
   if (name === "present_skills" && Array.isArray(args.ids)) return { type: "skills", ids: args.ids.map(String), title: typeof args.title === "string" ? args.title : undefined };
   if (name === "assemble_case") {

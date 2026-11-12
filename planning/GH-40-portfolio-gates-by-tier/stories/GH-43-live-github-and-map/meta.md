@@ -3,7 +3,7 @@ kind: story
 title: Live data for the System: GitHub read access and a map
 key: GH-43
 parent: GH-40
-status: tracked
+status: done
 branch:
 tracker-url: https://github.com/codeonym-org/portfolio/issues/43
 mr:
