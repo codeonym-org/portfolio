@@ -2,3 +2,4 @@
 - 2026-11-12: tracker issue created, GH-40.
 - 2026-11-12: decision 008 added — main stays clean until the epic is complete.
 - 2026-11-12: decision 009 — the agent works alone; epic branch 40-gates created from 38-living-record.
+- 2026-11-12: decision 010 — a fifth story, GH-57, added before The Deep; draft revised.

@@ -1,0 +1,2 @@
+- 2026-11-12: asked for by the owner; story pass by the agent alone (decisions 001, 002); six tickets drafted.
+- 2026-11-12: tracker issues created: GH-57, tickets GH-58 to GH-63.

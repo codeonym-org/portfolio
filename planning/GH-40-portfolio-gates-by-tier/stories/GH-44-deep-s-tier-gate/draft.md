@@ -16,3 +16,6 @@ Build a second gate, rank S: full gameplay, extended 3D elements and a reward mo
 - The rank C gate's load time is unchanged by this gate.
 
 Planned in detail later: its own grilling settles the gameplay, the rewards and the 3D scope.
+
+> 2026-11-12: this gate is now named **Erebus** and is a planet in the Gate Realm (story GH-57, decisions 001
+> and 002). Reuse GH-57's System window and `offer` tool.

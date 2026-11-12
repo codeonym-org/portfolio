@@ -15,7 +15,7 @@ experience. The record is also out of date: it still lists academic projects and
 ## How gates work
 
 - `/` opens the default gate directly, with no choice to make (decision 002).
-- `/gates` is the catalog of gates, like a console game library. Each gate lives at `/gates/<gate-name>`. A gate
+- `/gates` is the catalog of gates: a star system where each gate is a planet (story GH-57). Each gate lives at `/gates/<gate-name>`. A gate
   that is not built yet shows as a sealed card (decision 003).
 - Rank is an attribute of a gate; several gates may share a rank (decision 002).
 - All gates share one record (`src/config`) and one agent. A gate brings its own presentation and its own actions
@@ -23,13 +23,16 @@ experience. The record is also out of date: it still lists academic projects and
 - A visitor has one progress (XP, level, risen shadows), kept in the browser and shared by every gate
   (decision 006).
 
-## Stories, in order (decision 005)
+## Stories, in order (decisions 005 and 010)
 
 1. **Refresh the record** — open-source and guild work in, academic projects out.
 2. **The first gate (rank C) and the gates catalog** — the gate hiring teams see; this is where the "too
    minimal" feedback is answered.
 3. **Live data for the System** — GitHub read access and a map the agent can show.
-4. **The Deep S-tier gate** — full gameplay, extended 3D, rewards. Planned in detail later.
+4. **The Gate Realm and a System with presence** — the catalog as seven planets, the System's font and
+   dialog, an agent that leads the visitor on, the index wheel, the voice pulse, a holographic map (added by
+   decision 010).
+5. **The Deep S-tier gate** (now named Erebus) — full gameplay, extended 3D, rewards. Planned in detail later.
 
 ## Not part of this epic (decision 007)
 

@@ -28,7 +28,8 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
-| #44 | Story 4: The Deep (rank S gate) | drafted only |
+| #57 | Story 4: the Gate Realm and a System with presence (#58–#63) | planned (decisions 001, 002); **build next, in ticket order** |
+| #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
 What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight personal, by guild); new CV and
@@ -46,7 +47,26 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 4. Optional: add a read-only `GITHUB_TOKEN` on Vercel if GitHub rate limits ever show (story GH-43, decision 001).
 5. Not checked by the agent anywhere: voice (hold V), real phones, Safari, Firefox.
 
-## Next: story GH-44, The Deep (nothing built, nothing decided yet)
+## Next: story GH-57, then GH-44
+
+**GH-57 "The Gate Realm and a System with presence"** was asked for by the owner on 2026-11-12 and goes
+**before** The Deep (epic decision 010). Its whole design is in
+`stories/GH-57-gate-realm-and-system-presence/decisions/001-story-design.md`; read it before any ticket.
+Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `impl.md`):
+
+| Ticket | What | State |
+|---|---|---|
+| #58 | The Gate Realm: `/gates` as seven planets; gates renamed First Light and Erebus | not started |
+| #59 | The System font (Rajdhani) and the System window: notices and prompts | not started |
+| #60 | The System persuades: one next step per answer, the `offer` tool | not started |
+| #61 | The index as a wheel from the left edge | not started |
+| #62 | A pulse on screen while the voice is live | not started |
+| #63 | A holographic map: globe to city, data shipped with the site | not started |
+
+Open for the owner from this story (nothing blocks): the names "First Light" and "Erebus" (one file,
+`src/config/gates.config.ts`); whether the System's long answers should also use the System font.
+
+## Then: story GH-44, The Deep / Erebus (nothing built, nothing decided yet)
 
 Stories 1–3 are done and merged into `40-gates`. GH-44 is the only story left; its folder
 (`stories/GH-44-deep-s-tier-gate/`) holds only the short draft. No branch exists for it and no code was written.
