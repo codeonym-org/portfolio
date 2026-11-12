@@ -86,7 +86,7 @@ function ariseAll(): Promise<number> {
       const next = fallen()[0];
       if (!next) return finish();
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => store().arise(next.id), 350);
+      timer = window.setTimeout(() => store().arise(next.id), 150);
     };
     const unsubscribe = useWorldStore.subscribe((s, prev) => {
       if (prev.rising && !s.rising) step();

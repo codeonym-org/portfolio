@@ -51,7 +51,7 @@ export function pulse(target: string) {
 }
 
 /** how long one ARISE takes, start to bound */
-export const ARISE_MS = 2600;
+export const ARISE_MS = 1700;
 
 interface WorldState {
   /** models and light are loaded; the Monolith has assembled */

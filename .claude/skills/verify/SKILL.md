@@ -56,7 +56,7 @@ sheet under it).
   `system.run(name, args)`, `system.commands` (`open_sector`,
   `inspect_entity`, `assemble_case`, `arise`, `arise_all`, `open_cv`,
   `close_windows`…). Prefer it to synthesized clicks. ARISE takes
-  `ARISE_MS` (2.6 s) per shadow; poll `snapshot().visitor.shadowsRisen`.
+  `ARISE_MS` (1.7 s) per shadow; poll `snapshot().visitor.shadowsRisen`.
 - **Talking to the agent**: fill the `textarea` and press Enter. A live run
   takes 5–15 s (needs `OPEN_ROUTER_API_KEY`). Read the reply from `.oracle`
   and the tool calls from `.trace-row`. A case file also sets
