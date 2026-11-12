@@ -50,6 +50,25 @@ export interface Player {
   languages: { name: string; grade: string }[];
 }
 
+export type GateRank = "S" | "A" | "B" | "C";
+
+/** one way into the record: a named, ranked page */
+export interface Gate {
+  /** also the route: /gates/<id> */
+  id: string;
+  name: string;
+  rank: GateRank;
+  /** sealed = listed in the catalog, not built yet */
+  state: "open" | "sealed";
+  tagline: string;
+  description: string;
+  /** what the visitor finds inside, three short lines */
+  holds: string[];
+  audience: string;
+  /** how much the device has to work: Light or Heavy */
+  cost: string;
+}
+
 /** an organization the Player works in */
 export interface Guild {
   id: string;

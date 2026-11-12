@@ -1,11 +1,6 @@
-import { Shell } from "@/components/interface/shell";
-import { Stage } from "@/components/scene/stage";
+import { SurfaceGate } from "@/components/gates/surface-gate";
 
+/** `/` opens the default gate with no choice to make; the catalog is at /gates */
 export default function Home() {
-  return (
-    <main className="grain relative h-dvh w-full overflow-hidden">
-      <Stage />
-      <Shell />
-    </main>
-  );
+  return <SurfaceGate />;
 }

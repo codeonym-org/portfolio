@@ -39,6 +39,7 @@ const ACTIONS: { label: string; sub: string; search: string; name: string; args?
   { label: "Copy the email address", sub: 'copy_contact(channel: "email")', search: "email copy contact", name: "copy_contact", args: { channel: "email" } },
   { label: "Save a picture of the Monolith", sub: "capture_snapshot()", search: "snapshot screenshot picture photo", name: "capture_snapshot" },
   { label: "Cast: awaken", sub: 'cast_effect(effect: "awaken")', search: "effect awaken shockwave", name: "cast_effect", args: { effect: "awaken" } },
+  { label: "Gates — every way into the record", sub: "open_gates()", search: "gates catalog realms tiers surface deep library", name: "open_gates" },
   { label: "Back to orbit", sub: "close_windows()", search: "close home orbit reset view", name: "close_windows" },
 ];
 

@@ -17,4 +17,4 @@ gate (epic decisions 002, 003). The gate reads the shared record and agent (deci
 - A recruiter can find experience, projects by guild, skills, the CV and contact without using the agent.
 - The owner confirms the gate no longer feels too minimal.
 
-Its own grilling settles the gate's name, its look and what "light on resources" means in numbers.
+Design: story decision 001. Tickets, in order: the gates catalog, gate routes and the sealed screen; then a one-minute brief in The Surface.

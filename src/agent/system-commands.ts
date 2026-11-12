@@ -192,6 +192,16 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
+    name: "open_gates",
+    description:
+      "Leave this gate for the catalog of gates (the page /gates): every named, ranked way into the record, open or sealed. Use only when the visitor asks for the gates, the catalog, other realms or tiers, or The Deep.",
+    parameters: z.object({}),
+    handler: () => {
+      window.setTimeout(() => window.location.assign("/gates"), 600);
+      return "Taking the visitor to the catalog of gates. Say one short line of farewell; this page is about to close.";
+    },
+  }),
+  define({
     name: "download_cv",
     description:
       "Download the Hunter's License — the Player's CV as a PDF file — straight to the visitor's device. Use when they want to download, save or get the CV / resume / hunter card.",

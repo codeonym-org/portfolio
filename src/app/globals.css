@@ -196,6 +196,12 @@
   }
 
   /* ── controls: hairline rectangles, mono, quiet until touched ── */
+  @keyframes gate-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
   .hud-chip {
     position: relative;
     display: inline-flex;

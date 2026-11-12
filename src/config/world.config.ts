@@ -151,6 +151,7 @@ export const world = {
     arise: "ARISE",
     ariseAll: "ARISE — ALL",
     plain: "plain record",
+    gates: "gates",
   },
 
   toasts: {
