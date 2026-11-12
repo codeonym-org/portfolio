@@ -12,6 +12,7 @@ import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { useSession, type Turn } from "@/store/session-store";
 import { view } from "@/components/scene/view";
+import { VoicePulse } from "./voice-pulse";
 import { useWorldStore } from "@/store/world-store";
 import { Cards } from "./cards";
 
@@ -189,6 +190,8 @@ export function Console() {
       )}
     >
       <AnimatePresence>{history && !compact && <Transcript key="transcript" turns={turns} />}</AnimatePresence>
+
+      <VoicePulse />
 
       {!history && !compact && (
         <div className={cn("fade-top max-h-[38dvh] space-y-3 overflow-y-auto overscroll-contain pt-8 pr-2", !touch && !focused && "text-center")}>

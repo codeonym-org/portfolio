@@ -51,6 +51,8 @@ export const live = {
   agentBusy: false,
   /** the voice link's pull on the Monolith (1 = rest): it leans open while listening, pulses as it speaks */
   voiceSurge: 1,
+  /** the voice's heartbeat, 0 at rest … 1 on the spike; written by the pulse monitor while the voice is live */
+  heart: 0,
   pulses: [] as Pulse[],
   /** one-shot kicks, decayed by the scene: a shockwave across the floor, a lens split, a camera shake */
   shock: 0,
