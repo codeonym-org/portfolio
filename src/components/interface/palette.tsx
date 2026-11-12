@@ -40,7 +40,7 @@ const ACTIONS: { label: string; sub: string; search: string; name: string; args?
   { label: "Save a picture of the Monolith", sub: "capture_snapshot()", search: "snapshot screenshot picture photo", name: "capture_snapshot" },
   { label: "Cast: awaken", sub: 'cast_effect(effect: "awaken")', search: "effect awaken shockwave", name: "cast_effect", args: { effect: "awaken" } },
   { label: "The one-minute brief", sub: "open_brief()", search: "brief summary overview short quick recruiter hiring tldr", name: "open_brief" },
-  { label: "Gates — every way into the record", sub: "open_gates()", search: "gates catalog realms tiers surface deep library", name: "open_gates" },
+  { label: "Gates — every way into the record", sub: "open_gates()", search: "gates realm worlds planets tiers first light erebus", name: "open_gates" },
   { label: "Back to orbit", sub: "close_windows()", search: "close home orbit reset view", name: "close_windows" },
 ];
 
