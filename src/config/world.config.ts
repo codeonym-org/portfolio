@@ -166,6 +166,7 @@ export const world = {
     accept: "Accept",
     decline: "Later",
     keys: "Y to accept · N or Esc for later",
+    offerHeading: "THE SYSTEM OFFERS",
     greeting: {
       heading: "A HUNTER HAS ENTERED",
       body: "You stand before the record of the Player. The System can brief you on him in one minute. Accept the briefing?",
@@ -185,6 +186,8 @@ export const world = {
   /** THE SYSTEM — the agent that lives in the Monolith */
   agent: {
     name: "THE SYSTEM",
+    /** the project the System leads a new visitor to first (a quest id) */
+    flagship: "pharma-mas",
     epithet: "the entity that chose the Player",
     greeting:
       "You have been noticed. I hold the whole record of the Player — ask me anything, or tell me what to show you. I answer by rearranging this place.",

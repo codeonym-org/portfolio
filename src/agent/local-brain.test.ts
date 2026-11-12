@@ -76,3 +76,9 @@ test("what it cannot answer, it says so and does nothing", () => {
   assert.match(reply.text, /cannot reason/);
   assert.deepEqual(answerLocally("   ", index).actions, []);
 });
+
+test("a sector word inside a project's name does not select that project", () => {
+  const withDesign: BrainIndex = { ...index, quests: [...index.quests, { id: "design-skills", name: "design-skills", summary: "Design skills.", stack: [] }] };
+  assert.deepEqual(answerLocally("show me his skills", withDesign).actions, [{ name: "open_sector", args: { sector: "skills" } }]);
+  assert.deepEqual(answerLocally("tell me about design-skills", withDesign).actions, [{ name: "inspect_entity", args: { kind: "quest", id: "design-skills" } }]);
+});

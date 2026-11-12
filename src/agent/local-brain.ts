@@ -54,6 +54,8 @@ const SECTOR_WORDS: Record<string, string[]> = {
   status: ["who", "about", "profile", "status", "player", "ayoub", "codeonym", "level", "rank", "creed", "title", "qui", "profil", "bio", "introduce", "himself"],
 };
 
+const GENERIC = new Set(["skills", "project", "projects", "system", "systems", "agents", "record", "portfolio"]);
+
 function mention<T extends { id: string; name: string }>(text: string, list: T[]): T | undefined {
   // the longest name first, so "LangGraph" wins over "Lang"
   return [...list]
@@ -63,7 +65,8 @@ function mention<T extends { id: string; name: string }>(text: string, list: T[]
       if (name.length < 3) return false;
       if (text.includes(name) || text.includes(e.id)) return true;
       // "the pharma project" → "Multi-Agent Pharmaceutical Catalog System"
-      const words = name.split(/[\s·/-]+/).filter((w) => w.length >= 6);
+      // …but not on a word that names a whole sector: "his skills" is not the project "design-skills"
+      const words = name.split(/[\s·/-]+/).filter((w) => w.length >= 6 && !GENERIC.has(w));
       return words.some((w) => text.includes(w.slice(0, 6)));
     });
 }
