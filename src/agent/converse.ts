@@ -74,7 +74,7 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
       session.step({ id: step, status: /^(Invalid|Unknown|Command .* failed)/.test(result) ? "failed" : "done" });
       await wait(140);
     }
-    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.contact ? [{ type: "contact" }] : undefined }]);
+    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : reply.contact ? [{ type: "contact" }] : undefined }]);
   } finally {
     live.agentBusy = false;
     useSession.getState().set({ running: false });

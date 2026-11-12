@@ -54,6 +54,13 @@ function PresentationTools() {
       `Contact card shown (${links?.join(", ") || "all channels"}). The visitor sees the buttons — do not list the links or address in text; reply with one short line.`,
   });
   useFrontendTool({
+    name: "show_map",
+    description:
+      "Draw a world map under your reply with the Player's base marked, his current local time and the time difference with the visitor (computed in the visitor's browser). Use when the visitor asks where he is based, his location, his time zone, what time it is for him, or whether working hours overlap.",
+    parameters: z.object({}),
+    handler: async () => "Map shown: the Player's base, his local time and the difference with the visitor's clock. You do not know the visitor's time zone — do not state the difference yourself; reply with one short line.",
+  });
+  useFrontendTool({
     name: "present_skills",
     description:
       "Draw a row of skill badges (with mastery grades) under your reply; each badge opens its inspect card, and the Monolith lights their shards. Use when answering about skills or tech stack.",

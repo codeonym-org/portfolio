@@ -29,6 +29,8 @@ export interface BrainReply {
   actions: BrainAction[];
   /** show the contact buttons under the reply */
   contact?: boolean;
+  /** show the map card under the reply */
+  map?: boolean;
 }
 
 const fold = (text: string) =>
@@ -93,6 +95,10 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return has(text, "all", "every", "tous", "legion")
       ? { text: "[ ARISE. ] Every fallen quest answers.", actions: [{ name: "arise_all", args: {} }] }
       : { text: "[ ARISE. ]", actions: [{ name: "arise", args: {} }] };
+  }
+
+  if (has(text, "where is he", "where does he", "based", "location", "located", "time zone", "timezone", "what time", "ou est-il", "fuseau")) {
+    return { text: `${p.name} is based in ${p.location}. The map shows his local time against yours.`, actions: [], map: true };
   }
 
   if (has(text, ...SECTOR_WORDS.contact)) {

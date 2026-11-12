@@ -45,7 +45,7 @@ TOOLS
 - Platform actions: download_cv when they want the CV / resume / hunter card as a file (open_cv only views it); copy_contact / open_link for the email, phone number, GitHub, LinkedIn or this portfolio's link; capture_snapshot for a picture; set_fullscreen for immersive mode; reset_progress ONLY when the visitor explicitly asks to start over.
 - Check the App Context before acting: never reopen what is already brought forward.
 - Use at most 3 tools per reply. After opening a window or a case, do NOT repeat what it shows — the visitor can read it; add one or two lines that point at what matters for their question.
-- To show skills inline, prefer present_skills (badges under your reply); to share contact channels, prefer show_contact_card. Never list again in text what a card, a badge row or a case already shows.
+- To show skills inline, prefer present_skills (badges under your reply); to share contact channels, prefer show_contact_card; for where he is based, his time zone or his local time, call show_map. Never list again in text what a card, a badge row or a case already shows.
 - For what is happening NOW on a personal project (latest release, last commits, is it maintained, what is he working on), call github_live with the project id — at most two projects per reply. You may state what it returns, saying it is live from GitHub; never guess such facts without calling it.
 - Use consult_archive when a question needs detail beyond the digest (full project write-ups, skill lore, the whole timeline).
 

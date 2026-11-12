@@ -5,6 +5,7 @@ import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
 import { player } from "@/config/player.config";
 import { findSkill } from "@/config/skills.config";
 import { play } from "@/lib/audio";
+import { MapCard } from "./map-card";
 import { masteryGrade, rarityTile } from "@/lib/rarity";
 import { cn } from "@/lib/utils";
 import type { Card } from "@/store/session-store";
@@ -82,6 +83,8 @@ export function Cards({ cards }: { cards?: Card[] }) {
           <ContactCard key={i} ids={card.links} />
         ) : card.type === "skills" ? (
           <SkillCard key={i} ids={card.ids} title={card.title} />
+        ) : card.type === "map" ? (
+          <MapCard key={i} />
         ) : open?.title === card.file.title ? null : (
           <button key={i} type="button" data-active="true" onClick={() => setCase(card.file)} className="hud-chip px-3.5 py-2 text-sm">
             <Waypoints className="size-4" /> Reopen case — {card.file.title}

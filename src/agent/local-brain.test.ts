@@ -39,6 +39,11 @@ test("asking for the short version opens the brief", () => {
   assert.deepEqual(actions("a quick summary please"), [{ name: "open_brief", args: {} }]);
 });
 
+test("asking where he is shows the map", () => {
+  assert.equal(answerLocally("Where is he based?", index).map, true);
+  assert.equal(answerLocally("what time is it for him", index).map, true);
+});
+
 test("contact opens the gate and shows the channels", () => {
   const reply = answerLocally("How do I reach him?", index);
   assert.deepEqual(reply.actions, [{ name: "open_sector", args: { sector: "contact" } }]);

@@ -26,6 +26,7 @@ import { play } from "@/lib/audio";
 import { masteryGrade, rarityBar, rarityText, rarityTile } from "@/lib/rarity";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
+import { MapCard } from "./map-card";
 
 /* ── shared bits ─────────────────────────────────────────── */
 
@@ -570,6 +571,9 @@ export function GatePanel() {
       </motion.div>
       <motion.div variants={rise} className="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin className="size-4 text-arcane-hot" /> {player.location} · {player.languages.map((l) => `${l.name} (${l.grade})`).join(" · ")}
+      </motion.div>
+      <motion.div variants={rise}>
+        <MapCard />
       </motion.div>
       <motion.p variants={rise} className="border-t border-arcane/15 pt-4 font-mono text-[10px] leading-relaxed text-muted-foreground/70">
         {world.credits}
