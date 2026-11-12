@@ -1,0 +1,2 @@
+- 2026-11-12: grilling finished (decisions 001–010); draft written, with two tickets.
+- 2026-11-12: tracker issue created, GH-41.
