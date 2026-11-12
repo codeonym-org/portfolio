@@ -78,6 +78,10 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: "The Hunter's License — the complete record, as a document.", actions: [{ name: "open_cv", args: {} }] };
   }
 
+  if (has(text, "brief", "summary", "overview", "short version", "in short", "tl;dr", "tldr", "one minute", "resume rapide", "en bref")) {
+    return { text: "The record in one minute. Every line opens its full entry.", actions: [{ name: "open_brief", args: {} }] };
+  }
+
   if (has(text, "hire", "fit", "why him", "why should", "convince", "recruit", "embauch", "strongest", "case")) {
     return {
       text: "I cannot argue from the local index — but the evidence does not need me to. This is the case the record makes on its own.",

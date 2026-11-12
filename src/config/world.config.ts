@@ -100,6 +100,12 @@ export const visitorQuests: VisitorQuest[] = [
     xp: 100,
   },
   {
+    id: "brief",
+    name: "Read the Brief",
+    objective: "Open the one-minute brief",
+    xp: 100,
+  },
+  {
     id: "explore",
     name: "Cartographer",
     objective: "Open every sector of the record",
@@ -172,6 +178,7 @@ export const world = {
       "You have been noticed. I hold the whole record of the Player — ask me anything, or tell me what to show you. I answer by rearranging this place.",
     placeholder: "Ask the System…",
     thinking: "The System is processing…",
+    brief: "One-minute brief",
     suggestions: [
       "Who is the Player?",
       "What has he built with agents?",

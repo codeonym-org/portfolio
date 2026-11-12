@@ -107,6 +107,16 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
+    name: "open_brief",
+    description:
+      "Open the one-minute brief: one window with who the Player is, his current role, his guilds, his work by rank, his signature skills and every contact channel. Use when the visitor wants the short version, a summary, an overview, or says they are in a hurry.",
+    parameters: z.object({}),
+    handler: () => {
+      store().openBrief();
+      return "The brief is open: identity, current role, guilds, work by rank, signature skills, contact and CV. The visitor can read it — do not recite it; one line on what to look at first.";
+    },
+  }),
+  define({
     name: "close_windows",
     description: "Send everything back to orbit: closes the sector window, the case file, the inspect card, the palette and the CV viewer.",
     parameters: z.object({}),

@@ -65,6 +65,8 @@ interface WorldState {
   sector: SectorId | null;
   /** the case the System assembled, brought forward instead of a sector */
   caseFile: CaseFile | null;
+  /** the one-minute brief, brought forward instead of a sector or a case */
+  brief: boolean;
   inspect: InspectTarget | null;
   cvOpen: boolean;
   paletteOpen: boolean;
@@ -87,6 +89,7 @@ interface WorldState {
   setTouch: (touch: boolean) => void;
   openSector: (sector: SectorId) => void;
   setCase: (file: CaseFile | null) => void;
+  openBrief: () => void;
   /** close the sector window and the case, back to the open sky */
   closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
@@ -125,6 +128,7 @@ export const useWorldStore = create<WorldState>()(
       sector: null,
       caseFile: null,
       inspect: null,
+      brief: false,
       cvOpen: false,
       paletteOpen: false,
       hovered: null,
@@ -144,7 +148,7 @@ export const useWorldStore = create<WorldState>()(
 
       openSector: (sector) => {
         if (get().sector === sector && !get().caseFile) return;
-        set({ sector, caseFile: null, inspect: null, paletteOpen: false });
+        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false });
         pulse(`sector:${sector}`);
         if (get().visited.includes(sector)) return;
         const visited = [...get().visited, sector];
@@ -153,10 +157,15 @@ export const useWorldStore = create<WorldState>()(
         if (sectorIds.every((id) => visited.includes(id))) get().completeQuest("explore");
       },
       setCase: (caseFile) => {
-        set(caseFile ? { caseFile, sector: null, inspect: null, paletteOpen: false } : { caseFile: null });
+        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false } : { caseFile: null });
         caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
-      closeFocus: () => set({ sector: null, caseFile: null, inspect: null }),
+      openBrief: () => {
+        set({ brief: true, sector: null, caseFile: null, inspect: null, paletteOpen: false });
+        pulse("sector:status");
+        get().completeQuest("brief");
+      },
+      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null }),
 
       setInspect: (inspect) => {
         set({ inspect });

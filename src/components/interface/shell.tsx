@@ -110,7 +110,7 @@ export function Shell() {
         if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);
-        else if (s.sector || s.caseFile) s.closeFocus();
+        else if (s.sector || s.caseFile || s.brief) s.closeFocus();
         return;
       }
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen) return;

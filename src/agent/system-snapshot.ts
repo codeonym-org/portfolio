@@ -36,6 +36,8 @@ export interface SystemSnapshot {
     openSector: SectorId | null;
     /** case file brought forward, if any */
     caseFile: CaseFile | null;
+    /** true when the one-minute brief is brought forward */
+    briefOpen: boolean;
     cvOpen: boolean;
     paletteOpen: boolean;
     inspectTarget: InspectTarget | null;
@@ -118,6 +120,7 @@ export function getSystemSnapshot(): SystemSnapshot {
     world: {
       openSector: s.sector,
       caseFile: s.caseFile,
+      briefOpen: s.brief,
       cvOpen: s.cvOpen,
       paletteOpen: s.paletteOpen,
       inspectTarget: s.inspect,
