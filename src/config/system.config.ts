@@ -8,7 +8,7 @@ import type { SystemConfig } from "./types";
  * Edit freely — the types in ./types.ts keep the UI safe.
  */
 export const systemConfig: SystemConfig = {
-  version: "5.0",
+  version: "9.0",
   vitals: [
     {
       code: "HP",
@@ -47,7 +47,7 @@ export const systemConfig: SystemConfig = {
     },
     {
       heading: "PARTY REQUEST",
-      body: "A visitor wishes to form a party. The Shadow Gate is open.",
+      body: "A visitor wishes to form a party. The Gate is open.",
       tone: "system",
     },
     {
@@ -86,6 +86,6 @@ export const systemConfig: SystemConfig = {
     title: "THIS GATE LEADS NOWHERE",
     body: "The coordinates you followed don't resolve to a sector within the System. It may have been sealed or never existed.",
     footer: "[ NAVIGATION FAILED · NO ACTIVE GATE ]",
-    cta: "RETURN TO THE TEMPLE",
+    cta: "RETURN TO THE RECORD",
   },
 };

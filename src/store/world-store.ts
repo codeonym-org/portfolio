@@ -1,25 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { quests } from "@/config/quests.config";
-import type { InspectTarget, Tone, ZoneId } from "@/config/types";
-import { clampToHall } from "@/components/world/layout";
-import {
-  visitorQuests,
-  world,
-  xpPerLevel,
-  zoneById,
-  zoneIds,
-} from "@/config/world.config";
+import type { InspectTarget, SectorId, Tone } from "@/config/types";
+import { sectorById, sectorIds, visitorQuests, world, xpPerLevel } from "@/config/world.config";
+import type { CaseFile } from "@/record/case-file";
 
 /**
  * ── WORLD STATE ───────────────────────────────────────────────
- * Everything the HUD and the scene share. Per-frame data (the
- * Hunter's live position, joystick input) deliberately lives in
- * the mutable `live` object below instead — writing it into React
- * state 60×/s would re-render the whole HUD.
+ * What the scene and the interface share: which sector or case is
+ * brought forward, what is being inspected, and the visitor's
+ * progress. Per-frame data (how far the Monolith is open, beams in
+ * flight) lives in the mutable `live` object instead — writing it
+ * into React state 60×/s would re-render the whole interface.
  */
 
-export type Phase = "loading" | "title" | "world";
 export type Quality = "high" | "medium" | "low";
 
 export interface Toast {
@@ -29,111 +23,112 @@ export interface Toast {
   tone: Tone;
 }
 
-/** per-frame channel between scene, input and HUD — never rendered directly */
+/** a beam the Monolith fires at a shard (or a whole sector) when the System touches it */
+export interface Pulse {
+  /** node key, or `sector:<id>` for every shard of a sector */
+  target: string;
+  at: number;
+}
+
+/** per-frame channel between the scene, the agent and the voice link — never rendered directly */
 export const live = {
-  /** Hunter world position [x, z] and facing (radians) */
-  hunter: { x: world.spawn[0], z: world.spawn[1], heading: Math.PI },
-  /** is the Hunter currently moving */
-  moving: false,
-  /** analog input, -1..1 (keyboard + touch joystick merge here) */
-  input: { x: 0, z: 0, run: false },
-  /** camera yaw (radians) — movement input is relative to it */
-  cameraYaw: 0,
-  /** THE SYSTEM is generating — its wraith reads this every frame */
+  /** THE SYSTEM is generating — the Monolith opens while it thinks */
   agentBusy: false,
-  /** the voice link's pull on the wraith (1 = rest): it leans in while listening, pulses as it speaks */
+  /** the voice link's pull on the Monolith (1 = rest): it leans open while listening, pulses as it speaks */
   voiceSurge: 1,
+  pulses: [] as Pulse[],
+  /** one-shot kicks, decayed by the scene: a shockwave across the floor, a lens split, a camera shake */
+  shock: 0,
+  aberration: 0,
+  shake: 0,
+  /** set once by the stage: draw one frame and hand back the canvas as a PNG */
+  capture: null as null | (() => Promise<Blob | null>),
 };
 
+export function pulse(target: string) {
+  live.pulses.push({ target, at: performance.now() });
+  if (live.pulses.length > 24) live.pulses.shift();
+}
+
+/** how long one ARISE takes, start to bound */
+export const ARISE_MS = 2600;
+
 interface WorldState {
-  phase: Phase;
+  /** models and light are loaded; the Monolith has assembled */
+  ready: boolean;
   quality: Quality;
   muted: boolean;
   /** true on coarse-pointer / small screens — set once on mount */
   touch: boolean;
 
-  /** click-to-move destination, [x, z] */
-  target: [number, number] | null;
-  /** zone whose panel opens as soon as the Hunter arrives */
-  pending: ZoneId | null;
-  /** zone whose trigger radius the Hunter is standing in */
-  nearZone: ZoneId | null;
-  /** zone whose panel is open (the camera frames its landmark) */
-  panel: ZoneId | null;
-  cvOpen: boolean;
-  mapOpen: boolean;
-  /** the dialogue window with THE SYSTEM (the agent) */
-  dialogueOpen: boolean;
+  /** the sector brought forward (its window is open) */
+  sector: SectorId | null;
+  /** the case the System assembled, brought forward instead of a sector */
+  caseFile: CaseFile | null;
   inspect: InspectTarget | null;
-  /** quest id currently mid-ARISE (animation playing) */
+  cvOpen: boolean;
+  paletteOpen: boolean;
+  /** node key under the pointer (or hovered in a window) */
+  hovered: string | null;
+  /** quest id currently mid-ARISE */
   rising: string | null;
-  /** bumps whenever the Hunter should teleport (fast travel) */
-  warp: { to: [number, number]; n: number };
 
   // ── persisted visitor progress ──
-  visited: ZoneId[];
+  visited: SectorId[];
   risen: string[];
   completed: string[];
   xp: number;
 
   toasts: Toast[];
-  /** level number when a LEVEL UP overlay should play, else null */
-  levelUp: number | null;
 
-  setPhase: (phase: Phase) => void;
+  setReady: () => void;
   setQuality: (q: Quality) => void;
   toggleMuted: () => void;
   setTouch: (touch: boolean) => void;
-  moveTo: (x: number, z: number) => void;
-  /** walk to a zone and open its panel on arrival */
-  goTo: (zone: ZoneId) => void;
-  clearTarget: () => void;
-  setNearZone: (zone: ZoneId | null) => void;
-  openPanel: (zone: ZoneId) => void;
-  closePanel: () => void;
-  travelTo: (zone: ZoneId) => void;
-  setMapOpen: (open: boolean) => void;
-  setCvOpen: (open: boolean) => void;
-  setDialogueOpen: (open: boolean) => void;
+  openSector: (sector: SectorId) => void;
+  setCase: (file: CaseFile | null) => void;
+  /** close the sector window and the case, back to the open sky */
+  closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
+  setCvOpen: (open: boolean) => void;
+  setPaletteOpen: (open: boolean) => void;
+  setHovered: (key: string | null) => void;
   arise: (questId: string) => void;
   finishRising: () => void;
   completeQuest: (id: string) => void;
   pushToast: (toast: Omit<Toast, "id">) => void;
   dismissToast: (id: number) => void;
-  clearLevelUp: () => void;
   resetProgress: () => void;
 }
 
 let toastSeq = 0;
+let riseTimer: ReturnType<typeof setTimeout> | undefined;
 
 export function levelFor(xp: number) {
   return Math.floor(xp / xpPerLevel) + 1;
 }
 
-/** where the Hunter stands to use a zone */
-export function approachPoint(zone: ZoneId): [number, number] {
-  return zoneById[zone].approach;
+/** share of the record the visitor has uncovered, 0–100 */
+export function syncPercent(s: Pick<WorldState, "visited" | "risen" | "completed">) {
+  const done = s.visited.length + s.risen.length + s.completed.length;
+  return Math.round((done / (sectorIds.length + quests.length + visitorQuests.length)) * 100);
 }
 
 export const useWorldStore = create<WorldState>()(
   persist(
     (set, get) => ({
-      phase: "loading",
+      ready: false,
       quality: "high",
       muted: false,
       touch: false,
 
-      target: null,
-      pending: null,
-      nearZone: null,
-      panel: null,
-      cvOpen: false,
-      mapOpen: false,
-      dialogueOpen: false,
+      sector: null,
+      caseFile: null,
       inspect: null,
+      cvOpen: false,
+      paletteOpen: false,
+      hovered: null,
       rising: null,
-      warp: { to: world.spawn, n: 0 },
 
       visited: [],
       risen: [],
@@ -141,73 +136,56 @@ export const useWorldStore = create<WorldState>()(
       xp: 0,
 
       toasts: [],
-      levelUp: null,
 
-      setPhase: (phase) => set({ phase }),
+      setReady: () => set({ ready: true }),
       setQuality: (quality) => set({ quality }),
       toggleMuted: () => set((s) => ({ muted: !s.muted })),
       setTouch: (touch) => set({ touch }),
 
-      moveTo: (x, z) => set({ target: clampToHall(x, z, 0.7), pending: null }),
-      goTo: (zone) => {
-        if (get().nearZone === zone) return get().openPanel(zone);
-        set({ target: approachPoint(zone), pending: zone, panel: null, inspect: null });
-      },
-      clearTarget: () => set({ target: null }),
-
-      setNearZone: (nearZone) => {
-        if (get().nearZone === nearZone) return;
-        set({ nearZone });
-        if (nearZone && get().pending === nearZone) get().openPanel(nearZone);
-        if (!nearZone || get().visited.includes(nearZone)) return;
-        const visited = [...get().visited, nearZone];
+      openSector: (sector) => {
+        if (get().sector === sector && !get().caseFile) return;
+        set({ sector, caseFile: null, inspect: null, paletteOpen: false });
+        pulse(`sector:${sector}`);
+        if (get().visited.includes(sector)) return;
+        const visited = [...get().visited, sector];
         set({ visited });
-        get().pushToast({
-          heading: world.toasts.zoneDiscovered,
-          body: `${zoneById[nearZone].name} — ${zoneById[nearZone].epithet}`,
-          tone: zoneById[nearZone].tone,
-        });
-        if (nearZone === "gate") get().completeQuest("party");
-        if (zoneIds.every((id) => visited.includes(id))) get().completeQuest("explore");
+        if (sector === "contact") get().completeQuest("party");
+        if (sectorIds.every((id) => visited.includes(id))) get().completeQuest("explore");
       },
-
-      openPanel: (zone) =>
-        set({ panel: zone, target: null, pending: null, mapOpen: false, inspect: null }),
-      closePanel: () => set({ panel: null, inspect: null }),
-
-      travelTo: (zone) => {
-        const to = approachPoint(zone);
-        set((s) => ({
-          warp: { to, n: s.warp.n + 1 },
-          target: null,
-          pending: null,
-          mapOpen: false,
-          panel: null,
-          inspect: null,
-        }));
+      setCase: (caseFile) => {
+        set(caseFile ? { caseFile, sector: null, inspect: null, paletteOpen: false } : { caseFile: null });
+        caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
+      closeFocus: () => set({ sector: null, caseFile: null, inspect: null }),
 
-      setMapOpen: (mapOpen) => set({ mapOpen }),
+      setInspect: (inspect) => {
+        set({ inspect });
+        if (inspect) pulse(`${inspect.kind}:${inspect.id}`);
+        if (inspect?.kind === "item" && inspect.id === "hunter-license") get().completeQuest("license");
+      },
       setCvOpen: (cvOpen) => {
         set({ cvOpen });
         if (cvOpen) get().completeQuest("license");
       },
-      setDialogueOpen: (dialogueOpen) => set(dialogueOpen ? { dialogueOpen, mapOpen: false } : { dialogueOpen }),
-      setInspect: (inspect) => {
-        set({ inspect });
-        if (inspect?.kind === "item" && inspect.id === "hunter-license") {
-          get().completeQuest("license");
-        }
+      setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+      setHovered: (hovered) => {
+        if (get().hovered !== hovered) set({ hovered });
       },
 
+      // The extraction is timed here, not by the render loop, so a
+      // hidden tab or a slow GPU can never leave a shadow half-risen.
       arise: (questId) => {
         const { risen, rising } = get();
-        if (rising || risen.includes(questId)) return;
+        if (rising || risen.includes(questId) || !quests.some((q) => q.id === questId)) return;
         set({ rising: questId });
+        pulse(`quest:${questId}`);
+        clearTimeout(riseTimer);
+        riseTimer = setTimeout(() => get().finishRising(), ARISE_MS);
       },
       finishRising: () => {
         const { rising, risen } = get();
         if (!rising) return;
+        clearTimeout(riseTimer);
         const next = [...risen, rising];
         set({ rising: null, risen: next });
         const quest = quests.find((q) => q.id === rising);
@@ -224,12 +202,11 @@ export const useWorldStore = create<WorldState>()(
         const quest = visitorQuests.find((q) => q.id === id);
         if (!quest || completed.includes(id)) return;
         const nextXp = xp + quest.xp;
-        const before = levelFor(xp);
-        const after = levelFor(nextXp);
+        const leveled = levelFor(nextXp) > levelFor(xp);
         const done = [...completed, id];
-        set({ completed: done, xp: nextXp, levelUp: after > before ? after : get().levelUp });
+        set({ completed: done, xp: nextXp });
         get().pushToast({
-          heading: world.toasts.questComplete,
+          heading: leveled ? `${world.toasts.levelUp} · LV.${levelFor(nextXp)}` : world.toasts.questComplete,
           body: `${quest.name} — +${quest.xp} XP`,
           tone: "gold",
         });
@@ -241,12 +218,14 @@ export const useWorldStore = create<WorldState>()(
       pushToast: (toast) =>
         set((s) => ({ toasts: [...s.toasts.slice(-3), { ...toast, id: ++toastSeq }] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
-      clearLevelUp: () => set({ levelUp: null }),
-      resetProgress: () => set({ visited: [], risen: [], completed: [], xp: 0 }),
+      resetProgress: () => {
+        clearTimeout(riseTimer);
+        set({ visited: [], risen: [], completed: [], xp: 0, rising: null });
+      },
     }),
     {
-      name: "codeonym-world-v5",
-      // rehydrated after mount (WorldHud) so SSR and first client render match
+      name: "codeonym-record-v9",
+      // rehydrated after mount (Shell) so SSR and first client render match
       skipHydration: true,
       partialize: (s) => ({
         visited: s.visited,
@@ -259,3 +238,9 @@ export const useWorldStore = create<WorldState>()(
     },
   ),
 );
+
+/** what the focus is called, for labels and the agent's context */
+export function focusLabel(s: Pick<WorldState, "sector" | "caseFile">): string | null {
+  if (s.caseFile) return `case file "${s.caseFile.title}"`;
+  return s.sector ? `${s.sector} (${sectorById[s.sector].section})` : null;
+}

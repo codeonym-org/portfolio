@@ -1,7 +1,7 @@
 import { useWorldStore } from "@/store/world-store";
 
 /**
- * World audio — CC0 samples (Kenney), the System notification chime and a
+ * Audio — CC0 samples (Kenney), the System notification chime and a
  * suspense theme loop.
  * Buffers are fetched lazily on first use; everything fails silently,
  * audio is decoration and never load-bearing.
@@ -14,29 +14,17 @@ const SOUNDS = {
   close: "/audio/close.mp3",
   confirm: "/audio/confirm.mp3",
   levelup: "/audio/levelup.mp3",
-  error: "/audio/error.mp3",
-  glitch: "/audio/glitch.mp3",
   portal: "/audio/portal.mp3",
   arise: "/audio/arise.mp3",
   system: "/audio/notify.mp3",
-  book: "/audio/book.mp3",
   coins: "/audio/coins.mp3",
-  chest: "/audio/chest.mp3",
   blade: "/audio/blade.mp3",
-  step0: "/audio/step-00.mp3",
-  step1: "/audio/step-03.mp3",
-  step2: "/audio/step-05.mp3",
-  step3: "/audio/step-08.mp3",
 } as const;
 
 export type SoundId = keyof typeof SOUNDS;
 
 const VOLUME: Partial<Record<SoundId, number>> = {
   hover: 0.25,
-  step0: 0.18,
-  step1: 0.18,
-  step2: 0.18,
-  step3: 0.18,
   arise: 0.9,
   portal: 0.5,
   system: 0.4,
@@ -105,12 +93,6 @@ export function chime(volume?: number) {
   if (now - lastChime < 2500) return;
   lastChime = now;
   play("system", { volume });
-}
-
-let stepIndex = 0;
-export function footstep() {
-  const id = (["step0", "step1", "step2", "step3"] as const)[stepIndex++ % 4];
-  play(id, { rate: 0.9 + Math.random() * 0.2 });
 }
 
 /** warm the cache for sounds that must fire without latency */

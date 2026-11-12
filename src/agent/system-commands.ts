@@ -3,24 +3,26 @@ import { player } from "@/config/player.config";
 import { findItem, inventoryItems } from "@/config/inventory.config";
 import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
-import type { Tone, ZoneId } from "@/config/types";
-import { zoneById, zoneIds } from "@/config/world.config";
-import { setImmersion } from "@/components/hud/immersion";
-import { addShake, kickAberration } from "@/components/world/follow-camera";
+import type { SectorId, Tone } from "@/config/types";
+import { sectorById, sectorIds } from "@/config/world.config";
 import { chime, play } from "@/lib/audio";
-import { levelFor, useWorldStore, type Quality } from "@/store/world-store";
+import { setImmersion } from "@/lib/immersion";
+import { caseSchema, encodeCase, resolveCase } from "@/record/case-file";
+import { hasNode } from "@/record/nodes";
+import { ARISE_MS, levelFor, live, pulse, syncPercent, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
 
 /**
  * ── AGENT BRIDGE · WRITE SIDE ─────────────────────────────────
- * Every way an AI agent may drive the world, as a flat registry:
+ * Every way an AI agent may drive the record, as a flat registry:
  * name, model-facing description, a zod schema and a handler that
  * returns a human-readable tool result.
  *
  * The same entries become CopilotKit v2 frontend tools
- * (`useFrontendTool`, see `components/agent/system-tools.tsx`) and
- * the `window.system.run(...)` console bridge. New zones need zero
- * work — schemas read zone ids from world.config.
+ * (`useFrontendTool`, see `components/agent/system-tools.tsx`), the
+ * local index's actions (`agent/local-brain.ts`), the command palette
+ * and the `window.system.run(...)` console bridge. New sectors need
+ * zero work — schemas read sector ids from world.config.
  */
 
 export interface SystemCommand<S extends z.ZodObject = z.ZodObject> {
@@ -32,10 +34,10 @@ export interface SystemCommand<S extends z.ZodObject = z.ZodObject> {
 
 const define = <S extends z.ZodObject>(cmd: SystemCommand<S>) => cmd as unknown as SystemCommand;
 
-const ZONE = z
-  .enum(zoneIds as [ZoneId, ...ZoneId[]])
+const SECTOR = z
+  .enum(sectorIds as [SectorId, ...SectorId[]])
   .describe(
-    "System window / zone id: awakening = STATUS window (profile, stats, titles), guild = experience & education, crypt = projects (quests), armory = skills, treasury = inventory & CV, gate = contact.",
+    "Sector of the record: status = STATUS window (profile, stats, titles), experience = jobs & education, projects = the shadows (quests), skills = the arsenal, inventory = the vault & CV, contact = the Gate.",
   );
 
 const store = () => useWorldStore.getState();
@@ -54,18 +56,15 @@ function download(href: string, filename: string) {
   a.remove();
 }
 
-/**
- * The 3D view as a PNG. Read inside the next animation frame, after
- * the renderer has drawn it (the WebGL buffer is not preserved).
- */
-function captureCanvas(): Promise<Blob | null> {
-  const canvas = document.querySelector("canvas");
-  if (!canvas) return Promise.resolve(null);
-  return new Promise((resolve) => requestAnimationFrame(() => canvas.toBlob(resolve, "image/png")));
-}
+/** a rise that has not finished by now has stalled */
+const RISE_STALL_MS = ARISE_MS * 3;
 
-/** a rise that has not finished by now has stalled (e.g. a hidden tab stops the render loop) */
-const RISE_STALL_MS = 15_000;
+/** the lens split, the shake and the shockwave, for big moments */
+export function castEffect(effect: "tremor" | "surge" | "awaken") {
+  if (effect !== "surge") live.shake = Math.min(1.2, live.shake + (effect === "awaken" ? 0.9 : 0.6));
+  if (effect !== "tremor") live.aberration = Math.min(2, live.aberration + (effect === "awaken" ? 1.6 : 1));
+  if (effect === "awaken") live.shock = 1;
+}
 
 /** raise every fallen shadow, one after another; resolves with how many rose */
 function ariseAll(): Promise<number> {
@@ -98,41 +97,30 @@ function ariseAll(): Promise<number> {
 
 export const systemCommands: SystemCommand[] = [
   define({
-    name: "open_zone",
+    name: "open_sector",
     description:
-      "Open a System window (tab) — e.g. 'show me the status window' → awakening. The Hunter fast-travels to the zone, its window opens and the camera frames the landmark.",
-    parameters: z.object({ zone: ZONE }),
-    handler: ({ zone }) => {
-      store().travelTo(zone);
-      // let the warp land before the panel frames the landmark
-      window.setTimeout(() => store().openPanel(zone), 450);
-      return `Opened ${zoneById[zone].name} (${zoneById[zone].section}). The visitor can read it — do not recite its contents; one or two lines on what matters.`;
-    },
-  }),
-  define({
-    name: "walk_to_zone",
-    description: "Make the Hunter walk (not teleport) to a zone; its window opens on arrival. Slower and more cinematic than open_zone.",
-    parameters: z.object({ zone: ZONE }),
-    handler: ({ zone }) => {
-      store().goTo(zone);
-      return `The Hunter is walking to ${zoneById[zone].name}.`;
+      "Bring a sector of the record forward — e.g. 'show me the status window' → status. Its shards leave their orbit and form a halo around the Monolith, and its window opens beside it.",
+    parameters: z.object({ sector: SECTOR }),
+    handler: ({ sector }) => {
+      store().openSector(sector);
+      return `Opened ${sectorById[sector].name} (${sectorById[sector].section}). The visitor can read it — do not recite its contents; one or two lines on what matters.`;
     },
   }),
   define({
     name: "close_windows",
-    description: "Close every open System window: the zone panel, inspect card, world map and CV viewer.",
+    description: "Send everything back to orbit: closes the sector window, the case file, the inspect card, the palette and the CV viewer.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
-      s.closePanel();
-      s.setMapOpen(false);
+      s.closeFocus();
+      s.setPaletteOpen(false);
       s.setCvOpen(false);
-      return "All windows closed.";
+      return "All windows closed. The record is back in orbit.";
     },
   }),
   define({
     name: "inspect_entity",
-    description: "Open the detail card for one skill, inventory item or quest (project) by its id from the dossier.",
+    description: "Open the detail card for one skill, inventory item or quest (project) by its id from the dossier. The Monolith fires a beam at its shard.",
     parameters: z.object({
       kind: z.enum(["skill", "item", "quest"]),
       id: z.string().describe("Entity id, e.g. a skill id like 'langgraph', an item id like 'hunter-license', a quest id like 'pharma-mas'."),
@@ -148,9 +136,25 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
+    name: "assemble_case",
+    description:
+      "Your strongest answer to a judgement question (\"is he a fit for…\", \"why hire him\", \"can he do X\", \"compare him to this job description\"): instead of a paragraph, build a CASE FILE. You pick 2–7 pieces of evidence from the record by id and write one honest sentence each; the shards fly into a halo tethered to the Monolith and a case window lists them with the real record beside your reasoning. The visitor can share the case as a link.",
+    parameters: caseSchema,
+    handler: (file) => {
+      const { file: kept, unknown } = resolveCase(file, hasNode);
+      if (!kept.evidence.length) {
+        return `No evidence matched the record (unknown: ${unknown.join(", ")}). Use exact ids from the dossier with kind quest / skill / experience / education / item.`;
+      }
+      store().setCase(kept);
+      window.history.replaceState(null, "", `#${encodeCase(kept)}`);
+      const dropped = unknown.length ? ` Dropped unknown evidence: ${unknown.join(", ")}.` : "";
+      return `Case file "${kept.title}" assembled with ${kept.evidence.length} pieces of evidence and shown to the visitor.${dropped} Do not repeat the evidence in text — reply with one or two lines.`;
+    },
+  }),
+  define({
     name: "arise",
     description:
-      "Command a fallen quest (project) in the Shadow Crypt to ARISE: it plays the extraction and joins the Hunter's shadow legion. Omit id to raise the next fallen one. One at a time — each extraction takes a few seconds.",
+      "Command a fallen quest (project) to ARISE: its dormant shard ignites, its sealed details open and it binds to the Monolith on a tight orbit. Omit id to raise the next fallen one. One at a time — each extraction takes a few seconds.",
     parameters: z.object({ id: z.enum(quests.map((q) => q.id) as [string, ...string[]]).optional() }),
     handler: ({ id }) => {
       const s = store();
@@ -158,12 +162,23 @@ export const systemCommands: SystemCommand[] = [
       const target = id ?? quests.find((q) => !s.risen.includes(q.id))?.id;
       if (!target) return "Every quest has already risen.";
       if (s.risen.includes(target)) return `"${target}" has already risen.`;
-      if (s.panel !== "crypt") {
-        s.travelTo("crypt");
-        window.setTimeout(() => store().openPanel("crypt"), 450);
-      }
-      window.setTimeout(() => store().arise(target), s.panel === "crypt" ? 0 : 1300);
-      return `ARISE — "${target}" is being extracted in the Shadow Crypt.`;
+      s.arise(target);
+      return `ARISE — "${target}" is being extracted.`;
+    },
+  }),
+  define({
+    name: "arise_all",
+    description: "Raise EVERY fallen quest (project), one extraction after another, until all of them are bound to the Monolith. Takes a few seconds per shadow.",
+    parameters: z.object({}),
+    handler: async () => {
+      const s = store();
+      if (quests.every((q) => s.risen.includes(q.id))) return "Every quest has already risen.";
+      const count = await ariseAll();
+      const risen = store().risen.length;
+      const tally = `${count} shadow${count === 1 ? "" : "s"} extracted`;
+      return risen === quests.length
+        ? `ARISE — ${tally}; the legion is complete (${risen}/${quests.length}).`
+        : `ARISE — ${tally}, then the extraction stalled (${risen}/${quests.length} risen). Offer to try again.`;
     },
   }),
   define({
@@ -172,6 +187,7 @@ export const systemCommands: SystemCommand[] = [
     parameters: z.object({}),
     handler: () => {
       store().setCvOpen(true);
+      pulse("item:hunter-license");
       return "CV viewer open.";
     },
   }),
@@ -223,10 +239,10 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "capture_snapshot",
-    description: "Take a picture of the 3D temple as the visitor sees it right now (without the HUD) and download it as a PNG.",
+    description: "Take a picture of the Monolith and the record as the visitor sees them right now (without the interface) and download it as a PNG.",
     parameters: z.object({}),
     handler: async () => {
-      const blob = await captureCanvas();
+      const blob = await live.capture?.();
       if (!blob) return "The view could not be captured (no 3D view on screen).";
       const url = URL.createObjectURL(blob);
       const name = snapshotFileName(new Date());
@@ -237,62 +253,32 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
-    name: "arise_all",
-    description:
-      "Raise EVERY fallen quest (project) in the Shadow Crypt, one extraction after another, until the whole legion stands. Opens the crypt. Takes a few seconds per shadow.",
-    parameters: z.object({}),
-    handler: async () => {
-      const s = store();
-      if (quests.every((q) => s.risen.includes(q.id))) return "Every quest has already risen.";
-      if (s.panel !== "crypt") {
-        s.travelTo("crypt");
-        window.setTimeout(() => store().openPanel("crypt"), 450);
-        await new Promise((r) => window.setTimeout(r, 1300));
-      }
-      const count = await ariseAll();
-      const risen = store().risen.length;
-      const tally = `${count} shadow${count === 1 ? "" : "s"} extracted`;
-      return risen === quests.length
-        ? `ARISE — ${tally}; the legion is complete (${risen}/${quests.length}).`
-        : `ARISE — ${tally}, then the extraction stalled (${risen}/${quests.length} risen). Offer to try again.`;
-    },
-  }),
-  define({
     name: "set_fullscreen",
     description: "Enter or leave immersive (fullscreen) mode.",
     parameters: z.object({ on: z.boolean() }),
     handler: async ({ on }) => {
       const ok = await setImmersion(on);
       if (ok) return `Immersive mode ${on ? "on" : "off"}.`;
-      store().pushToast({ heading: "IMMERSION", body: "Press F (or the fullscreen chip) to enter immersive mode.", tone: "system" });
+      store().pushToast({ heading: "IMMERSION", body: "Press F (or the fullscreen control) to enter immersive mode.", tone: "system" });
       return "The browser only allows fullscreen from the visitor's own click or key press — a notification now tells them to press F.";
     },
   }),
   define({
     name: "reset_progress",
     description:
-      "Wipe the visitor's progress (level, XP, discovered zones, completed quests, risen shadows) and start over. ONLY when the visitor explicitly asks to reset / start over.",
+      "Wipe the visitor's progress (level, XP, opened sectors, completed quests, risen shadows) and start over. ONLY when the visitor explicitly asks to reset / start over.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
       if (s.rising) return "A shadow is mid-extraction; try again in a few seconds.";
-      s.closePanel();
+      s.closeFocus();
       s.resetProgress();
       return "Progress reset: the visitor is back to level 1 and every shadow has fallen again.";
     },
   }),
   define({
-    name: "toggle_map",
-    description: "Open or close the world map (fast-travel overlay).",
-    parameters: z.object({ open: z.boolean() }),
-    handler: ({ open }) => {
-      store().setMapOpen(open);
-      return `World map ${open ? "open" : "closed"}.`;
-    },
-  }),
-  define({
     name: "set_sound",
-    description: "Mute or unmute all world audio.",
+    description: "Mute or unmute all audio.",
     parameters: z.object({ muted: z.boolean() }),
     handler: ({ muted }) => {
       if (store().muted !== muted) store().toggleMuted();
@@ -301,7 +287,7 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "set_quality",
-    description: "Change graphics quality: high (shadows + bloom), medium (bloom), low (no post-processing — use when the visitor says it is slow).",
+    description: "Change graphics quality: high (bloom + lens effects), medium (bloom), low (no post-processing — use when the visitor says it is slow).",
     parameters: z.object({ quality: z.enum(["high", "medium", "low"]) }),
     handler: ({ quality }) => {
       store().setQuality(quality as Quality);
@@ -311,7 +297,7 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "system_notification",
     description:
-      "Push a System notification toast (with the System chime) onto the visitor's HUD — for quest hints, warnings, flavor announcements. Keep heading ≤ 4 words, body ≤ 140 chars.",
+      "Push a System notification (with the System chime) onto the visitor's screen — for quest hints, warnings, flavor announcements. Keep heading ≤ 4 words, body ≤ 140 chars.",
     parameters: z.object({
       heading: z.string().describe("Short uppercase heading, e.g. 'HIDDEN QUEST'"),
       body: z.string(),
@@ -319,29 +305,28 @@ export const systemCommands: SystemCommand[] = [
     }),
     handler: ({ heading, body, tone }) => {
       store().pushToast({ heading: heading.toUpperCase().slice(0, 40), body: body.slice(0, 200), tone: (tone ?? "system") as Tone });
+      chime();
       return "Notification delivered.";
     },
   }),
   define({
     name: "cast_effect",
     description:
-      "Play a cinematic world effect for dramatic moments: tremor (camera shake), surge (mana surge — lens aberration + portal hum), awaken (both, with the ARISE roar).",
+      "Play a cinematic effect for dramatic moments: tremor (camera shake), surge (the lens splits + a deep hum), awaken (both, with a shockwave across the void and the ARISE roar).",
     parameters: z.object({ effect: z.enum(["tremor", "surge", "awaken"]) }),
     handler: ({ effect }) => {
-      if (effect !== "surge") addShake(effect === "awaken" ? 0.9 : 0.6);
-      if (effect !== "tremor") kickAberration(effect === "awaken" ? 1.6 : 1);
+      castEffect(effect);
       play(effect === "awaken" ? "arise" : effect === "surge" ? "portal" : "blade");
-      if (effect === "awaken") chime();
       return `Effect "${effect}" cast.`;
     },
   }),
   define({
     name: "visitor_progress",
-    description: "Report the visitor's level, XP, discovered zones, completed System quests and risen shadows.",
+    description: "Report the visitor's level, XP, SYNC, opened sectors, completed System quests and risen shadows.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
-      return `Visitor LV.${levelFor(s.xp)} (${s.xp} XP). Zones discovered: ${s.visited.join(", ") || "none"}. Quests done: ${s.completed.join(", ") || "none"}. Shadows risen: ${s.risen.length}/${quests.length}.`;
+      return `Visitor LV.${levelFor(s.xp)} (${s.xp} XP), SYNC ${syncPercent(s)}%. Sectors opened: ${s.visited.join(", ") || "none"}. Quests done: ${s.completed.join(", ") || "none"}. Shadows risen: ${s.risen.length}/${quests.length}.`;
     },
   }),
 ];

@@ -30,5 +30,5 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 export function snapshotFileName(at: Date) {
   const day = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
-  return `shadow-monarch-${day}-${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}.png`;
+  return `codeonym-record-${day}-${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}.png`;
 }

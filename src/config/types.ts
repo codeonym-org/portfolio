@@ -178,38 +178,30 @@ export interface SystemScreenCopy {
   footer: string;
 }
 
-/* ─────────────────────────── V5 · THE WORLD ─────────────────────────── */
+/* ─────────────────────────── THE RECORD ─────────────────────────── */
 
-/** every explorable zone in the temple — each one opens its own panel */
-export type ZoneId =
-  | "awakening"
-  | "guild"
-  | "crypt"
-  | "armory"
-  | "treasury"
-  | "gate";
+/** the six sectors of the record — each one is a ring of shards around the Monolith */
+export type SectorId =
+  | "status"
+  | "experience"
+  | "projects"
+  | "skills"
+  | "inventory"
+  | "contact";
 
 /** where a USE / link / agent command can send the visitor */
-export type Destination = ZoneId | "cv";
+export type Destination = SectorId | "cv";
 
-export interface ZoneDef {
-  id: ZoneId;
-  /** landmark name shown on markers, map and HUD */
+export interface SectorDef {
+  id: SectorId;
+  /** in-world name shown on beacons, the index and the window */
   name: string;
-  /** what the panel holds, in plain words (e.g. "Status & Profile") */
+  /** what the window holds, in plain words (e.g. "Status & Profile") */
   section: string;
-  /** one-line flavor under the name on the zone banner */
+  /** one-line flavor under the name */
   epithet: string;
   icon: LucideIcon;
   tone: Tone;
-  /** world position of the landmark center, [x, z] */
-  position: [number, number];
-  /** where the Hunter stands to use it (walk-to target), [x, z] */
-  approach: [number, number];
-  /** walk within this radius of `position` to get the interaction prompt */
-  radius: number;
-  /** verb on the interaction prompt: "[E] <verb> <name>" */
-  verb: string;
   /** agent-facing routing hint (exposed through src/agent) */
   description: string;
 }

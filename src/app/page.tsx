@@ -1,14 +1,11 @@
-import { LoadingScreen, TitleScreen } from "@/components/hud/intro-screens";
-import { WorldHud } from "@/components/hud/world-hud";
-import { WorldCanvas } from "@/components/world/world-canvas";
+import { Shell } from "@/components/interface/shell";
+import { Stage } from "@/components/scene/stage";
 
 export default function Home() {
   return (
     <main className="grain relative h-dvh w-full overflow-hidden">
-      <WorldCanvas />
-      <WorldHud />
-      <TitleScreen />
-      <LoadingScreen />
+      <Stage />
+      <Shell />
     </main>
   );
 }

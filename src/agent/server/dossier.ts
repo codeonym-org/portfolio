@@ -4,7 +4,7 @@ import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skills } from "@/config/skills.config";
-import { visitorQuests, zones } from "@/config/world.config";
+import { sectors, visitorQuests } from "@/config/world.config";
 
 /**
  * ── THE PLAYER DOSSIER ────────────────────────────────────────
@@ -41,12 +41,12 @@ function profile() {
 
 function experience() {
   return chronicle
-    .map((c) => `- ${c.period} · ${c.role} @ ${c.organization}\n  ${c.summary}\n  Highlights: ${c.highlights.join("; ")}`)
+    .map((c) => `- [${c.id}] ${c.period} · ${c.role} @ ${c.organization}\n  ${c.summary}\n  Highlights: ${c.highlights.join("; ")}`)
     .join("\n");
 }
 
 function education() {
-  return achievements.map((a) => `- ${a.period} · ${a.title} — ${a.issuer}`).join("\n");
+  return achievements.map((a) => `- [${a.id}] ${a.period} · ${a.title} — ${a.issuer}`).join("\n");
 }
 
 function projects(full: boolean) {
@@ -86,9 +86,9 @@ function inventory(full: boolean) {
 }
 
 function world() {
-  const zoneLines = zones.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
+  const sectorLines = sectors.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
   const questLines = visitorQuests.map((q) => `- ${q.id}: "${q.name}" — ${q.objective} (+${q.xp} XP)`).join("\n");
-  return `Zones of the temple (each opens a System window / tab):\n${zoneLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
+  return `Sectors of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
 }
 
 export const dossierDigest = [
@@ -96,15 +96,15 @@ export const dossierDigest = [
   identity(),
   "## PROFILE",
   profile(),
-  "## EXPERIENCE (Guild Hall)",
+  "## EXPERIENCE (sector: experience; ids in brackets, evidence kind \"experience\")",
   experience(),
-  "## EDUCATION",
+  "## EDUCATION (sector: experience; ids in brackets, evidence kind \"education\")",
   education(),
-  "## PROJECTS = QUESTS (Shadow Crypt; ids in brackets)",
+  "## PROJECTS = QUESTS (sector: projects; ids in brackets, evidence kind \"quest\")",
   projects(false),
-  "## SKILLS (Armory; ids in brackets, grade S≥90 A≥85 B≥78)",
+  "## SKILLS (sector: skills; ids in brackets, grade S≥90 A≥85 B≥78, evidence kind \"skill\")",
   skillTree(false),
-  "## INVENTORY (Treasury; ids in brackets)",
+  "## INVENTORY (sector: inventory; ids in brackets, evidence kind \"item\")",
   inventory(false),
   "## THE WORLD",
   world(),

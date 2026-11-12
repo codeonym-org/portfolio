@@ -21,5 +21,5 @@ test("resolves each channel to what to copy and where to go", () => {
 
 test("names snapshots by local date and time, filesystem-safe", () => {
   const name = snapshotFileName(new Date(2026, 8, 24, 7, 5, 9));
-  assert.equal(name, "shadow-monarch-2026-09-24-070509.png");
+  assert.equal(name, "codeonym-record-2026-09-24-070509.png");
 });

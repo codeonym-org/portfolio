@@ -57,9 +57,9 @@ export const inventoryItems: InventoryItem[] = [
     category: "artifacts",
     rarity: "rare",
     meta: "SINGLE-TARGET · INFINITE CHARGES",
-    lore: "Carries a voice across any distance. USE it to open the Shadow Gate and call the Player to your party.",
+    lore: "Carries a voice across any distance. USE it to open the Gate and call the Player to your party.",
     tags: ["contact", "party"],
-    unlocks: "gate",
+    unlocks: "contact",
   },
   {
     id: "gate-key",

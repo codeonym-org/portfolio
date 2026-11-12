@@ -1,16 +1,17 @@
 # System Configuration
 
-Everything the world displays lives here — edit these files to update the
-portfolio without touching a single component.
+Everything the record displays lives here — edit these files to update the
+portfolio without touching a single component. The scene, the windows, the
+agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 
 | File                  | What it controls                                                        |
 | --------------------- | ----------------------------------------------------------------------- |
-| `world.config.ts`     | The temple: zone layout/names/sections, visitor quests + XP, HUD copy, loading tips, title screen, credits |
+| `world.config.ts`     | The six sectors (names, sections, tones), visitor quests + XP, boot and HUD copy, the System's greeting and suggestions, credits |
 | `player.config.ts`    | Identity, level, rank, titles, stats, links, languages, profile, creed  |
-| `quests.config.ts`    | Projects — each one is a fallen knight in the Shadow Crypt (the nave)   |
-| `skills.config.ts`    | Skill sets, categories (job categories = Armory panel sections), skills|
-| `inventory.config.ts` | Treasury items, rarity tiers, lore; `unlocks` = `"cv"` or a zone id     |
-| `chronicle.config.ts` | Experience timeline and education (Guild Hall)                          |
+| `quests.config.ts`    | Projects — each one is a dormant shard until ARISE wakes it             |
+| `skills.config.ts`    | Skill sets, categories (sections of the Arsenal window), skills         |
+| `inventory.config.ts` | Vault items, rarity tiers, lore; `unlocks` = `"cv"` or a sector id      |
+| `chronicle.config.ts` | Experience timeline and education (Chronicle)                           |
 | `system.config.ts`    | Version, vitals, error / 404 screen copy                                |
 | `types.ts`            | Shared shapes — TypeScript will flag any invalid edit                   |
 
@@ -18,14 +19,12 @@ portfolio without touching a single component.
 
 - Values are validated by the types in `types.ts` — if `pnpm build` passes,
   the UI cannot break from a config edit.
-- Stat/mastery values are `0–100`. Quest ranks are `"S" | "A" | "B"`
-  (shown on the crypt's ARISE tags; every quest rises as a shadow knight).
+- Stat/mastery values are `0–100`. Quest ranks are `"S" | "A" | "B"`.
   Rarity is `"legendary" | "epic" | "rare" | "common"`.
-- The crypt has six graves; more than six quests will share resting places.
-- Zone `position` is `[x, z]` in world units (-z is north, the throne; +z is
-  the Shadow Gate); `approach` is where the Hunter walks to open it. The
-  hall's walkable floor is `world.hall`. Moving a zone moves its station,
-  marker, minimap pin and trigger — but colliders and camera shots live in
-  `components/world/layout.ts`.
+- Every entry becomes one shard in orbit (`src/record/nodes.ts`); its `id` is
+  what the agent, case files and shared links refer to, so changing an id
+  breaks old `#case=` links that cite it (the entry is dropped from the case).
+- Sector ids are fixed (`SectorId` in `types.ts`); each needs a shard of the
+  same name in `public/models/record/shards.glb`.
 - Icons are [lucide](https://lucide.dev/icons) components — import any icon
   at the top of the file and reference it.

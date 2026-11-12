@@ -4,15 +4,16 @@ import { player } from "@/config/player.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skillSets, skills } from "@/config/skills.config";
 import { systemConfig } from "@/config/system.config";
-import type { Destination, InspectTarget, ZoneId } from "@/config/types";
-import { visitorQuests, zones } from "@/config/world.config";
-import { levelFor, live, useWorldStore } from "@/store/world-store";
+import type { Destination, InspectTarget, SectorId } from "@/config/types";
+import { visitorQuests, sectors } from "@/config/world.config";
+import type { CaseFile } from "@/record/case-file";
+import { levelFor, syncPercent, useWorldStore } from "@/store/world-store";
 
 /**
  * ── AGENT BRIDGE · READ SIDE ──────────────────────────────────
  * One serializable snapshot of everything an AI agent needs to
- * reason about the world: where the Hunter stands, which zone panel
- * is open, the visitor's progress, and the Player's full dossier.
+ * reason about the record: which sector or case is brought forward,
+ * the visitor's progress, and the Player's full dossier.
  * Icons and React types are stripped — every value survives
  * JSON.stringify.
  *
@@ -20,31 +21,31 @@ import { levelFor, live, useWorldStore } from "@/store/world-store";
  * LangChain: serialize `getSystemSnapshot()` into the model context.
  */
 
-export interface ZoneSnapshot {
-  zone: ZoneId;
+export interface SectorSnapshot {
+  sector: SectorId;
   name: string;
   section: string;
   description: string;
-  position: [number, number];
-  discovered: boolean;
+  opened: boolean;
 }
 
 export interface SystemSnapshot {
   system: { version: string; soundMuted: boolean; quality: string; touch: boolean };
   world: {
-    hunter: { x: number; z: number; moving: boolean };
-    /** zone the Hunter stands in, if any */
-    nearZone: ZoneId | null;
-    /** zone whose panel is open, if any */
-    openPanel: ZoneId | null;
+    /** sector brought forward, if any */
+    openSector: SectorId | null;
+    /** case file brought forward, if any */
+    caseFile: CaseFile | null;
     cvOpen: boolean;
-    mapOpen: boolean;
+    paletteOpen: boolean;
     inspectTarget: InspectTarget | null;
-    zones: ZoneSnapshot[];
+    sectors: SectorSnapshot[];
   };
   visitor: {
     level: number;
     xp: number;
+    /** share of the record uncovered, 0–100 */
+    sync: number;
     questsCompleted: string[];
     quests: { id: string; name: string; objective: string; done: boolean }[];
     /** quest (project) ids already extracted as shadows */
@@ -115,24 +116,23 @@ export function getSystemSnapshot(): SystemSnapshot {
   return {
     system: { version: systemConfig.version, soundMuted: s.muted, quality: s.quality, touch: s.touch },
     world: {
-      hunter: { x: +live.hunter.x.toFixed(2), z: +live.hunter.z.toFixed(2), moving: live.moving },
-      nearZone: s.nearZone,
-      openPanel: s.panel,
+      openSector: s.sector,
+      caseFile: s.caseFile,
       cvOpen: s.cvOpen,
-      mapOpen: s.mapOpen,
+      paletteOpen: s.paletteOpen,
       inspectTarget: s.inspect,
-      zones: zones.map((z) => ({
-        zone: z.id,
+      sectors: sectors.map((z) => ({
+        sector: z.id,
         name: z.name,
         section: z.section,
         description: z.description,
-        position: z.position,
-        discovered: s.visited.includes(z.id),
+        opened: s.visited.includes(z.id),
       })),
     },
     visitor: {
       level: levelFor(s.xp),
       xp: s.xp,
+      sync: syncPercent(s),
       questsCompleted: s.completed,
       quests: visitorQuests.map((q) => ({ id: q.id, name: q.name, objective: q.objective, done: s.completed.includes(q.id) })),
       shadowsRisen: s.risen,
