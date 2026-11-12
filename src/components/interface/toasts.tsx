@@ -38,7 +38,7 @@ function Notice({ toast }: { toast: Toast }) {
 export function Toasts() {
   const toasts = useWorldStore((s) => s.toasts);
   // beside an open window, notices move over the stage instead of covering what is being read
-  const focused = useWorldStore((s) => !!s.sector || !!s.caseFile);
+  const focused = useWorldStore((s) => !!s.sector || !!s.caseFile || s.brief);
   return (
     <ol
       aria-live="polite"

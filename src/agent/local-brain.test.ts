@@ -34,6 +34,11 @@ test("sector words open their sector, in English and French", () => {
   assert.deepEqual(actions("ses projets"), [{ name: "open_sector", args: { sector: "projects" } }]);
 });
 
+test("asking for the short version opens the brief", () => {
+  assert.deepEqual(actions("give me the short version"), [{ name: "open_brief", args: {} }]);
+  assert.deepEqual(actions("a quick summary please"), [{ name: "open_brief", args: {} }]);
+});
+
 test("contact opens the gate and shows the channels", () => {
   const reply = answerLocally("How do I reach him?", index);
   assert.deepEqual(reply.actions, [{ name: "open_sector", args: { sector: "contact" } }]);

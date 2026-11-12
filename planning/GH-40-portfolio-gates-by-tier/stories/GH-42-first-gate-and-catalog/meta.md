@@ -3,7 +3,7 @@ kind: story
 title: The first gate (rank C) and the gates catalog
 key: GH-42
 parent: GH-40
-status: tracked
+status: done
 branch:
 tracker-url: https://github.com/codeonym-org/portfolio/issues/42
 mr:

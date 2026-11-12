@@ -107,7 +107,7 @@ export function Console() {
   const online = useSession((s) => s.online);
   const mode = useSession((s) => s.mode);
   const stop = useSession((s) => s.agentStop);
-  const focused = useWorldStore((s) => !!(s.sector || s.caseFile));
+  const focused = useWorldStore((s) => !!(s.sector || s.caseFile || s.brief));
   const touch = useWorldStore((s) => s.touch);
   const ready = useWorldStore((s) => s.ready);
   const setPaletteOpen = useWorldStore((s) => s.setPaletteOpen);
@@ -189,6 +189,9 @@ export function Console() {
 
       {!turns.length && !focused && !speaking && (
         <div className={cn("pointer-events-auto flex gap-1.5", touch ? "-mx-3 overflow-x-auto px-3 [scrollbar-width:none]" : "flex-wrap justify-center")}>
+          <button type="button" data-active="true" onPointerEnter={() => play("hover")} onClick={() => useWorldStore.getState().openBrief()} className="hud-chip shrink-0 px-3 py-1.5 text-[13px] backdrop-blur-md">
+            {copy.brief}
+          </button>
           {copy.suggestions.map((s) => (
             <button key={s} type="button" onPointerEnter={() => play("hover")} onClick={() => send(s)} className="hud-chip shrink-0 px-3 py-1.5 text-[13px] backdrop-blur-md">
               {s}

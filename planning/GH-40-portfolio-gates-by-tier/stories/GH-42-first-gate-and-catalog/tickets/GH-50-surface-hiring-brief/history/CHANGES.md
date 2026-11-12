@@ -1,1 +1,2 @@
 - 2026-11-12: drafted by the agent in the story pass.
+- 2026-11-12: built by the agent (impl.md); merged into 40-gates.

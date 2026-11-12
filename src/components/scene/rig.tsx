@@ -80,7 +80,7 @@ export function Rig() {
     // the opening shot: start close and low, settle back as the body seals
     if (s.ready) intro.current = Math.min(1, intro.current + dt / 3.2);
     const ease = 1 - Math.pow(1 - intro.current, 3);
-    const focused = !!(s.sector || s.caseFile);
+    const focused = !!(s.sector || s.caseFile || s.brief);
     const distance = view.distance * (0.62 + 0.38 * ease) * (focused ? 0.97 : 1);
 
     live.shake *= Math.exp(-dt * 4);

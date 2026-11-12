@@ -176,7 +176,7 @@ export function Monolith() {
           e.stopPropagation();
           if (e.delta > 6) return;
           const s = useWorldStore.getState();
-          if (s.sector || s.caseFile) s.closeFocus();
+          if (s.sector || s.caseFile || s.brief) s.closeFocus();
           else window.dispatchEvent(new Event("system:focus-prompt"));
         }}
       />
