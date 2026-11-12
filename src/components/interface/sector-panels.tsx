@@ -350,7 +350,7 @@ export function ShadowsPanel() {
     if (!all || rising) return;
     const next = quests.find((q) => !risen.includes(q.id));
     if (!next) return;
-    const id = window.setTimeout(() => arise(next.id), 350);
+    const id = window.setTimeout(() => arise(next.id), 150);
     return () => window.clearTimeout(id);
   }, [all, rising, risen, arise]);
 

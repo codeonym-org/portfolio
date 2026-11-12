@@ -1,2 +1,3 @@
 - 2026-11-12: drafted by its parent.
 - 2026-11-12: tracker issue created, GH-46.
+- 2026-11-12: checked and fixed by the agent (impl.md); merged into 40-gates.
