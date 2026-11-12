@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, FileText, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
+import { Check, DoorOpen, FileText, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { player } from "@/config/player.config";
 import { systemConfig } from "@/config/system.config";
 import { visitorQuests, world } from "@/config/world.config";
@@ -91,6 +91,10 @@ export function TopBar() {
       </button>
       <div className="pointer-events-auto flex items-center gap-1.5">
         <Sync />
+        <Link href="/gates" aria-label="Gates — every way into the record" title="Gates — every way into the record" className="hud-chip h-9 px-2.5">
+          <DoorOpen className="size-4" />
+          <span className="hidden font-mono text-[11px] md:inline">{world.hud.gates}</span>
+        </Link>
         <Link href="/record" aria-label="The plain record — the same content as one page of text" title="The plain record (text only)" className="hud-chip h-9 px-2.5">
           <FileText className="size-4" />
           <span className="hidden font-mono text-[11px] md:inline">{world.hud.plain}</span>
