@@ -46,9 +46,39 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 4. Optional: add a read-only `GITHUB_TOKEN` on Vercel if GitHub rate limits ever show (story GH-43, decision 001).
 5. Not checked by the agent anywhere: voice (hold V), real phones, Safari, Firefox.
 
-## Next
+## Next: story GH-44, The Deep (nothing built, nothing decided yet)
 
-Story GH-44 (The Deep) is the only story left. For The Deep, the owner's brief: "fully functional gameplay with
-extended 3d elems and gamified experience with reward models"; it must build on the shared progress (epic
-decision 006) and must not slow The Surface. When it opens, set its `state` to `open` in `gates.config.ts` and
-give `/gates/[gate]/page.tsx` its component.
+Stories 1–3 are done and merged into `40-gates`. GH-44 is the only story left; its folder
+(`stories/GH-44-deep-s-tier-gate/`) holds only the short draft. No branch exists for it and no code was written.
+
+The owner's brief: "fully functional gameplay with extended 3d elems and gamified experience with reward
+models". It must build on the shared progress (epic decision 006), share the record and the agent (004), and
+not slow The Surface.
+
+**A design the last agent was about to record (a proposal, not a decision — write it as story decision 001 if
+you keep it, or replace it):**
+
+- **A dive.** Side view of the iceberg's underwater mass. The visitor steers a light downward (WASD / arrows, or
+  hold the pointer or a finger where to go). The camera follows.
+- **Relics.** The record's entries float in the dark: the top job skills as small motes, the eight personal
+  projects as crystals grouped by guild, the two OpenSNZ rank S entries at the bottom. Coming close collects one:
+  a toast, XP, and its entry in a codex panel (text from `src/config`, link to the repository).
+- **Three layers with gates between them:** the Shallows (skills), the Guild Reefs (codeonym-oss, codeonym-org),
+  the Abyss (OpenSNZ work and "the Heart"). A gate opens after enough relics of the layer above.
+- **A light meter** that drains with depth and refills on each relic; empty sends the visitor back to the last
+  gate (no hard failure).
+- **Rewards:** a visitor rank E → S from the relic count, shown in the HUD with a rank-up toast; reaching the
+  Heart gives a title and a downloadable "hunter card" image, then the contact card.
+- **Build notes:** its own route chunk (`/gates/the-deep`), its own R3F canvas; reuse `public/models/record/
+  shards.glb` geometries (`useGLTF`, see `constellation.tsx`), `Toasts`, `play()` sounds, `levelFor`. Add the
+  found relics to the persisted part of `world-store.ts` (storage key `codeonym-record-v9`; check `partialize`
+  and `resetProgress`). Then set `state: "open"` for `the-deep` in `gates.config.ts` and return the new
+  component from `src/app/gates/[gate]/page.tsx` (today every open gate renders `SurfaceGate`).
+- **Known gap to plan as a ticket:** the agent inside The Deep (the chat stack is only mounted by the Surface's
+  `Shell`).
+
+Suggested tickets: (1) the dive scene, controls and relic collection; (2) layers, gates and the light meter;
+(3) rewards: rank, codex, hunter card, the Heart; (4) the System in The Deep; then open the gate.
+
+After GH-44: the epic is complete. Tell the owner; the owner merges `40-gates` into `main` (decision 008).
+Pull request #39 can then be closed as superseded.
