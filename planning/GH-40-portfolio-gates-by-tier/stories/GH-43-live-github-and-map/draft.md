@@ -17,4 +17,4 @@ writing to GitHub).
 - The agent can show a map on the page.
 - No token reaches the browser; a failed or rate-limited call falls back to the record.
 
-Its own grilling settles tools or an MCP server, what is shown, the map's content and caching.
+Design: story decision 001. Tickets, in order: live GitHub data; then the map.

@@ -1,6 +1,8 @@
 import "server-only";
 import { tool } from "langchain";
 import { z } from "zod";
+import { describe } from "@/github/format";
+import { liveRepos, repoLive } from "@/github/live";
 import { ARCHIVE_SECTIONS, archive } from "./dossier";
 
 /**
@@ -22,4 +24,21 @@ export const consultArchive = tool(
   },
 );
 
-export const backendTools = [consultArchive];
+const LIVE_IDS = Object.keys(liveRepos) as [string, ...string[]];
+
+export const githubLive = tool(
+  async ({ project }) => {
+    const live = await repoLive(project);
+    return live ? describe(live, new Date()) : "GitHub did not answer. Say so in a few words and answer from the dossier instead.";
+  },
+  {
+    name: "github_live",
+    description:
+      "Read what GitHub says RIGHT NOW about one of the Player's personal projects: latest release and its date, last push, the three latest commits, open issues, licence. Use when the visitor asks what is new, whether a project is active or maintained, its current version, or what he is working on. Read-only; only projects in the dossier.",
+    schema: z.object({
+      project: z.enum(LIVE_IDS).describe("The project's id from the dossier."),
+    }),
+  },
+);
+
+export const backendTools = [consultArchive, githubLive];
