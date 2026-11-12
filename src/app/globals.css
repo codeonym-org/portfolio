@@ -259,21 +259,22 @@
     color: var(--muted-foreground);
   }
 
-  /* ── the System's voice: large, carved, never a chat bubble ── */
+  /* ── the System's voice: large, in the System font, never a chat bubble ── */
   .oracle {
-    font-family: var(--font-instrument), "Iowan Old Style", Georgia, serif;
-    font-size: clamp(1.4rem, 1rem + 1.25vw, 2.15rem);
-    line-height: 1.22;
-    letter-spacing: -0.005em;
+    font-family: var(--font-rajdhani), var(--font-geist), sans-serif;
+    font-weight: 500;
+    font-size: clamp(1.3rem, 0.95rem + 1.05vw, 1.95rem);
+    line-height: 1.24;
+    letter-spacing: 0.012em;
     color: var(--bone);
     text-shadow: 0 0 34px oklch(0.05 0.02 290 / 95%), 0 2px 14px oklch(0.05 0.02 290 / 90%);
     text-wrap: pretty;
   }
   .oracle--aside {
-    font-size: clamp(1.2rem, 0.9rem + 0.8vw, 1.6rem);
+    font-size: clamp(1.15rem, 0.9rem + 0.7vw, 1.5rem);
   }
   .oracle strong {
-    font-weight: 400;
+    font-weight: 700;
     color: white;
     text-shadow: 0 0 22px oklch(0.74 0.17 300 / 70%);
   }
@@ -700,6 +701,16 @@
   }
 
   /* fade the top of a scroller into the sky */
+  /* behind the System's words: the scene dims where the text is, so neither prints over the other */
+  .console-scrim {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: calc(var(--console-clear, 0px) + 90px);
+    z-index: 29;
+    pointer-events: none;
+    background: linear-gradient(to top, oklch(0.05 0.02 290 / 96%) 0%, oklch(0.05 0.02 290 / 88%) 62%, transparent 100%);
+    transition: opacity 0.6s;
+  }
   .fade-top {
     mask-image: linear-gradient(to bottom, transparent, #000 2.2rem);
   }

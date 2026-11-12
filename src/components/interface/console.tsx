@@ -11,6 +11,7 @@ import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { useSession, type Turn } from "@/store/session-store";
+import { view } from "@/components/scene/view";
 import { useWorldStore } from "@/store/world-store";
 import { Cards } from "./cards";
 
@@ -116,6 +117,26 @@ export function Console() {
   const [draft, setDraft] = useState("");
   const [history, setHistory] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
+  const section = useRef<HTMLElement>(null);
+
+  // tell the stage how much of the bottom of the screen the words take (the rig frames the Monolith above them)
+  useEffect(() => {
+    const el = section.current;
+    if (!el) return;
+    const measure = () => {
+      view.clear = focused ? 0 : Math.max(0, window.innerHeight - el.getBoundingClientRect().top);
+      document.documentElement.style.setProperty("--console-clear", `${Math.round(view.clear)}px`);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      view.clear = 0;
+    };
+  }, [focused]);
 
   useEffect(() => {
     const focus = () => input.current?.focus();
@@ -145,8 +166,17 @@ export function Console() {
   const status = speaking && voice.phase !== "idle" ? copy.voice[voice.phase] : awaiting ? copy.thinking : null;
   const compact = touch && focused;
 
+  // a new answer takes the camera back from a close-up, so the words have room
+  const answerId = answer?.id;
+  useEffect(() => {
+    if (answerId && answerId !== "greeting") view.zoom = Math.max(view.zoom, 1);
+  }, [answerId]);
+
   return (
+    <>
+    <div className={cn("console-scrim", focused || !ready ? "opacity-0" : turns.length || speaking ? "opacity-100" : "opacity-60")} aria-hidden />
     <section
+      ref={section}
       aria-label={`${copy.name} — console`}
       className={cn(
         "pointer-events-none fixed z-30 flex flex-col gap-3 transition-[left,width,transform,opacity] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
@@ -258,5 +288,6 @@ export function Console() {
         </p>
       )}
     </section>
+    </>
   );
 }

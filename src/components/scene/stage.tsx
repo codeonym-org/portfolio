@@ -74,6 +74,7 @@ export function Stage() {
   return (
     <div className="fixed inset-0 bg-[var(--void)]">
       <Canvas
+        style={{ touchAction: "none" }}
         dpr={DPR[quality]}
         camera={{ position: [0, -1.1, 9.5], fov: 36, near: 0.1, far: 140 }}
         gl={{ antialias: quality === "low", powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}

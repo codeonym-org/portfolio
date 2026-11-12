@@ -1,0 +1,2 @@
+- 2026-11-12: created from the owner's review (story decision 003); tracker issue GH-68.
+- 2026-11-12: built by the agent (impl.md); merged into 40-gates.
