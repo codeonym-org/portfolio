@@ -1,2 +1,3 @@
 - 2026-11-12: drafted by its parent.
 - 2026-11-12: tracker issue created, GH-45.
+- 2026-11-12: ticket pass and build done by the agent (decision 001, impl.md).

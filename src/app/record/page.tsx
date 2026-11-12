@@ -87,6 +87,11 @@ export default function PlainRecord() {
                     {e.link.replace(/^https?:\/\//, "")} ↗
                   </a>
                 )}
+                {e.docs && (
+                  <a href={e.docs} className="plain-link mt-3 ml-4 inline-block font-mono text-xs text-foreground">
+                    docs ↗
+                  </a>
+                )}
               </article>
             ))}
           </div>

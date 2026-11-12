@@ -8,7 +8,8 @@ agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 | --------------------- | ----------------------------------------------------------------------- |
 | `world.config.ts`     | The six sectors (names, sections, tones), visitor quests + XP, boot and HUD copy, the System's greeting and suggestions, credits |
 | `player.config.ts`    | Identity, level, rank, titles, stats, links, languages, profile, creed  |
-| `quests.config.ts`    | Projects — each one is a dormant shard until ARISE wakes it             |
+| `quests.config.ts`    | Projects — each one is a dormant shard until ARISE wakes it; each names its guild |
+| `guilds.config.ts`    | The organizations the Player works in and the role held in each         |
 | `skills.config.ts`    | Skill sets, categories (sections of the Arsenal window), skills         |
 | `inventory.config.ts` | Vault items, rarity tiers, lore; `unlocks` = `"cv"` or a sector id      |
 | `chronicle.config.ts` | Experience timeline and education (Chronicle)                           |

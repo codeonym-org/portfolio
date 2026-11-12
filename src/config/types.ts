@@ -18,6 +18,8 @@ export interface PlayerLinks {
   github: string;
   linkedin: string;
   email: string;
+  /** international format, as printed on the CV */
+  phone: string;
 }
 
 /** honorific earned through deeds — shown as gold cards at the Awakening Circle */
@@ -48,11 +50,27 @@ export interface Player {
   languages: { name: string; grade: string }[];
 }
 
+/** an organization the Player works in */
+export interface Guild {
+  id: string;
+  name: string;
+  /** the Player's role there: employed, or founder and maintainer */
+  role: "Engineer" | "Guild Master";
+  /** what kind of place it is, in two words */
+  kind: string;
+  summary: string;
+  link?: string;
+}
+
 export interface Quest {
   id: string;
   name: string;
   rank: QuestRank;
   type: "main" | "side";
+  /** must match a Guild id (guilds.config) */
+  guild: string;
+  /** personal projects only: released, or still being built */
+  stage?: "released" | "in development";
   status: QuestStatus;
   period?: string;
   summary: string;
@@ -60,6 +78,8 @@ export interface Quest {
   /** tech stack, framed as quest rewards */
   rewards: string[];
   link?: string;
+  /** documentation site, when the project has one */
+  docs?: string;
 }
 
 /** job = the Player's craft; secondary = everything the job isn't */

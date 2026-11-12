@@ -51,6 +51,17 @@ export const inventoryItems: InventoryItem[] = [
     tags: ["guild", "employment"],
   },
   {
+    id: "guild-crest-codeonym",
+    name: "Guild Crest — codeonym",
+    icon: Shield,
+    category: "artifacts",
+    rarity: "epic",
+    meta: "CODEONYM-OSS · CODEONYM-ORG · GUILD MASTER",
+    lore: "Emblem of the two guilds the Player founded: codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
+    tags: ["guild", "open-source", "guild-master"],
+    link: "https://github.com/codeonym-oss",
+  },
+  {
     id: "summoning-stone",
     name: "Summoning Stone",
     icon: Waypoints,

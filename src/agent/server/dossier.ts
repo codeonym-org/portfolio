@@ -2,6 +2,7 @@ import "server-only";
 import { achievements, chronicle } from "@/config/chronicle.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
+import { guilds, findGuild } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skills } from "@/config/skills.config";
 import { sectors, visitorQuests } from "@/config/world.config";
@@ -23,10 +24,11 @@ function identity() {
   return [
     `Name: ${player.name} (handle "${player.handle}")`,
     `Role: ${player.job} — ${player.title}`,
-    `Guild (employer): ${player.guild} · Location: ${player.location}`,
+    `Location: ${player.location}`,
+    `Guilds: ${guilds.map((g) => `${g.name} [${g.id}] — ${g.role} (${g.kind}). ${g.summary}${g.link ? ` ${g.link}` : ""}`).join(" | ")}`,
     `Hunter rank ${player.rank} · LV.${player.level} (${player.rankNote})`,
     `Languages: ${player.languages.map((l) => `${l.name} (${l.grade})`).join(", ")}`,
-    `Links: GitHub ${player.links.github} · LinkedIn ${player.links.linkedin} · Email ${player.links.email}`,
+    `Links: GitHub ${player.links.github} · LinkedIn ${player.links.linkedin} · Email ${player.links.email} · Phone ${player.links.phone}`,
   ].join("\n");
 }
 
@@ -52,9 +54,9 @@ function education() {
 function projects(full: boolean) {
   return quests
     .map((q) => {
-      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "main quest" : "side quest"} · rank ${q.rank} · ${q.status}${q.period ? ` · ${q.period}` : ""}`;
+      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "main quest" : "side quest"} · rank ${q.rank} · guild ${findGuild(q.guild)?.name ?? q.guild} · ${q.stage ?? q.status}${q.period ? ` · ${q.period}` : ""}`;
       const body = full
-        ? `\n  ${q.summary}\n  ${q.details.map((d) => `• ${d}`).join("\n  ")}\n  Stack: ${q.rewards.join(", ")}${q.link ? `\n  Link: ${q.link}` : ""}`
+        ? `\n  ${q.summary}\n  ${q.details.map((d) => `• ${d}`).join("\n  ")}\n  Stack: ${q.rewards.join(", ")}${q.link ? `\n  Link: ${q.link}` : ""}${q.docs ? `\n  Docs: ${q.docs}` : ""}`
         : `\n  ${q.summary} Stack: ${q.rewards.join(", ")}`;
       return head + body;
     })
