@@ -4,13 +4,14 @@ import { findItem, inventoryItems } from "@/config/inventory.config";
 import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
 import type { SectorId, Tone } from "@/config/types";
-import { sectorById, sectorIds } from "@/config/world.config";
+import { sectorById, sectorIds, world } from "@/config/world.config";
 import { chime, play } from "@/lib/audio";
 import { setImmersion } from "@/lib/immersion";
 import { caseSchema, encodeCase, resolveCase } from "@/record/case-file";
 import { hasNode } from "@/record/nodes";
 import { ARISE_MS, levelFor, live, pulse, syncPercent, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
+import { MAX_DECLINED, OFFER_GAP_MS } from "./next-step";
 
 /**
  * ── AGENT BRIDGE · WRITE SIDE ─────────────────────────────────
@@ -338,6 +339,41 @@ export const systemCommands: SystemCommand[] = [
       castEffect(effect);
       play(effect === "awaken" ? "arise" : effect === "surge" ? "portal" : "blade");
       return `Effect "${effect}" cast.`;
+    },
+  }),
+  define({
+    name: "offer",
+    description:
+      "Put ONE next step to the visitor as a System prompt they can accept or decline (\"Accept\" / \"Later\"). Accepting runs the action for them. Use it to lead the Hunter deeper into the record: the brief, a project, a sector, the CV. It returns at once — the visitor answers in their own time, and the App Context later shows how they answered. At most one per reply; never offer what is already open or already seen.",
+    parameters: z.object({
+      message: z.string().min(8).max(170).describe("What the System proposes, one or two short sentences ending with a question, in the visitor's language. Only facts from the record."),
+      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "arise_all"]).describe("What accepting does."),
+      sector: SECTOR.optional().describe("For open_sector."),
+      kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
+      id: z.string().optional().describe("For inspect_entity: the exact id from the dossier."),
+    }),
+    handler: ({ message, action, sector, kind, id }) => {
+      const s = store();
+      if (s.offers.declinedInARow >= MAX_DECLINED)
+        return `Skipped: the visitor declined ${s.offers.declinedInARow} offers in a row, so no more offers for now. That is fine. Now answer the visitor normally in one to three sentences, with no next step.`;
+      if (Date.now() - s.offers.lastAt < OFFER_GAP_MS) return "Skipped: the visitor was offered something a moment ago. That is fine. Now answer the visitor normally in one to three sentences.";
+      const args: Record<string, unknown> = action === "open_sector" ? { sector } : action === "inspect_entity" ? { kind, id } : {};
+      const target = systemCommands.find((c) => c.name === action);
+      const parsed = target?.parameters.safeParse(args);
+      if (!target || !parsed?.success) return `Not shown: invalid arguments for ${action}${parsed && !parsed.success ? ` (${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")})` : ""}.`;
+      if (action === "inspect_entity" && !hasNode(`${kind}:${id}`)) return `Not shown: there is no ${kind} "${id}" in the record.`;
+      s.noteOffer(null);
+      s.ask({
+        id: "offer",
+        heading: world.prompts.offerHeading,
+        body: message,
+        accept: world.prompts.accept,
+        decline: world.prompts.decline,
+        tone: "system",
+        command: { name: action, args },
+        onAnswer: (accepted) => store().noteOffer(accepted),
+      });
+      return "Offer shown as a System prompt. The visitor will answer in their own time. Finish your reply now: it must NOT contain another invitation, question or next step — the prompt is the next step.";
     },
   }),
   define({

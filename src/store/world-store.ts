@@ -99,6 +99,10 @@ interface WorldState {
   toasts: Toast[];
   /** the question the System is asking right now; one at a time */
   prompt: SystemPrompt | null;
+  /** entity keys (`quest:<id>`) inspected during this visit */
+  inspected: string[];
+  /** how the visitor has answered the System's offers during this visit */
+  offers: { declinedInARow: number; lastAt: number };
   /** persisted: the first-visit offer has been made */
   greeted: boolean;
 
@@ -124,6 +128,10 @@ interface WorldState {
   /** closes the prompt; running its command is the dialog's job */
   answer: (accepted: boolean) => void;
   setGreeted: () => void;
+  /** an offer was raised (`null`) or answered */
+  noteOffer: (accepted: boolean | null) => void;
+  /** the visitor asked what to see next: the System may offer again */
+  invite: () => void;
   resetProgress: () => void;
 }
 
@@ -164,6 +172,8 @@ export const useWorldStore = create<WorldState>()(
 
       toasts: [],
       prompt: null,
+      inspected: [],
+      offers: { declinedInARow: 0, lastAt: 0 },
       greeted: false,
 
       setReady: () => set({ ready: true }),
@@ -194,7 +204,11 @@ export const useWorldStore = create<WorldState>()(
 
       setInspect: (inspect) => {
         set({ inspect });
-        if (inspect) pulse(`${inspect.kind}:${inspect.id}`);
+        if (inspect) {
+          pulse(`${inspect.kind}:${inspect.id}`);
+          const key = `${inspect.kind}:${inspect.id}`;
+          if (!get().inspected.includes(key)) set({ inspected: [...get().inspected, key] });
+        }
         if (inspect?.kind === "item" && inspect.id === "hunter-license") get().completeQuest("license");
       },
       setCvOpen: (cvOpen) => {
@@ -265,6 +279,14 @@ export const useWorldStore = create<WorldState>()(
         prompt.onAnswer?.(accepted);
       },
       setGreeted: () => set({ greeted: true }),
+      noteOffer: (accepted) =>
+        set((s) => ({
+          offers:
+            accepted === null
+              ? { ...s.offers, lastAt: Date.now() }
+              : { ...s.offers, declinedInARow: accepted ? 0 : s.offers.declinedInARow + 1 },
+        })),
+      invite: () => set({ offers: { declinedInARow: 0, lastAt: 0 } }),
       resetProgress: () => {
         clearTimeout(riseTimer);
         set({ visited: [], risen: [], completed: [], xp: 0, rising: null });

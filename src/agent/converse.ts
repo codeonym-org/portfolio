@@ -7,7 +7,8 @@ import { sectors, world } from "@/config/world.config";
 import type { CaseFile } from "@/record/case-file";
 import { compactArgs, useSession } from "@/store/session-store";
 import { live, useWorldStore } from "@/store/world-store";
-import { answerLocally, type BrainIndex } from "./local-brain";
+import { mayOffer, suggestedAfter } from "./guide";
+import { answerLocally, type BrainAction, type BrainIndex } from "./local-brain";
 import { executeSystemCommand } from "./system-commands";
 
 /**
@@ -54,6 +55,9 @@ function brainIndex(): BrainIndex {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let localSeq = 0;
+/** the step the local index last invited the visitor to: a plain "yes" takes it */
+let invited: BrainAction | null = null;
+const YES = /^(yes|yeah|yep|ok|okay|sure|go|do it|please|accept|oui|d'accord|vas-y|na3am|نعم)\b/i;
 
 /** answer from the local index, running its commands the way the agent would — visibly, one by one */
 export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
@@ -63,7 +67,9 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
   session.set({ running: true });
   live.agentBusy = true;
   try {
-    const reply = answerLocally(text, brainIndex());
+    const taking = invited && YES.test(text.trim()) ? invited : null;
+    invited = null;
+    const reply = taking ? { text: "[ Accepted. ]", actions: [taking] } : answerLocally(text, brainIndex());
     session.step({ id: `${id}-route`, name: "local_index.route", args: compactArgs({ query: text }), source: "local" });
     await wait(260);
     session.step({ id: `${id}-route`, status: "done" });
@@ -74,12 +80,21 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
       session.step({ id: step, status: /^(Invalid|Unknown|Command .* failed)/.test(result) ? "failed" : "done" });
       await wait(140);
     }
+    // the guide's duty, without a model: close with the next thing worth seeing
+    const closesTheVisit = reply.contact || reply.actions.some((a) => a.name === "close_windows" || (a.name === "open_sector" && a.args.sector === "contact"));
+    const step = !closesTheVisit && mayOffer(useWorldStore.getState()) ? suggestedAfter(reply.actions) : null;
+    if (step) {
+      invited = step.command;
+      reply.text = `${reply.text}\n\n${step.line}`;
+    }
     session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : reply.contact ? [{ type: "contact" }] : undefined }]);
   } finally {
     live.agentBusy = false;
     useSession.getState().set({ running: false });
   }
 }
+
+const ASKS_FOR_MORE = /what (else|next|now|should i (see|read|look))|show me more|anything else|where (next|should i)|quoi d'autre|et ensuite|la suite/i;
 
 /** how long a message waits for the link to come up before the local index takes it */
 const LINK_WAIT_MS = 5000;
@@ -88,6 +103,8 @@ export async function converse(input: string) {
   const text = input.trim().slice(0, 1200);
   if (!text || useSession.getState().running) return;
   useWorldStore.getState().completeQuest("awaken");
+  // asking for more reopens the offers a visitor had declined
+  if (ASKS_FOR_MORE.test(text)) useWorldStore.getState().invite();
   useSession.getState().set({ mode: "text" });
 
   // the link loads lazily: give it a moment on the first message

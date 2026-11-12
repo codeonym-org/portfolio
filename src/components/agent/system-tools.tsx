@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
+import { mayOffer, suggestedNext } from "@/agent/guide";
 import { systemCommands, type SystemCommand } from "@/agent/system-commands";
 import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
@@ -88,9 +89,13 @@ function RecordContext() {
   const muted = useWorldStore((s) => s.muted);
   const quality = useWorldStore((s) => s.quality);
   const touch = useWorldStore((s) => s.touch);
+  const inspected = useWorldStore((s) => s.inspected);
+  const offers = useWorldStore((s) => s.offers);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const next = suggestedNext({ visited, completed, inspected });
+    const allowed = mayOffer({ offers });
+    return {
       broughtForward: focusLabel({ sector, caseFile }),
       cvViewerOpen: cvOpen,
       inspecting: inspect ? { kind: inspect.kind, id: inspect.id } : null,
@@ -103,10 +108,18 @@ function RecordContext() {
         shadowsRisen: risen,
         shadowsStillFallen: quests.filter((q) => !risen.includes(q.id)).map((q) => q.id),
       },
+      // the guide's duty (see the prompt, THE HUNTER): what to lead the visitor to next
+      guide: {
+        mayOffer: allowed,
+        suggestedNext: !allowed
+          ? `none: the visitor declined ${offers.declinedInARow} offers in a row. No offer and no closing invitation until they ask what to see next.`
+          : next
+            ? `"${next.line}" (to offer it: action ${next.command.name}${Object.entries(next.command.args).map(([k, v]) => `, ${k} ${v}`).join("")})`
+            : "nothing left unseen: point to the Gate (contact) once, then stop",
+      },
       settings: { soundMuted: muted, graphics: quality, device: touch ? "touch/mobile" : "desktop" },
-    }),
-    [sector, caseFile, cvOpen, inspect, visited, completed, risen, xp, muted, quality, touch],
-  );
+    };
+  }, [sector, caseFile, cvOpen, inspect, visited, completed, risen, xp, muted, quality, touch, inspected, offers]);
 
   useAgentContext({ description: "Live state of the record (what is brought forward, what is open, visitor progress)", value });
   return null;
