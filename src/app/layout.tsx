@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Rajdhani } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -21,6 +21,13 @@ const michroma = localFont({
   src: "../fonts/michroma-latin.woff2",
   variable: "--font-michroma",
   display: "swap",
+});
+
+// the System's announcements: notices, prompts and their buttons (SIL Open Font Licence, hosted with the site)
+const rajdhani = Rajdhani({
+  variable: "--font-rajdhani",
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
@@ -50,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geist.variable} ${instrument.variable} ${michroma.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geist.variable} ${instrument.variable} ${michroma.variable} ${rajdhani.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>

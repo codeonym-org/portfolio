@@ -40,7 +40,7 @@ sheet under it).
 - **Pin quality and mute before load** (storage key `codeonym-record-v9`):
   ```js
   await page.addInitScript(() => localStorage.setItem("codeonym-record-v9",
-    JSON.stringify({ state: { quality: "high", visited: [], risen: [], completed: [], xp: 0, muted: true }, version: 0 })));
+    JSON.stringify({ state: { quality: "high", visited: [], risen: [], completed: [], xp: 0, muted: true, greeted: true }, version: 0 })));
   ```
 - **Headless stops producing frames while it idles**, so
   `page.waitForTimeout` freezes every animation mid-way and screenshots

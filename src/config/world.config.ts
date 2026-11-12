@@ -160,6 +160,18 @@ export const world = {
     gates: "gates",
   },
 
+  /** what the System asks in its dialog */
+  prompts: {
+    heading: "SYSTEM",
+    accept: "Accept",
+    decline: "Later",
+    keys: "Y to accept · N or Esc for later",
+    greeting: {
+      heading: "A HUNTER HAS ENTERED",
+      body: "You stand before the record of the Player. The System can brief you on him in one minute. Accept the briefing?",
+    },
+  },
+
   toasts: {
     sectorOpened: "SECTOR OPENED",
     questComplete: "QUEST COMPLETE",

@@ -22,19 +22,20 @@ function Notice({ toast }: { toast: Toast }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ type: "spring", stiffness: 260, damping: 26 }}
-      className="glass pointer-events-auto w-[min(340px,86vw)] cursor-pointer border-l-2 px-4 py-3 shadow-[0_20px_50px_-20px_#000]"
-      style={{ borderColor: color }}
+      className="pointer-events-auto w-[min(360px,88vw)] cursor-pointer"
       onClick={() => dismiss(toast.id)}
     >
-      <p className="eyebrow" style={{ color }}>
-        [ {toast.heading} ]
-      </p>
-      <p className="mt-1 text-sm leading-snug text-foreground/90">{toast.body}</p>
+      {/* the window is inside: its own opening animation must not fight the list's layout animation */}
+      <div className="sys-window overflow-hidden px-4 py-3" style={{ ["--sys" as string]: color }}>
+        <span className="sys-scan" aria-hidden />
+        <p className="sys-head text-[11px]">{toast.heading}</p>
+        <p className="mt-1.5 text-[15px] leading-snug">{toast.body}</p>
+      </div>
     </motion.li>
   );
 }
 
-/** System notifications: quests, ARISE, anything the agent pushes */
+/** System notices: quests, ARISE, anything the agent pushes. Each is a small System window that closes by itself. */
 export function Toasts() {
   const toasts = useWorldStore((s) => s.toasts);
   // beside an open window, notices move over the stage instead of covering what is being read

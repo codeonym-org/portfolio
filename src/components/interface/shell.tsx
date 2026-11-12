@@ -15,6 +15,7 @@ import { Console } from "./console";
 import { IndexRail } from "./index-rail";
 import { CvModal, InspectCard } from "./inspect";
 import { Palette } from "./palette";
+import { SystemDialog } from "./system-dialog";
 import { Toasts } from "./toasts";
 import { TopBar } from "./top-bar";
 import { Trace } from "./trace";
@@ -40,6 +41,7 @@ function useWorldSounds() {
           castEffect("awaken");
         }
         if (s.toasts.length > prev.toasts.length) chime(0.3);
+        if (s.prompt && s.prompt !== prev.prompt) play("system");
         if (s.inspect && !prev.inspect) play("open", { volume: 0.4 });
         if (s.completed.length > prev.completed.length) play("levelup", { volume: 0.5 });
       }),
@@ -107,13 +109,19 @@ export function Shell() {
         return;
       }
       if (e.key === "Escape") {
-        if (s.paletteOpen) s.setPaletteOpen(false);
+        if (s.prompt) s.answer(false);
+        else if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);
         else if (s.sector || s.caseFile || s.brief) s.closeFocus();
         return;
       }
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen) return;
+      if (s.prompt && (e.key.toLowerCase() === "y" || e.key.toLowerCase() === "n")) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("system:answer", { detail: e.key.toLowerCase() === "y" }));
+        return;
+      }
       const index = Number(e.key) - 1;
       if (Number.isInteger(index) && sectors[index]) {
         s.openSector(sectors[index].id);
@@ -140,6 +148,7 @@ export function Shell() {
       <Console />
       <FocusWindow />
       <Toasts />
+      <SystemDialog />
       <InspectCard />
       <CvModal />
       <Palette />

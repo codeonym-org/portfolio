@@ -23,6 +23,21 @@ export interface Toast {
   tone: Tone;
 }
 
+/** something the System asks: a message and up to two answers. Accepting may run one command. */
+export interface SystemPrompt {
+  /** prompts with the same id replace each other */
+  id: string;
+  heading: string;
+  body: string;
+  accept: string;
+  decline: string;
+  tone: Tone;
+  /** a command from the System's command list, run when the visitor accepts */
+  command?: { name: string; args?: Record<string, unknown> };
+  /** told to whoever raised it */
+  onAnswer?: (accepted: boolean) => void;
+}
+
 /** a beam the Monolith fires at a shard (or a whole sector) when the System touches it */
 export interface Pulse {
   /** node key, or `sector:<id>` for every shard of a sector */
@@ -82,6 +97,10 @@ interface WorldState {
   xp: number;
 
   toasts: Toast[];
+  /** the question the System is asking right now; one at a time */
+  prompt: SystemPrompt | null;
+  /** persisted: the first-visit offer has been made */
+  greeted: boolean;
 
   setReady: () => void;
   setQuality: (q: Quality) => void;
@@ -101,6 +120,10 @@ interface WorldState {
   completeQuest: (id: string) => void;
   pushToast: (toast: Omit<Toast, "id">) => void;
   dismissToast: (id: number) => void;
+  ask: (prompt: SystemPrompt) => void;
+  /** closes the prompt; running its command is the dialog's job */
+  answer: (accepted: boolean) => void;
+  setGreeted: () => void;
   resetProgress: () => void;
 }
 
@@ -140,6 +163,8 @@ export const useWorldStore = create<WorldState>()(
       xp: 0,
 
       toasts: [],
+      prompt: null,
+      greeted: false,
 
       setReady: () => set({ ready: true }),
       setQuality: (quality) => set({ quality }),
@@ -227,6 +252,19 @@ export const useWorldStore = create<WorldState>()(
       pushToast: (toast) =>
         set((s) => ({ toasts: [...s.toasts.slice(-3), { ...toast, id: ++toastSeq }] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+      ask: (prompt) => {
+        // a new question replaces an unanswered one: the old one counts as declined
+        const waiting = get().prompt;
+        if (waiting && waiting.id !== prompt.id) waiting.onAnswer?.(false);
+        set({ prompt });
+      },
+      answer: (accepted) => {
+        const prompt = get().prompt;
+        if (!prompt) return;
+        set({ prompt: null });
+        prompt.onAnswer?.(accepted);
+      },
+      setGreeted: () => set({ greeted: true }),
       resetProgress: () => {
         clearTimeout(riseTimer);
         set({ visited: [], risen: [], completed: [], xp: 0, rising: null });
@@ -243,6 +281,7 @@ export const useWorldStore = create<WorldState>()(
         xp: s.xp,
         muted: s.muted,
         quality: s.quality,
+        greeted: s.greeted,
       }),
     },
   ),
