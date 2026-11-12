@@ -151,8 +151,9 @@ export function Monolith() {
     seams.color.copy(HEART_COLOR).multiplyScalar(1.5 + Math.sin(t * 1.6) * 0.3 + Math.min(open, 1.2) * 2.2);
     shell.envMapIntensity = 0.3 + open * 0.5;
     // the heart breathes at rest and burns when the body opens
-    heartGlow.color.copy(HEART_COLOR).multiplyScalar(1.9 + Math.sin(t * 1.6) * 0.35 + Math.min(open, 1.2) * 3.2 + (live.agentBusy ? Math.sin(t * 11) * 0.5 : 0));
-    const heart = 0.5 + Math.min(open, 1.4) * 2.4 + (live.agentBusy ? Math.sin(t * 9) * 0.12 : 0);
+    heartGlow.color.copy(HEART_COLOR).multiplyScalar(1.9 + Math.sin(t * 1.6) * 0.35 + Math.min(open, 1.2) * 3.2 + (live.agentBusy ? Math.sin(t * 11) * 0.5 : 0) + live.heart * 3);
+    // while the voice is live the heart beats with the pulse line
+    const heart = 0.5 + Math.min(open, 1.4) * 2.4 + (live.agentBusy ? Math.sin(t * 9) * 0.12 : 0) + live.heart * 0.9;
     if (light.current) light.current.intensity = 4 + heart * 26;
     if (nucleus.current) nucleus.current.scale.setScalar(0.5 + heart * 0.42);
     if (halo.current) {

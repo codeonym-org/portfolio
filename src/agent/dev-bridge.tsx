@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { executeSystemCommand, systemCommands } from "./system-commands";
+import { useVoiceStore, type VoicePhase } from "@/components/agent/voice/voice-store";
 import { getSystemSnapshot } from "./system-snapshot";
 
 declare global {
@@ -11,6 +12,8 @@ declare global {
       snapshot: typeof getSystemSnapshot;
       run: typeof executeSystemCommand;
       commands: string[];
+      /** show the voice pulse in a state without a microphone: system.pulse("speaking"), system.pulse("idle") */
+      pulse: (phase: VoicePhase) => void;
     };
   }
 }
@@ -27,6 +30,7 @@ export function AgentDevBridge() {
       snapshot: getSystemSnapshot,
       run: executeSystemCommand,
       commands: systemCommands.map((c) => c.name),
+      pulse: (phase) => useVoiceStore.getState().set({ phase }),
     };
     return () => {
       delete window.system;
