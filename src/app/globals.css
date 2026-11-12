@@ -12,6 +12,7 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-michroma);
   --font-display: var(--font-michroma);
+  --font-system: var(--font-rajdhani);
   --color-void: var(--void);
   --color-system: var(--system);
   --color-system-dim: var(--system-dim);
@@ -564,6 +565,123 @@
   }
 
   /* full-screen System interrupt frame (error / 404) */
+  /* ── the System window: every notice and prompt the System raises ── */
+  @keyframes sys-open {
+    from {
+      opacity: 0;
+      clip-path: inset(48% 0 48% 0);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes sys-scan {
+    to {
+      background-position: 0 -200%;
+    }
+  }
+  .sys-window {
+    --sys: var(--system);
+    position: relative;
+    font-family: var(--font-rajdhani), var(--font-geist), sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: oklch(0.93 0.03 232);
+    background:
+      linear-gradient(oklch(0.78 0.13 232 / 5%), transparent 30%),
+      linear-gradient(180deg, oklch(0.2 0.06 255 / 82%), oklch(0.1 0.04 265 / 90%));
+    border: 1px solid color-mix(in oklch, var(--sys) 55%, transparent);
+    box-shadow:
+      0 0 0 1px oklch(0 0 0 / 60%),
+      0 0 34px -6px color-mix(in oklch, var(--sys) 60%, transparent),
+      inset 0 0 28px -12px color-mix(in oklch, var(--sys) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    animation: sys-open 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  /* the brackets at its corners */
+  .sys-window::before,
+  .sys-window::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--sys);
+    filter: drop-shadow(0 0 6px var(--sys));
+    pointer-events: none;
+  }
+  .sys-window::before {
+    top: -3px;
+    left: -3px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .sys-window::after {
+    right: -3px;
+    bottom: -3px;
+    border-left: 0;
+    border-top: 0;
+  }
+  .sys-scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(transparent 0%, color-mix(in oklch, var(--sys) 9%, transparent) 50%, transparent 100%);
+    background-size: 100% 200%;
+    animation: sys-scan 3.2s linear infinite;
+    mix-blend-mode: screen;
+  }
+  .sys-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sys);
+    text-shadow: 0 0 12px color-mix(in oklch, var(--sys) 70%, transparent);
+  }
+  .sys-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, color-mix(in oklch, var(--sys) 60%, transparent), transparent);
+  }
+  .sys-button {
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: oklch(0.93 0.03 232);
+    border: 1px solid color-mix(in oklch, var(--sys) 45%, transparent);
+    background: color-mix(in oklch, var(--sys) 7%, transparent);
+    transition:
+      background 0.15s,
+      box-shadow 0.15s,
+      color 0.15s;
+  }
+  .sys-button:hover,
+  .sys-button:focus-visible {
+    outline: none;
+    color: white;
+    background: color-mix(in oklch, var(--sys) 24%, transparent);
+    box-shadow: 0 0 20px -4px var(--sys);
+  }
+  .sys-button[data-primary="true"] {
+    border-color: var(--sys);
+    background: color-mix(in oklch, var(--sys) 18%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sys-window {
+      animation: none;
+    }
+    .sys-scan {
+      display: none;
+    }
+  }
+
   .system-frame {
     position: relative;
     border: 1px solid var(--hair);
