@@ -12,7 +12,7 @@ import { hasNode } from "@/record/nodes";
 import { live, useWorldStore } from "@/store/world-store";
 import { Boot } from "./boot";
 import { Console } from "./console";
-import { IndexRail } from "./index-rail";
+import { IndexWheel } from "./index-wheel";
 import { CvModal, InspectCard } from "./inspect";
 import { Palette } from "./palette";
 import { SystemDialog } from "./system-dialog";
@@ -144,7 +144,7 @@ export function Shell() {
       <div className="scrim z-10" aria-hidden />
       <TopBar />
       <Trace />
-      <IndexRail />
+      <IndexWheel />
       <Console />
       <FocusWindow />
       <Toasts />
