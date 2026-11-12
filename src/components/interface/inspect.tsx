@@ -5,6 +5,7 @@ import { Download, ExternalLink, X } from "lucide-react";
 import { findItem, inventoryCategories } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
 import { findGuild } from "@/config/guilds.config";
+import { LiveRepo } from "./live-repo";
 import { quests } from "@/config/quests.config";
 import { findSkill, skillCategories } from "@/config/skills.config";
 import type { InspectTarget, Rarity } from "@/config/types";
@@ -120,6 +121,7 @@ function Body({ target }: { target: InspectTarget }) {
         ))}
       </ul>
       <Tags tags={quest.rewards} />
+      {quest.type === "side" && <LiveRepo id={quest.id} />}
       {quest.link && (
         <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
           <ExternalLink className="size-4" /> View source
