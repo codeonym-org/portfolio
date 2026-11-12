@@ -9,8 +9,8 @@ description: Build, launch and drive the portfolio (the living record) headlessl
 
 ```bash
 pnpm lint && pnpm test
-pnpm build
-pnpm start &   # serves the prod build on http://localhost:3000
+NEXT_DIST_DIR=.next-verify pnpm build   # own folder: never build into .next while `next dev` runs
+NEXT_DIST_DIR=.next-verify pnpm start &   # serves the prod build on http://localhost:3000
 ```
 
 ## Drive it headlessly
