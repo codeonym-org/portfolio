@@ -17,7 +17,9 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 - Tracker: GitHub `codeonym-org/portfolio`, board 1 (sub-issues are added to the board automatically; set the
   status with `gh project item-edit 1 --owner codeonym-org --url <issue> --field Status --value Todo`). Every
   issue: a type, one `area: …` label, milestone `v9 — Next`.
-- Before pushing: `pnpm lint`, `npx tsc --noEmit`, `pnpm test`, `pnpm build`. To look at the page headlessly:
+- Before pushing: `pnpm lint`, `npx tsc --noEmit`, `pnpm test`, `NEXT_DIST_DIR=.next-verify pnpm build` (never
+  build into `.next` while the owner's `next dev` runs: it leaves the dev server with a stale stylesheet; then
+  `git checkout tsconfig.json`, the build rewrites it). To look at the page headlessly:
   `.claude/skills/verify/SKILL.md`.
 
 ## State
@@ -28,7 +30,7 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
-| #57 | Story 4: the Gate Realm and a System with presence (#58–#63) | planned (decisions 001, 002); **build next, in ticket order** |
+| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68) | in progress (decisions 001–003); #62 and #63 left |
 | #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
@@ -59,7 +61,8 @@ Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `imp
 | #58 | The Gate Realm: `/gates` as seven planets; gates renamed First Light and Erebus | done, merged into `40-gates` |
 | #59 | The System font (Rajdhani) and the System window: notices and prompts | done, merged into `40-gates` |
 | #60 | The System persuades: one next step per answer, the `offer` tool | done, merged into `40-gates` |
-| #61 | The index as a wheel from the left edge | not started |
+| #61 | The index as a wheel from the left edge (hover the edge, hold Q, tap the tab) | done, merged into `40-gates` (#67) |
+| #68 | From the owner's review (decision 003): answers in the System font; the camera frames the Monolith above the words; free camera | done, merged into `40-gates` (#69) |
 | #62 | A pulse on screen while the voice is live | not started |
 | #63 | A holographic map: globe to city, data shipped with the site | not started |
 
