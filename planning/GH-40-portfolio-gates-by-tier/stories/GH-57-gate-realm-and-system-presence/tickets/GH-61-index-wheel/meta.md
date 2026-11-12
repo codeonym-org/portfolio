@@ -1,6 +1,6 @@
 ---
 kind: ticket
-title: 
+title: The index as a wheel that opens from the left edge
 key: GH-61
 parent: GH-57
 status: done

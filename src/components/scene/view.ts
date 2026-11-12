@@ -45,6 +45,11 @@ export const view = {
   haloScale: 1,
   /** vertical squash of the halo: next to an open window the console needs the bottom of the stage */
   haloSquash: 1,
+  /** the visitor's own camera: zoom (wheel or pinch; above 1 is further away) and tilt (drag up or down, radians) */
+  zoom: 1,
+  tilt: 0,
+  /** px at the bottom of the screen the console's words take; the rig frames the Monolith above them */
+  clear: 0,
   /** pointer in -1..1, for parallax */
   pointer: new Vector2(),
   /** how far the Monolith is open right now, 0 sealed … 1 wide */
@@ -56,6 +61,15 @@ export function fitView(aspect: number) {
   view.distance = portrait ? 18.5 : 15;
   view.orbitScale = portrait ? 0.56 : 1;
   view.haloScale = portrait ? 0.6 : Math.min(1, aspect / 1.45);
+}
+
+export const ZOOM = { min: 0.62, max: 1.7 };
+export const TILT = { min: -0.3, max: 0.95 };
+/** hand the camera back to the System's framing */
+export function resetCamera() {
+  view.zoom = 1;
+  view.tilt = 0;
+  view.spinVelocity = 0;
 }
 
 /** lens split read by the ChromaticAberration pass */
