@@ -6,7 +6,7 @@ import type { PlanetKind } from "@/config/types";
  * noise on the sphere, its light from the star at the origin.
  */
 
-export const KIND_INDEX: Record<PlanetKind, number> = { ocean: 0, cracked: 1, gas: 2, ice: 3, lava: 4, crystal: 5, barren: 6 };
+export const KIND_INDEX: Record<PlanetKind, number> = { ocean: 0, cracked: 1, gas: 2, ice: 3, lava: 4, crystal: 5, barren: 6, shroud: 7 };
 
 // Simplex noise by Ian McEwan / Ashima Arts (MIT)
 const NOISE = /* glsl */ `
@@ -128,6 +128,17 @@ void main(){
     col=mix(uLow,uHigh,tint);
     gloss=1.6;
     emit=uGlow*pow(1.0-max(dot(n,V),0.0),2.5)*0.9;
+  }else if(uKind==7){
+    // a shrouded world: black rock under slow, heavy fog, and something dim still burning far below
+    col=mix(uLow,uHigh,fbm(q*3.2)*0.5+0.5)*0.4;
+    vec3 w=q*1.5+vec3(uTime*0.009,0.0,uTime*0.006);
+    float swirl=fbm(w+fbm(w*1.8+3.0)*0.95);
+    float bank=smoothstep(-0.38,0.42,swirl);
+    float thin=1.0-bank;
+    vec3 mist=mix(uHigh,uGlow,0.35+0.3*fbm(q*5.0+uTime*0.01));
+    col=mix(col,mist,bank*0.9);
+    float ember=ridge(q*2.6,16.0)*thin*thin;
+    emit=vec3(0.75,0.3,0.12)*ember*0.5*(0.7+0.3*sin(uTime*0.5+p.y*5.0));
   }else{
     // a barren world: dust and craters
     float h=fbm(q*3.6);

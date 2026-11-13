@@ -35,6 +35,9 @@ export function PlanetArt({ planet, className, dim }: { planet: Planet; classNam
         {(planet.kind === "cracked" || planet.kind === "lava") && (
           <path d="M52 92 L80 100 L92 84 L118 104 L150 96 M80 100 L74 128 L96 146 M118 104 L126 132 L112 152 M92 84 L98 60" fill="none" stroke={glow} strokeWidth="2.2" strokeLinejoin="round" />
         )}
+        {planet.kind === "shroud" && (
+          <path d="M40 78 Q70 66 96 80 T160 76 M36 104 Q66 94 100 108 T166 100 M48 130 Q80 120 108 132 T156 126" fill="none" stroke={glow} strokeOpacity="0.32" strokeWidth="9" strokeLinecap="round" />
+        )}
         {planet.kind === "crystal" && <path d="M44 100 L100 44 L156 100 L100 156 Z M100 44 L100 156 M44 100 L156 100 M72 72 L128 128 M128 72 L72 128" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="1" />}
         {planet.kind === "ocean" && <path d="M58 70 Q84 58 104 76 T142 82 M66 122 Q92 108 118 126 T150 118" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="6" strokeLinecap="round" />}
       </g>

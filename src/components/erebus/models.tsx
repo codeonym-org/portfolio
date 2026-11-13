@@ -12,7 +12,6 @@ import {
   Group,
   LoopOnce,
   LoopRepeat,
-  Matrix4,
   Object3D,
   Vector3,
   type AnimationAction,
@@ -25,14 +24,14 @@ import {
 import { clone as cloneRig } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { game } from "@/erebus/game";
 import { rngFrom } from "@/erebus/rules";
-import { ARENA, MAX_SOLDIERS, type Foe } from "@/erebus/sim";
-import { HALL } from "./hall";
+import { MAX_SOLDIERS, type Foe } from "@/erebus/sim";
+import { CAVE } from "./cavern";
 
 /**
  * Everything on Erebus that is a model: the hunter, the statues that
  * wake against you and the ones that rise behind you (one knight rig,
  * three skins), the rock golems, the obelisks, the colossus and what
- * stands behind the columns. Sources and licenses: scripts/assets/README.md.
+ * stands in the dark behind the rock columns. Sources and licenses: scripts/assets/README.md.
  * All of it is meshopt-compressed; the decoder ships with three.
  */
 
@@ -41,8 +40,6 @@ const MODELS = {
   knight: "/models/erebus/knight.glb",
   golem: "/models/erebus/golem.glb",
   obelisk: "/models/erebus/obelisk.glb",
-  pillar: "/models/erebus/pillar.glb",
-  remains: "/models/erebus/remains.glb",
 } as const;
 const useModel = (url: string) => useGLTF(url, false, true);
 for (const url of Object.values(MODELS)) useGLTF.preload(url, false, true);
@@ -161,46 +158,48 @@ function flash(p: Puppet, on: boolean, fade = 1) {
 const fallen: Skin = (m) => {
   const body = m.name === "Paladin_MAT";
   if (body) m.map = null;
-  m.color.set(body ? "#77737f" : "#3a2a2a");
-  m.emissive.set(body ? "#1a0705" : "#ff3b1f");
-  m.emissiveIntensity = body ? 0.6 : 2.4;
+  m.color.set(body ? "#6a6764" : "#3a2019");
+  m.emissive.set(body ? "#120504" : "#9a2a14");
+  m.emissiveIntensity = body ? 0.5 : 0.7;
   m.metalness = 0;
   m.roughness = 1;
 };
 /** a statue that has not: the same stone, nothing lit */
 const stone: Skin = (m) => {
   m.map = null;
-  m.color.set("#7f7c8e");
+  m.color.set("#6e6c69");
   m.emissive.set("#000000");
   m.metalness = 0;
   m.roughness = 1;
 };
 const hunterSkin: Skin = (m) => {
   const body = m.name === "Paladin_MAT";
-  m.color.set(body ? "#34304f" : "#cfc4ff");
-  m.emissive.set(body ? "#3a22a8" : "#8f6bff");
-  m.emissiveIntensity = body ? 0.9 : 2.8;
-  m.metalness = 0.5;
-  m.roughness = 0.65;
+  // black iron, and the one blade in the cavern that is clean steel
+  m.color.set(body ? "#30333c" : "#b4bccb");
+  m.emissive.set(body ? "#070b16" : "#5f74a8");
+  m.emissiveIntensity = body ? 0.8 : 0.55;
+  m.metalness = body ? 0.7 : 0.95;
+  m.roughness = body ? 0.5 : 0.28;
 };
 const risen: Skin = (m) => {
-  m.color.set("#162458");
-  m.emissive.set(m.name === "Paladin_MAT" ? "#1f48ff" : "#8fd0ff");
-  m.emissiveIntensity = m.name === "Paladin_MAT" ? 0.85 : 2.4;
+  m.color.set("#2a3448");
+  m.emissive.set(m.name === "Paladin_MAT" ? "#1c2f66" : "#8fb8e6");
+  m.emissiveIntensity = m.name === "Paladin_MAT" ? 0.45 : 1.1;
   m.transparent = true;
   m.opacity = 0.9;
   m.roughness = 0.9;
 };
 const rock: Skin = (m) => {
   if (m.name === "Emission") {
-    m.emissive.set("#ff7a1f");
-    m.emissiveIntensity = 3;
+    m.emissive.set("#e0661c");
+    m.emissiveIntensity = 2;
     m.toneMapped = false;
   } else {
-    m.color.set("#b5b1c6");
-    m.emissive.set("#15101f");
-    m.emissiveIntensity = 1;
-    m.roughness = 0.75;
+    // its own texture is a toy blue: bare rock instead
+    m.map = null;
+    m.color.set("#5f5c58");
+    m.emissive.set("#000000");
+    m.roughness = 0.9;
   }
 };
 
@@ -210,10 +209,6 @@ export function Hunter() {
   const knight = useModel(MODELS.knight);
   const body = useMemo(() => {
     const p = puppet(knight.scene, knight.animations, 1.1, hunterSkin);
-    // bare-headed: the helmet is for statues
-    p.root.traverse((o) => {
-      if (o.name.includes("Helmet")) o.visible = false;
-    });
     p.root.visible = true;
     return p;
   }, [knight]);
@@ -271,7 +266,7 @@ export function Hunter() {
       <group position={[0, 1.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <mesh ref={arc} visible={false}>
           <ringGeometry args={[1.5, 3.1, 28, 1, -Math.PI / 2 - 1.05, 2.1]} />
-          <meshBasicMaterial ref={arcMat} color="#b79bff" transparent opacity={0} blending={AdditiveBlending} side={DoubleSide} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial ref={arcMat} color="#c9d6f0" transparent opacity={0} blending={AdditiveBlending} side={DoubleSide} depthWrite={false} toneMapped={false} />
         </mesh>
       </group>
     </group>
@@ -414,12 +409,12 @@ export function Foes() {
           dummy.scale.set(0.42 * f.scale * fade, 1.05 * f.scale * fade, 0.42 * f.scale * fade);
           dummy.updateMatrix();
           sm.setMatrixAt(seer, dummy.matrix);
-          sm.setColorAt(seer, tint.set(f.flash > 0 ? "#ffffff" : "#15121c"));
+          sm.setColorAt(seer, tint.set(f.flash > 0 ? "#ffffff" : "#4a4742"));
           dummy.position.set(f.x + Math.sin(f.yaw) * 0.3 * f.scale, y + 0.1, f.z + Math.cos(f.yaw) * 0.3 * f.scale);
-          dummy.scale.setScalar((0.13 + warn * 0.22) * f.scale * fade);
+          dummy.scale.setScalar((0.085 + warn * 0.13) * f.scale * fade);
           dummy.updateMatrix();
           em.setMatrixAt(seer, dummy.matrix);
-          em.setColorAt(seer, tint.set("#b6ff3a").lerp(WHITE, warn));
+          em.setColorAt(seer, tint.set("#a9c96a").lerp(WHITE, warn));
           seer++;
         }
         top = 2.7 * f.scale;
@@ -482,7 +477,7 @@ export function Foes() {
       ))}
       <instancedMesh ref={seers} args={[undefined, undefined, SEERS]} frustumCulled={false}>
         <octahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial roughness={0.25} metalness={0.8} flatShading />
+        <meshStandardMaterial roughness={0.55} metalness={0.35} flatShading />
       </instancedMesh>
       <instancedMesh ref={eyes} args={[undefined, undefined, SEERS]} frustumCulled={false}>
         <sphereGeometry args={[1, 12, 10]} />
@@ -490,11 +485,11 @@ export function Foes() {
       </instancedMesh>
       <instancedMesh ref={bars} args={[undefined, undefined, MAX]} frustumCulled={false}>
         <planeGeometry args={[1, 0.07]} />
-        <meshBasicMaterial color="#ff4a3a" toneMapped={false} depthTest={false} transparent />
+        <meshBasicMaterial color="#c8463a" toneMapped={false} depthTest={false} transparent />
       </instancedMesh>
       <instancedMesh ref={crowns} args={[undefined, undefined, MAX]} frustumCulled={false}>
         <octahedronGeometry args={[1, 0]} />
-        <meshBasicMaterial color="#c08bff" toneMapped={false} wireframe />
+        <meshBasicMaterial color="#b9a6dc" toneMapped={false} wireframe />
       </instancedMesh>
     </>
   );
@@ -502,14 +497,14 @@ export function Foes() {
 
 /* ── the obelisks: carved stone whose glyphs light up with what happens to them ── */
 
-const STATE_COLOR = { sealed: "#7a1d1d", raid: "#ff3b2f", fallen: "#4cc3ff", risen: "#8b7bff" };
+const STATE_COLOR = { sealed: "#5e1b15", raid: "#c8402c", fallen: "#5fa8cf", risen: "#8f86c8" };
 const OBELISK_HEIGHT = 9;
 
 /** an obelisk, and the one thing that changes on it: the light in its carvings */
 function carvedStone(source: Object3D) {
   const mats: MeshStandardMaterial[] = [];
   const model = standing(source, OBELISK_HEIGHT, (m) => {
-    m.color.set("#4a4560");
+    m.color.set("#6a6660");
     // the carvings are the texture: lit from inside, they are the glyphs
     m.emissiveMap = m.map;
     m.emissive.set(STATE_COLOR.sealed);
@@ -540,9 +535,9 @@ function Obelisk({ index, source }: { index: number; source: Object3D }) {
     gem.current.rotation.y = t * (busy ? 2.4 : 0.6);
     gem.current.position.y = OBELISK_HEIGHT + 1 + Math.sin(t * 1.3 + index) * 0.25;
     const glow = busy ? 0.75 + Math.sin(t * 6) * 0.25 : ob.revealed ? 1 : 0.7;
-    gemMat.current.color.set(STATE_COLOR[ob.state]).multiplyScalar(glow * (ob.state === "sealed" && !ob.revealed ? 1 : 1.6));
+    gemMat.current.color.set(STATE_COLOR[ob.state]).multiplyScalar(glow * (ob.state === "sealed" && !ob.revealed ? 0.9 : 1.15));
     ringMat.current.color.copy(gemMat.current.color);
-    stone.light(STATE_COLOR[ob.state], (ob.state === "sealed" && !ob.revealed ? 0.35 : 1.1) * glow);
+    stone.light(STATE_COLOR[ob.state], (ob.state === "sealed" && !ob.revealed ? 0.14 : 0.5) * glow);
   });
 
   if (!o) return null;
@@ -554,8 +549,8 @@ function Obelisk({ index, source }: { index: number; source: Object3D }) {
         <meshBasicMaterial ref={gemMat} toneMapped={false} />
       </mesh>
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.6, 2.8, 48]} />
-        <meshBasicMaterial ref={ringMat} toneMapped={false} transparent opacity={0.8} depthWrite={false} />
+        <ringGeometry args={[2.7, 2.8, 64]} />
+        <meshBasicMaterial ref={ringMat} toneMapped={false} transparent opacity={0.45} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -573,74 +568,21 @@ export function Obelisks() {
   );
 }
 
-/* ── the ruins around the plateau ── */
-
-const placed = new Matrix4();
-function Part({ mesh, places, color }: { mesh: Mesh; places: Matrix4[]; color: string }) {
-  const ref = useRef<InstancedMesh>(null);
-  const material = useMemo(() => {
-    const m = (mesh.material as MeshStandardMaterial).clone();
-    m.color.set(color);
-    m.roughness = 0.85;
-    return m;
-  }, [mesh, color]);
-  useLayoutEffect(() => {
-    const im = ref.current;
-    if (!im) return;
-    places.forEach((p, i) => im.setMatrixAt(i, placed.multiplyMatrices(p, mesh.matrixWorld)));
-    im.instanceMatrix.needsUpdate = true;
-  }, [mesh, places]);
-  return <instancedMesh ref={ref} args={[mesh.geometry, material, places.length]} frustumCulled={false} />;
-}
-
-/** one model, drawn many times: one instanced mesh per part of it */
-function Scatter({ url, places, color }: { url: string; places: Matrix4[]; color: string }) {
-  const { scene } = useModel(url);
-  const parts = useMemo(() => {
-    const copy = scene.clone(true);
-    copy.updateMatrixWorld(true);
-    const out: Mesh[] = [];
-    copy.traverse((o) => {
-      if ((o as Mesh).isMesh) out.push(o as Mesh);
-    });
-    return out;
-  }, [scene]);
-  return (
-    <>
-      {parts.map((mesh, i) => (
-        <Part key={i} mesh={mesh} places={places} color={color} />
-      ))}
-    </>
-  );
-}
-
-function ring(seed: number, count: number, near: number, far: number, small: number, large: number) {
-  const r = rngFrom(seed);
-  const o = new Object3D();
-  return Array.from({ length: count }, (_, i) => {
-    const a = ((i + r() * 0.7) / count) * Math.PI * 2;
-    const d = ARENA + near + r() * (far - near);
-    o.position.set(Math.sin(a) * d, -0.1, Math.cos(a) * d);
-    o.rotation.set(0, r() * Math.PI * 2, 0);
-    o.scale.setScalar(small + r() * (large - small));
-    o.updateMatrix();
-    return o.matrix.clone();
-  });
-}
+/* ── the ruin the rock closed over ── */
 
 const STATUES = 14;
-/** the colossus on the dais, the statues that have not woken yet, and what fell from the vault */
+/** the colossus on the dais and the statues that have not woken yet */
 export function Ruins() {
   const hooded = useModel(MODELS.colossus);
   const knight = useModel(MODELS.knight);
   const colossus = useMemo(
     () =>
-      standing(hooded.scene, 19, (m) => {
-        m.color.set("#a9a4c4");
+      standing(hooded.scene, 16, (m) => {
+        m.color.set("#8b8986");
         // its own texture lights it: the cloth is black, the eyes are not
         m.emissiveMap = m.map;
         m.emissive.set("#9fe6ff");
-        m.emissiveIntensity = 1.6;
+        m.emissiveIntensity = 0.9;
         m.roughness = 1;
       }),
     [hooded],
@@ -652,7 +594,7 @@ export function Ruins() {
       // two slots are taken: the colossus (north) and the door (south)
       const slot = i < STATUES / 2 ? i + 1 : i + 2;
       const a = Math.PI + (slot / (STATUES + 2)) * Math.PI * 2;
-      p.root.position.set(Math.sin(a) * HALL.aisle, 1.2, Math.cos(a) * HALL.aisle);
+      p.root.position.set(Math.sin(a) * CAVE.aisle, 1.2, Math.cos(a) * CAVE.aisle);
       p.root.rotation.y = a + Math.PI;
       p.root.visible = true;
       // frozen mid-gesture, each at its own moment: the mixer never runs again
@@ -675,11 +617,9 @@ export function Ruins() {
     });
     m.instanceMatrix.needsUpdate = true;
   }, [statues]);
-  const pillars = useMemo(() => ring(17, 7, 4.5, 9.5, 0.8, 1.2), []);
-  const rubble = useMemo(() => ring(23, 12, 3.5, 9.5, 0.5, 0.85), []);
   return (
     <>
-      <group position={[0, 2.7, -HALL.aisle - 1]}>
+      <group position={[0, 2.4, -CAVE.aisle]}>
         <primitive object={colossus} />
       </group>
       {statues.map((p, i) => (
@@ -687,10 +627,8 @@ export function Ruins() {
       ))}
       <instancedMesh ref={plinths} args={[undefined, undefined, STATUES]} frustumCulled={false}>
         <boxGeometry args={[3.4, 1.2, 3.4]} />
-        <meshStandardMaterial color="#6f6c80" roughness={1} />
+        <meshStandardMaterial color="#5d5b58" roughness={1} />
       </instancedMesh>
-      <Scatter url={MODELS.pillar} places={pillars} color="#8f8cb4" />
-      <Scatter url={MODELS.remains} places={rubble} color="#7c7a9c" />
     </>
   );
 }

@@ -17,7 +17,7 @@ export const planets: Planet[] = [
   { id: "colossus", kind: "gas", orbit: 15.4, size: 1.75, phase: 0.83, palette: ["#c98f55", "#f1dcb4", "#ff8f5a"], moons: 2, tilt: 0.12 },
   { id: "rime", kind: "ice", orbit: 19.6, size: 1.2, phase: 0.27, palette: ["#7fb8e6", "#e9f6ff", "#9fe3ff"], ring: "full", tilt: 0.46 },
   { id: "prism", kind: "crystal", orbit: 23.2, size: 0.7, phase: 0.55, palette: ["#6a3df0", "#c9b6ff", "#b48cff"], tilt: 0.3 },
-  { id: "erebus", gate: "erebus", kind: "cracked", orbit: 27.5, size: 1.1, phase: 0.97, palette: ["#07050b", "#1a1016", "#ff2a1a"], ring: "broken", moons: 1, tilt: -0.34 },
+  { id: "erebus", gate: "erebus", kind: "shroud", orbit: 27.5, size: 1.1, phase: 0.97, palette: ["#090a0d", "#353b45", "#8799ad"], ring: "broken", moons: 1, tilt: -0.34 },
 ];
 
 export const realm = {

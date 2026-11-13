@@ -17,9 +17,7 @@ the rest is CC0 or supplied by the owner. Credits are in
 | `public/models/erebus/knight.glb`    | Erebus: the hunter, the statues (enemies) and the shadow soldiers    | Mixamo *Paladin J Nordstrom* + clips (Idle, Run, Slash, Spin, Kneel, PowerUp, Rise); sword from [Igris Solo Leveling](https://sketchfab.com/3d-models/igris-solo-leveling-0eeb4795c56d4a5cbca69ba2bd340c6a) by missafe · CC BY 4.0 (plume removed) |
 | `public/models/erebus/golem.glb`     | Erebus: brutes and Wardens                                           | [Drugdör The Golem Animated](https://sketchfab.com/3d-models/19c1855bdb2c4cdc89da2cfb64da48cf) by Phons · CC BY 4.0 |
 | `public/models/erebus/obelisk.glb`   | Erebus: one per project; its carvings are lit as glyphs              | [Obelisk](https://sketchfab.com/3d-models/0b4dc3d42d1b4ceb8a19a0001a427864) by Ankledot · CC BY 4.0 |
-| `public/models/erebus/pillar.glb`    | Erebus: broken columns behind the ring                                  | [Stylized Ruined Pillar](https://sketchfab.com/3d-models/0e66e5525d974b2d968e5b4c1636ef6c) by nico_hartl · CC BY 4.0 |
-| `public/models/erebus/remains.glb`   | Erebus: rubble at the rim                                            | [Stylized Ruin Remains](https://sketchfab.com/3d-models/f8f9907495f948a6bcccff089f527bc7) by nico_hartl · CC BY 4.0 |
-| `public/textures/erebus/*.webp`      | Erebus: the hall's floor and walls (colour and normal, 1k)           | [Monastery Stone Floor](https://polyhaven.com/a/monastery_stone_floor) and [Medieval Blocks 05](https://polyhaven.com/a/medieval_blocks_05), Poly Haven · CC0 |
+| `public/textures/erebus/*.webp`      | Erebus: the cavern's rock and floor, and the cut stone of the ruin (colour and normal, 1k) | [Dark Rock 02](https://polyhaven.com/a/dark_rock_02), [Rock Ground](https://polyhaven.com/a/rock_ground) and [Medieval Blocks 05](https://polyhaven.com/a/medieval_blocks_05), Poly Haven · CC0 |
 | `public/audio/*` (sfx)               | interface sounds, ARISE                                              | [Kenney](https://kenney.nl) interface / sci-fi / RPG packs · CC0 |
 | `public/audio/theme.mp3`             | suspense theme loop                                                  | supplied by the owner, re-encoded 128 kbps |
 | `public/audio/notify.mp3`            | System notification chime                                            | supplied by the owner, trimmed and re-encoded |
@@ -92,7 +90,8 @@ table, plus `knight.glb` as built for the old temple (git history,
 the bottom of `pack-erebus.mjs`, then pack: only the clips the game plays are
 kept, textures become 512 px WebP and everything is meshopt-compressed
 (2.2 MB in all). The stone textures are the 1k JPGs from Poly Haven,
-re-encoded with `magick <in>.jpg -quality 80 <out>.webp` (0.9 MB).
+re-encoded with `magick <in>.jpg -quality 80 <out>.webp` (1.6 MB); the rock's
+colour is lifted first (`-gamma 1.55 -modulate 100,75`), it is near black as shipped.
 
 ```bash
 mkdir <scratch> && cd <scratch> && npm init -y

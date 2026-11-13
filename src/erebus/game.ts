@@ -297,7 +297,7 @@ export function startGame() {
   said.length = 0;
   report({ type: "enter" });
   // the handle the headless playtest drives (as `window.system` is for the record)
-  Object.assign(window, { erebus: game });
+  Object.assign(window, { erebus: game, erebusControls: controls });
 }
 
 export function stopGame() {

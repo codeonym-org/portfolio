@@ -6,7 +6,7 @@ import { AdditiveBlending, Color, Object3D, type InstancedMesh } from "three";
 import { game } from "@/erebus/game";
 
 /**
- * The small things on the plateau: what enemies drop, what they throw,
+ * The small things on the cavern floor: what enemies drop, what they throw,
  * the ground that is about to break and the pillars of light. Each
  * kind is one instanced mesh, rewritten every frame from the
  * simulation. The bodies are in models.tsx.
@@ -20,7 +20,7 @@ const hidden = () => {
   dummy.updateMatrix();
 };
 
-const PICKUP: Record<string, string> = { echo: "#5fd8ff", heal: "#5dff9b", rune: "#f5b83d" };
+const PICKUP: Record<string, string> = { echo: "#7fc4e0", heal: "#74c796", rune: "#d9a441" };
 const MAX_DROPS = 60;
 const MAX_SHOTS = 30;
 const MAX_HAZARDS = 24;
@@ -57,13 +57,13 @@ export function Drops() {
       const p = sim.pickups[i];
       if (!p) hidden();
       else {
-        const size = p.kind === "rune" ? 0.5 : p.kind === "heal" ? 0.3 : 0.2;
+        const size = p.kind === "rune" ? 0.42 : p.kind === "heal" ? 0.24 : 0.16;
         dummy.position.set(p.x, 0.9 + Math.sin(t * 2.5 + p.id) * 0.18, p.z);
         dummy.rotation.set(0, t * 1.8 + p.id, 0);
         dummy.scale.set(size, size * 1.5, size);
         dummy.updateMatrix();
         d.setColorAt(i, color.set(PICKUP[p.kind]));
-        if (p.kind === "rune") pillar(p.x, p.z, 0.12, 9, "#f5b83d");
+        if (p.kind === "rune") pillar(p.x, p.z, 0.07, 4, "#c9983f");
       }
       d.setMatrixAt(i, dummy.matrix);
     }
@@ -73,7 +73,7 @@ export function Drops() {
       else {
         dummy.position.set(p.x, 1.1, p.z);
         dummy.rotation.set(0, 0, 0);
-        dummy.scale.setScalar(0.28);
+        dummy.scale.setScalar(0.2);
         dummy.updateMatrix();
       }
       s.setMatrixAt(i, dummy.matrix);
@@ -98,10 +98,10 @@ export function Drops() {
     }
 
     for (const o of sim.obelisks) {
-      if (o.revealed) pillar(o.x, o.z, 0.7, 60, "#b79bff");
-      else if (o.state === "fallen") pillar(o.x, o.z, 0.9, 60, "#4cc3ff");
+      if (o.revealed) pillar(o.x, o.z, 0.55, 30, "#a9a0d8");
+      else if (o.state === "fallen") pillar(o.x, o.z, 0.7, 30, "#6fb4d9");
     }
-    if (sim.quest?.type === "reach") pillar(sim.quest.x, sim.quest.z, 1.3, 60, "#e8fbff");
+    if (sim.quest?.type === "reach") pillar(sim.quest.x, sim.quest.z, 1.0, 30, "#d7e2ee");
     for (let i = beam; i < MAX_BEAMS; i++) {
       hidden();
       b.setMatrixAt(i, dummy.matrix);
@@ -119,19 +119,19 @@ export function Drops() {
       </instancedMesh>
       <instancedMesh ref={shots} args={[undefined, undefined, MAX_SHOTS]} frustumCulled={false}>
         <sphereGeometry args={[1, 10, 8]} />
-        <meshBasicMaterial color="#c8ff4a" toneMapped={false} />
+        <meshBasicMaterial color="#a3bd6a" toneMapped={false} />
       </instancedMesh>
       <instancedMesh ref={rings} args={[undefined, undefined, MAX_HAZARDS]} frustumCulled={false}>
         <ringGeometry args={[0.93, 1, 40]} />
-        <meshBasicMaterial color="#ff3b2f" toneMapped={false} transparent opacity={0.9} depthWrite={false} />
+        <meshBasicMaterial color="#d8402f" toneMapped={false} transparent opacity={0.85} depthWrite={false} />
       </instancedMesh>
       <instancedMesh ref={fills} args={[undefined, undefined, MAX_HAZARDS]} frustumCulled={false}>
         <circleGeometry args={[1, 40]} />
-        <meshBasicMaterial color="#ff3b2f" toneMapped={false} transparent opacity={0.35} blending={AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial color="#d8402f" toneMapped={false} transparent opacity={0.28} blending={AdditiveBlending} depthWrite={false} />
       </instancedMesh>
       <instancedMesh ref={beams} args={[undefined, undefined, MAX_BEAMS]} frustumCulled={false}>
         <cylinderGeometry args={[1, 1, 1, 12, 1, true]} />
-        <meshBasicMaterial toneMapped={false} transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial toneMapped={false} transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} />
       </instancedMesh>
     </>
   );

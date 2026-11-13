@@ -3,27 +3,26 @@
 import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
-import { ACESFilmicToneMapping, AdditiveBlending, Color, Vector3, type DirectionalLight, type Fog, type HemisphereLight, type Mesh, type MeshBasicMaterial, type PointLight, type ShaderMaterial } from "three";
+import { Bloom, EffectComposer, HueSaturation, Noise, Vignette } from "@react-three/postprocessing";
+import { ACESFilmicToneMapping, AdditiveBlending, Color, Vector3, type FogExp2, type HemisphereLight, type Mesh, type MeshBasicMaterial, type PointLight, type ShaderMaterial } from "three";
 import { frame, game } from "@/erebus/game";
 import { controls } from "@/erebus/input";
 import { rngFrom } from "@/erebus/rules";
 import { ARENA } from "@/erebus/sim";
 import { useWorldStore, type Quality } from "@/store/world-store";
 import { Foes, Hunter, Obelisks, Ruins, Soldiers } from "./models";
-import { Hall } from "./hall";
+import { Cavern, FOG } from "./cavern";
 import { Drops } from "./things";
 
 /**
- * Erebus, drawn: a sealed hall of cut stone (hall.tsx) with a ring of
- * obelisks, statues behind the columns and something still burning
- * under the floor. The bodies and the carved stone are models
- * (models.tsx). The
- * simulation runs first in every frame (`Driver`), then the camera
- * follows the hunter, then everything draws what the simulation says.
+ * Erebus, drawn: a cavern with a ruin left inside it (cavern.tsx), a
+ * ring of obelisks on the flat ground and statues in the dark behind
+ * the rock columns. The bodies and the carved stone are models
+ * (models.tsx). The simulation runs first in every frame (`Driver`),
+ * then the camera follows the hunter, then everything draws what the
+ * simulation says.
  */
 
-const SKY = "#06040a";
 const DPR: Record<Quality, [number, number]> = { high: [1, 2], medium: [1, 1.5], low: [0.75, 1] };
 
 function Driver() {
@@ -40,139 +39,63 @@ const groundVertex = /* glsl */ `
   }
 `;
 const groundFragment = /* glsl */ `
-  uniform float uTime;
-  uniform vec3 uCrack;
-  uniform vec3 uSky;
   uniform vec3 uHunter;
-  uniform float uHeat;
-  uniform float uFogNear;
-  uniform float uFogFar;
-  uniform float uArena;
   uniform float uBurst;
+  uniform float uHurt;
   varying vec3 vWorld;
-
-  vec2 hash2(vec2 p) {
-    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-    return fract(sin(p) * 43758.5453);
-  }
-  // distance to the nearest cell border: the cracks
-  float cracks(vec2 p) {
-    vec2 n = floor(p);
-    vec2 f = fract(p);
-    vec2 nearest;
-    float best = 8.0;
-    for (int j = -1; j <= 1; j++)
-      for (int i = -1; i <= 1; i++) {
-        vec2 g = vec2(float(i), float(j));
-        vec2 r = g + hash2(n + g) - f;
-        float d = dot(r, r);
-        if (d < best) { best = d; nearest = r; }
-      }
-    float edge = 8.0;
-    for (int j = -2; j <= 2; j++)
-      for (int i = -2; i <= 2; i++) {
-        vec2 g = vec2(float(i), float(j));
-        vec2 r = g + hash2(n + g) - f;
-        if (dot(nearest - r, nearest - r) > 0.0001) edge = min(edge, dot(0.5 * (nearest + r), normalize(r - nearest)));
-      }
-    return edge;
-  }
-
   void main() {
-    vec2 p = vWorld.xz;
-    float radius = length(p);
-    float big = cracks(p * 0.16);
-    float small = cracks(p * 0.42 + 7.3);
-    float pulse = 0.6 + 0.4 * sin(uTime * 0.7 + radius * 0.15);
-    float glow = smoothstep(0.02, 0.0, big) * 1.15 + smoothstep(0.016, 0.0, small) * 0.1;
-    // heat bleeding out of the wide cracks
-    glow += smoothstep(0.3, 0.0, big) * 0.045;
-    vec3 rock = vec3(0.0);
-    // the hunter's own light on the ground
-    float near = 1.0 - smoothstep(0.0, 11.0, distance(p, uHunter.xz));
-    rock += vec3(0.02, 0.035, 0.07) * near;
-    vec3 col = rock + uCrack * glow * pulse * uHeat * 0.3;
-    // the edge of the plateau
-    float rim = smoothstep(0.5, 0.0, abs(radius - uArena));
-    col += uCrack * rim * 0.5;
-    col *= 1.0 - 0.75 * smoothstep(uArena, uArena + 26.0, radius);
-    // the burst: a ring that runs outward from the hunter
-    float wave = abs(distance(p, uHunter.xz) - uBurst * 16.0);
-    col += vec3(0.55, 0.45, 1.0) * smoothstep(0.9, 0.0, wave) * (1.0 - uBurst) * step(0.001, uBurst);
-    float fog = smoothstep(uFogNear, uFogFar, distance(vWorld, cameraPosition));
-    gl_FragColor = vec4(col * (1.0 - fog), 1.0);
+    float d = distance(vWorld.xz, uHunter.xz);
+    // the burst: one ring that runs outward from the hunter
+    float wave = abs(d - uBurst * 16.0);
+    vec3 col = vec3(0.62, 0.72, 0.95) * smoothstep(0.7, 0.0, wave) * (1.0 - uBurst) * step(0.001, uBurst);
+    // a blow taken: the ground under the hunter darkens red for a moment
+    col += vec3(0.28, 0.02, 0.01) * uHurt * smoothstep(5.0, 0.0, d);
+    gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;
 
-const CRACK: Record<string, string> = { default: "#ff3a14", frenzy: "#ff7a10", calm: "#2f7dff", time_slow: "#35d6c4", echo_rain: "#5fd8ff", mirror: "#c04cff", giants: "#ff2a5a", tremor: "#ff2a10", blackout: "#5a0d06" };
-
-/** the ground, the light and the fog: they all answer to what the System has done to the world */
-function Plateau() {
+/** the air and the little light that is not fire or sky: they answer to what the System has done */
+function Air() {
   const mat = useRef<ShaderMaterial>(null);
-  const fog = useRef<Fog>(null);
+  const fog = useRef<FogExp2>(null);
   const hemi = useRef<HemisphereLight>(null);
-  const sun = useRef<DirectionalLight>(null);
   const lamp = useRef<PointLight>(null);
   const dark = useRef(0);
-  const crack = useRef(new Color(CRACK.default));
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uCrack: { value: new Color(CRACK.default) },
-      uSky: { value: new Color(SKY) },
-      uHunter: { value: new Vector3() },
-      uHeat: { value: 1 },
-      uFogNear: { value: 34 },
-      uFogFar: { value: 120 },
-      uArena: { value: ARENA },
-      uBurst: { value: 0 },
-    }),
-    [],
-  );
+  const uniforms = useMemo(() => ({ uHunter: { value: new Vector3() }, uBurst: { value: 0 }, uHurt: { value: 0 } }), []);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const sim = game.sim;
     const m = mat.current;
-    if (!sim || !m || !fog.current || !hemi.current || !sun.current || !lamp.current) return;
+    if (!sim || !m || !fog.current || !hemi.current || !lamp.current) return;
     const dt = Math.min(delta, 0.05);
-    const twist = sim.twist?.kind;
-    dark.current += ((twist === "blackout" ? 1 : 0) - dark.current) * Math.min(1, dt * 2.5);
+    dark.current += ((sim.twist?.kind === "blackout" ? 1 : 0) - dark.current) * Math.min(1, dt * 2.5);
     const d = dark.current;
-    crack.current.lerp(tint.set(CRACK[twist ?? "default"] ?? CRACK.default), Math.min(1, dt * 3));
     const u = m.uniforms;
-    u.uTime.value = state.clock.elapsedTime;
-    u.uCrack.value.copy(crack.current);
     u.uHunter.value.set(sim.hunter.x, 0, sim.hunter.z);
-    u.uHeat.value = 1 + (twist === "frenzy" || twist === "tremor" ? 0.8 : 0) + Math.max(0, 1 - (sim.time - game.fx.hurt) * 3) * 0.8;
     const burst = (sim.time - game.fx.burst) / 0.7;
     u.uBurst.value = burst > 0 && burst < 1 ? burst : 0;
-    const near = 34 - d * 28;
-    const far = 150 - d * 126;
-    u.uFogNear.value = fog.current.near = near;
-    u.uFogFar.value = fog.current.far = far;
-    hemi.current.intensity = 1.1 * (1 - d * 0.9);
-    sun.current.intensity = 0.55 * (1 - d * 0.95);
-    lamp.current.position.set(sim.hunter.x, 2.4, sim.hunter.z);
-    lamp.current.intensity = 9 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 120 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 160;
+    u.uHurt.value = Math.max(0, 1 - (sim.time - game.fx.hurt) * 3);
+    fog.current.density = 0.015 + d * 0.06;
+    hemi.current.intensity = 0.6 * (1 - d * 0.9);
+    lamp.current.position.set(sim.hunter.x, 2.6, sim.hunter.z);
+    lamp.current.intensity = 5 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 90 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 130;
   });
 
   return (
     <>
-      <fog ref={fog} attach="fog" args={[SKY, 34, 120]} />
-      <hemisphereLight ref={hemi} args={["#6a64a0", "#2a1410", 1.1]} />
-      <directionalLight ref={sun} color="#b9c6ff" intensity={0.55} position={[-30, 50, -20]} />
-      <pointLight ref={lamp} color="#a99bff" intensity={9} distance={22} decay={1.8} />
-      {/* light laid over the stone floor: the veins under it, the edge of the ring, the burst */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <circleGeometry args={[ARENA + 2, 96]} />
+      <fogExp2 ref={fog} attach="fog" args={[FOG, 0.015]} />
+      <hemisphereLight ref={hemi} args={["#56657c", "#1a1410", 0.6]} />
+      <pointLight ref={lamp} color="#b9c6dc" intensity={5} distance={20} decay={1.8} />
+      {/* light laid over the floor: the burst, and a blow taken */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+        <circleGeometry args={[ARENA + 2, 64]} />
         <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={groundVertex} fragmentShader={groundFragment} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
     </>
   );
 }
-const tint = new Color();
 
 const emberVertex = /* glsl */ `
   uniform float uTime;
@@ -181,14 +104,16 @@ const emberVertex = /* glsl */ `
   varying float vLife;
   void main() {
     vec3 p = position;
-    float rise = fract(aSeed + uTime * (0.03 + aSeed * 0.05));
-    p.y = rise * 16.0;
-    // the cloud of embers travels with the hunter
+    // dust: it hangs, and sinks so slowly you only see it where the light is
+    float rise = 1.0 - fract(aSeed * 7.0 + uTime * (0.006 + aSeed * 0.012));
+    p.y = rise * 14.0;
+    // the cloud travels with the hunter
     p.xz = mod(p.xz - uCentre.xz + 35.0, 70.0) - 35.0 + uCentre.xz;
-    p.x += sin(uTime * 0.6 + aSeed * 40.0) * 0.8;
+    p.x += sin(uTime * 0.21 + aSeed * 40.0) * 0.9;
+    p.z += cos(uTime * 0.17 + aSeed * 23.0) * 0.9;
     vLife = sin(rise * 3.1416);
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = (2.0 + aSeed * 5.0) * (30.0 / -mv.z);
+    gl_PointSize = (1.0 + aSeed * 2.4) * (30.0 / -mv.z);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -197,11 +122,11 @@ const emberFragment = /* glsl */ `
   varying float vLife;
   void main() {
     float d = length(gl_PointCoord - 0.5);
-    gl_FragColor = vec4(uColor * 1.6, smoothstep(0.5, 0.0, d) * vLife * 0.8);
+    gl_FragColor = vec4(uColor, smoothstep(0.5, 0.0, d) * vLife * 0.2);
   }
 `;
 
-function Embers({ count }: { count: number }) {
+function Dust({ count }: { count: number }) {
   const mat = useRef<ShaderMaterial>(null);
   const [positions, seeds] = useMemo(() => {
     const r = rngFrom(9);
@@ -214,7 +139,7 @@ function Embers({ count }: { count: number }) {
     }
     return [p, s];
   }, [count]);
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uCentre: { value: new Vector3() }, uColor: { value: new Color("#ff6a2a") } }), []);
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uCentre: { value: new Vector3() }, uColor: { value: new Color("#8fa0b8") } }), []);
   useFrame((state) => {
     const sim = game.sim;
     if (!mat.current || !sim) return;
@@ -243,12 +168,12 @@ function Aura() {
     ring.current.position.set(sim.hunter.x, 0.07, sim.hunter.z);
     ring.current.rotation.z = state.clock.elapsedTime * 0.8;
     ring.current.scale.setScalar(1 + (1 - flash) * (flash > 0 ? 5 : 0) + (sim.buffs.ward > 0 ? 0.25 : 0));
-    mat.current.opacity = Math.max(flash, sim.buffs.ward > 0 ? 0.8 : sim.buffs.might > 0 || sim.buffs.haste > 0 ? 0.5 : 0.22);
-    mat.current.color.set(flash > 0 ? "#f5d27a" : sim.buffs.ward > 0 ? "#f5b83d" : sim.buffs.might > 0 ? "#ff5a3a" : sim.buffs.haste > 0 ? "#5dff9b" : "#5f9bff");
+    mat.current.opacity = Math.max(flash, sim.buffs.ward > 0 ? 0.8 : sim.buffs.might > 0 || sim.buffs.haste > 0 ? 0.4 : 0.1);
+    mat.current.color.set(flash > 0 ? "#e6cf9a" : sim.buffs.ward > 0 ? "#d9a441" : sim.buffs.might > 0 ? "#d9583a" : sim.buffs.haste > 0 ? "#7fcf9d" : "#9fb4d6");
   });
   return (
     <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.95, 1.08, 6]} />
+      <ringGeometry args={[1.0, 1.05, 48]} />
       <meshBasicMaterial ref={mat} toneMapped={false} transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
     </mesh>
   );
@@ -281,7 +206,7 @@ export function World() {
       style={{ touchAction: "none" }}
       dpr={DPR[quality]}
       camera={{ position: [0, 9, -12], fov: 50, near: 0.2, far: 400 }}
-      gl={{ antialias: quality === "low", powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
+      gl={{ antialias: quality === "low", powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
     >
       <PerformanceMonitor
         flipflops={2}
@@ -293,11 +218,11 @@ export function World() {
           setQuality(q === "high" ? "medium" : "low");
         }}
       />
-      <color attach="background" args={[SKY]} />
+      <color attach="background" args={[FOG]} />
       <Driver />
       <Rig />
-      <Plateau />
-      <Embers count={quality === "low" ? 120 : 320} />
+      <Air />
+      <Dust count={quality === "low" ? 140 : 380} />
       <Aura />
       <Drops />
       <Suspense fallback={null}>
@@ -306,12 +231,14 @@ export function World() {
         <Soldiers />
         <Foes />
         <Ruins />
-        <Hall />
+        <Cavern />
       </Suspense>
       {quality !== "low" && (
         <EffectComposer multisampling={quality === "high" ? 4 : 0}>
-          <Bloom mipmapBlur intensity={quality === "high" ? 1.05 : 0.8} luminanceThreshold={0.62} luminanceSmoothing={0.3} radius={0.7} />
-          <Vignette darkness={0.78} offset={0.2} />
+          <Bloom mipmapBlur intensity={quality === "high" ? 0.55 : 0.45} luminanceThreshold={0.78} luminanceSmoothing={0.25} radius={0.65} />
+          <HueSaturation saturation={-0.12} />
+          <Noise opacity={0.07} premultiply />
+          <Vignette darkness={0.86} offset={0.22} />
         </EffectComposer>
       )}
     </Canvas>

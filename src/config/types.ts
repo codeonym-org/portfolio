@@ -74,7 +74,7 @@ export interface Gate {
 }
 
 /** what a planet of the Gate Realm is made of: each kind has its own shader branch */
-export type PlanetKind = "ocean" | "cracked" | "gas" | "ice" | "lava" | "crystal" | "barren";
+export type PlanetKind = "ocean" | "cracked" | "gas" | "ice" | "lava" | "crystal" | "barren" | "shroud";
 
 /** one world of the Gate Realm; a planet that holds a gate is charted */
 export interface Planet {
