@@ -30,7 +30,7 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
-| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68) | in progress (decisions 001–003); only #63 left, see "In progress right now" |
+| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68) | done, merged into `40-gates` (#64–#67, #69–#71) |
 | #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
@@ -39,29 +39,7 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 `/gates/the-surface` (same as `/`), `/gates/the-deep` (sealed screen); the one-minute brief (`open_brief`); live GitHub data
 (`github_live`, `/api/github/<project id>`, optional `GITHUB_TOKEN`); the map card (`show_map`).
 
-## In progress right now: ticket #63 (branch `63-holo-map`)
-
-The code is written and committed on the branch as one work-in-progress commit (pushed). Lint, `tsc`, the 57
-tests and the build passed. A headless run passed on desktop and phone: the four levels (Globe, Region, Country,
-City), wheel and arrow keys, Escape closes, no request to any other host.
-
-- New: `scripts/assets/holo-map.mjs` → `public/data/holo-map.json` (501 kB, 135 kB gzipped; Natural Earth land
-  and borders, OpenStreetMap roads around the base); `src/components/map/holo-scene.tsx` (the R3F scene);
-  `src/components/interface/holo-map.tsx` (the overlay window).
-- Changed: `player.config.ts` and `config/types.ts` (`base.countryCentre`), `world.config.ts` (`world.map`
-  copy and credits), `world-store.ts` (`mapOpen`), `shell.tsx`, `system-commands.ts` (`open_map`),
-  `system-snapshot.ts`, `palette.tsx`, `map-card.tsx` ("Open the hologram"), `globals.css` (`.holo-*`).
-- The source data files are not in the repository (they were in the agent's scratchpad). To build the JSON
-  again, download them as the header of `holo-map.mjs` says.
-
-**Left for #63:** look at how it renders (take screenshots at each level, desktop and phone) and fix what looks
-wrong; list the data sources in `scripts/assets/README.md`; write `tickets/GH-63-holographic-map/impl.md`;
-update the ticket's `meta.md` and `history/CHANGES.md`; open the pull request to `40-gates` ("feat(map): a
-holographic map, from the globe down to the city", `Fixes #63`), squash-merge, close #63 by hand.
-
-**Then:** mark story GH-57 done (`meta.md`, `history/CHANGES.md`), close #57, update this file, start GH-44.
-
-**Rules learned in this story:**
+## Rules learned in story GH-57
 
 - Do not stop or restart the owner's dev server (port 3001). Ask the owner to restart `pnpm dev` if styles look
   stale. Run your own check server on another port from `.next-verify`.
@@ -81,12 +59,12 @@ holographic map, from the globe down to the city", `Fixes #63`), squash-merge, c
    Safari, Firefox.
 6. The hologram draws Morocco with the Sahara as one outline (`scripts/assets/holo-map.mjs`).
 
-## Next: story GH-57, then GH-44
+## Done: story GH-57. Next: GH-44
 
-**GH-57 "The Gate Realm and a System with presence"** was asked for by the owner on 2026-11-12 and goes
-**before** The Deep (epic decision 010). Its whole design is in
-`stories/GH-57-gate-realm-and-system-presence/decisions/001-story-design.md`; read it before any ticket.
-Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `impl.md`):
+**GH-57 "The Gate Realm and a System with presence"** was asked for by the owner on 2026-11-12 and went
+**before** The Deep (epic decision 010). Its design is in
+`stories/GH-57-gate-realm-and-system-presence/decisions/` (001–003); each ticket has an `impl.md` that says
+what was built, what was checked and what was not.
 
 | Ticket | What | State |
 |---|---|---|
@@ -96,14 +74,18 @@ Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `imp
 | #61 | The index as a wheel from the left edge (hover the edge, hold Q, tap the tab) | done, merged into `40-gates` (#67) |
 | #68 | From the owner's review (decision 003): answers in the System font; the camera frames the Monolith above the words; free camera | done, merged into `40-gates` (#69) |
 | #62 | A pulse on screen while the voice is live (an ECG trace and a bpm readout) | done, merged into `40-gates` (#70) |
-| #63 | A holographic map: globe to city, data shipped with the site | **in progress on branch `63-holo-map`**, see below |
+| #63 | A holographic map: globe to city, data shipped with the site | done, merged into `40-gates` (#71) |
+
+What this story added on `40-gates`: `/gates` as seven planets; the System font and window; the `offer` tool;
+the index wheel; a camera the visitor can move; the voice pulse; the holographic map (`open_map`,
+`public/data/holo-map.json`, built by `scripts/assets/holo-map.mjs`, see `scripts/assets/README.md`).
 
 Open for the owner from this story (nothing blocks): the names "First Light" and "Erebus" (one file,
-`src/config/gates.config.ts`); whether the System's long answers should also use the System font.
+`src/config/gates.config.ts`).
 
 ## Then: story GH-44, The Deep / Erebus (nothing built, nothing decided yet)
 
-Stories 1–3 are done and merged into `40-gates`. GH-44 is the only story left; its folder
+Stories 1–4 are done and merged into `40-gates`. GH-44 is the only story left; its folder
 (`stories/GH-44-deep-s-tier-gate/`) holds only the short draft. No branch exists for it and no code was written.
 
 The owner's brief: "fully functional gameplay with extended 3d elems and gamified experience with reward
