@@ -101,13 +101,32 @@ const borders = c50
 const home = homeOutline(read(countries10).features, 0.01).filter((l) => l.length > 6);
 
 // ── the city's roads ──
+// Overpass returns a way whole, even when most of it is outside the box (a motorway runs for 100 km):
+// keep only what lies within REACH_KM of the base, which is what the plate shows.
+// BASE is the same point as `player.base` in src/config/player.config.ts.
+const BASE = { lon: -1.91, lat: 34.68 };
+const REACH_KM = 12.5;
+const near = (lon, lat) => Math.hypot((lon - BASE.lon) * Math.cos((BASE.lat * Math.PI) / 180), lat - BASE.lat) * 111.2 <= REACH_KM;
+function withinReach(flat) {
+  const pieces = [];
+  let current = [];
+  for (let i = 0; i + 1 < flat.length; i += 2) {
+    if (near(flat[i], flat[i + 1])) current.push(flat[i], flat[i + 1]);
+    else {
+      if (current.length >= 4) pieces.push(current);
+      current = [];
+    }
+  }
+  if (current.length >= 4) pieces.push(current);
+  return pieces;
+}
 const CLASS = { motorway: "major", trunk: "major", primary: "major", secondary: "minor", tertiary: "small" };
 const roads = { major: [], minor: [], small: [] };
 for (const way of read(roadsFile).elements) {
   const cls = CLASS[way.tags?.highway];
   if (!cls || !way.geometry) continue;
   const flat = line(way.geometry.map((p) => [p.lon, p.lat]), 0.0001);
-  if (flat.length >= 4) roads[cls].push(flat);
+  for (const piece of withinReach(flat)) roads[cls].push(piece);
 }
 
 const data = {

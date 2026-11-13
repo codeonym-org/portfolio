@@ -105,6 +105,7 @@ export default function HoloMap() {
             <HoloScene data={data} place={PLACE} want={want} still={still} onLevel={setLevel} />
           </div>
           <span className="holo-lines" aria-hidden />
+          <span className="holo-shade" aria-hidden />
 
           <div className="pointer-events-none absolute top-3 left-4 max-w-[70%]">
             <p className="text-[11px] font-bold tracking-[0.3em] text-[color-mix(in_oklch,var(--sys)_80%,transparent)] uppercase">

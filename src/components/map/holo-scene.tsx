@@ -34,7 +34,7 @@ export const LEVELS = ["Globe", "Region", "Country", "City"] as const;
 const DEG = Math.PI / 180;
 const Y = new Vector3(0, 1, 0);
 /** camera distance from the globe's centre at levels 0, 1 and 2 */
-const ORBIT = [3.7, 1.95, 1.46];
+const ORBIT = [3.7, 1.95, 1.6];
 /** plate units per degree of latitude at the city level (0.1° is about 11 km) */
 const CITY_SCALE = 4;
 const KM = CITY_SCALE / 111.2;
@@ -236,7 +236,7 @@ function Hologram({ data, place, want, still, onLevel }: Control & { data: HoloD
   const plate = useRef<Group>(null);
   const ping = useRef<Mesh>(null);
   const pingMaterial = useRef<MeshBasicMaterial>(null);
-  const beam = useRef<Mesh>(null);
+  const dot = useRef<Mesh>(null);
   const scratch = useMemo(() => ({ orbit: new Vector3(), city: new Vector3(), look: new Vector3(), up: new Vector3(), arm: new Vector3() }), []);
 
   useFrame(({ clock }, delta) => {
@@ -297,12 +297,12 @@ function Hologram({ data, place, want, still, onLevel }: Control & { data: HoloD
     if (small.current) small.current.opacity = city * 0.3;
     if (ringLines.current) ringLines.current.opacity = city * 0.45;
 
-    // the place: a ring that keeps opening, and a beam straight up
+    // the place: a point, and a ring that keeps opening around it
     const beat = (t * 0.6) % 1;
     const far = 0.012 + (1 - Math.min(v.z, 2) / 2) * 0.05;
     if (ping.current) ping.current.scale.setScalar(far * (0.6 + beat * 2.6) * (1 - city * 0.5));
     if (pingMaterial.current) pingMaterial.current.opacity = (1 - beat) * 0.9;
-    if (beam.current) beam.current.scale.set(far * 0.5, 0.05 + far * 2.6, far * 0.5);
+    if (dot.current) dot.current.scale.setScalar(far * 0.34 * (1 - city * 0.5));
   });
 
   const blue = COLORS.system;
@@ -344,9 +344,9 @@ function Hologram({ data, place, want, still, onLevel }: Control & { data: HoloD
           <ringGeometry args={[0.82, 1, 48]} />
           <meshBasicMaterial ref={pingMaterial} color={gold} transparent depthTest={false} blending={AdditiveBlending} toneMapped={false} />
         </mesh>
-        <mesh ref={beam} renderOrder={5}>
-          <cylinderGeometry args={[0.12, 0.5, 1, 12, 1, true]} />
-          <meshBasicMaterial color={gold} transparent opacity={0.55} depthTest={false} blending={AdditiveBlending} toneMapped={false} />
+        <mesh ref={dot} rotation={[-Math.PI / 2, 0, 0]} renderOrder={6}>
+          <circleGeometry args={[1, 24]} />
+          <meshBasicMaterial color={gold} transparent opacity={0.95} depthTest={false} toneMapped={false} />
         </mesh>
         <group ref={plate} visible={false}>
           <lineSegments geometry={geometry.rings} renderOrder={3}>

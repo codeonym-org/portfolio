@@ -708,6 +708,14 @@
     background: repeating-linear-gradient(to bottom, transparent 0 2px, oklch(0 0 0 / 22%) 2px 3px);
     mix-blend-mode: multiply;
   }
+  /* the map's lines fade under the readouts at the top, so the words stay readable */
+  .holo-shade {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 9.5rem;
+    pointer-events: none;
+    background: linear-gradient(to bottom, oklch(0.07 0.03 255 / 94%) 0%, oklch(0.07 0.03 255 / 78%) 55%, transparent 100%);
+  }
 
   .system-frame {
     position: relative;
