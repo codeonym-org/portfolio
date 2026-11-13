@@ -40,6 +40,7 @@ import { floorAt } from "./hall";
 const MODELS = {
   colossus: "/models/erebus/colossus.glb",
   knight: "/models/erebus/knight.glb",
+  hunter: "/models/erebus/hunter.glb",
   golem: "/models/erebus/golem.glb",
   obelisk: "/models/erebus/obelisk.glb",
 } as const;
@@ -100,10 +101,10 @@ function rim(m: MeshStandardMaterial, color: string, strength: number, sharp = 2
     shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimColor;\nuniform float uRimStrength;\nuniform float uRimPower;").replace(
       "#include <emissivemap_fragment>",
       `#include <emissivemap_fragment>
-        totalEmissiveRadiance += uRimColor * pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), uRimPower) * uRimStrength;`,
+        totalEmissiveRadiance += uRimColor * pow(1.0 - abs(dot(normal, normalize(vViewPosition))), uRimPower) * uRimStrength;`,
     );
   };
-  m.customProgramCacheKey = () => `erebus-rim-${color}-${strength}-${sharp}`;
+  m.customProgramCacheKey = () => `erebus-rim2-${color}-${strength}-${sharp}`;
 }
 
 function puppet(source: Object3D, clips: AnimationClip[], scale: number, skin: Skin): Puppet {
@@ -191,15 +192,15 @@ const stone: Skin = (m) => {
   m.metalness = 0;
   m.roughness = 1;
 };
+/** cloth and leather, not armour: its own texture kept, pulled toward night; and the one clean blade in the hall */
 const hunterSkin: Skin = (m) => {
-  const body = m.name === "Paladin_MAT";
-  // black iron, and the one blade in the hall that is clean steel
-  m.color.set(body ? "#30333c" : "#b4bccb");
-  m.emissive.set(body ? "#070b16" : "#5f74a8");
-  m.emissiveIntensity = body ? 0.8 : 0.55;
-  m.metalness = body ? 0.7 : 0.95;
-  m.roughness = body ? 0.5 : 0.28;
-  rim(m, "#9a8cff", body ? 0.55 : 0.3, 3);
+  const body = m.name === "Hunter_MAT";
+  m.color.set(body ? "#9197ab" : "#b4bccb");
+  m.emissive.set(body ? "#05060c" : "#5f74a8");
+  m.emissiveIntensity = body ? 0.6 : 0.55;
+  m.metalness = body ? 0.05 : 0.95;
+  m.roughness = body ? 0.78 : 0.28;
+  rim(m, "#9a8cff", body ? 0.5 : 0.3, 3);
 };
 /** a shadow: black all through, and lit only along its outline */
 const risen: Skin = (m) => {
@@ -231,12 +232,12 @@ const rock: Skin = (m) => {
 /* ── the hunter: the one body in the hall that is not stone ── */
 
 export function Hunter() {
-  const knight = useModel(MODELS.knight);
+  const hunter = useModel(MODELS.hunter);
   const body = useMemo(() => {
-    const p = puppet(knight.scene, knight.animations, 1.1, hunterSkin);
+    const p = puppet(hunter.scene, hunter.animations, 1.04, hunterSkin);
     p.root.visible = true;
     return p;
-  }, [knight]);
+  }, [hunter]);
   const root = useRef<Group>(null);
   const lean = useRef<Group>(null);
   const arc = useRef<Mesh>(null);

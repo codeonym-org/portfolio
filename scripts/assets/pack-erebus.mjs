@@ -80,6 +80,8 @@ await pack("death_star_asuirila_shadow_wraith.glb", "colossus.glb", { size: 1024
 // one Mixamo rig for the hunter (helmet hidden), the statues that wake and the shadow soldiers; no plume
 const clipsKept = { Idle: "Idle", Run: "Run", Slash: "Slash", Spin: "Spin", Kneel: "Kneel", PowerUp: "PowerUp", StandUp: "Rise" };
 await pack("knight.glb", "knight.glb", { skinned: true, size: 1024, keep: clipsKept, drop: ["Igris_plume"] });
+// the hunter: a hooded figure skinned to the same rig (`rig-hunter.py`), so it plays the same clips and carries the same blade
+await pack("hunter.glb", "hunter.glb", { skinned: true, size: 1024, keep: clipsKept });
 await pack("drugdor_the_golem_animated.glb", "golem.glb", { skinned: true, keep: { Walk: "Walk", Attack3: "Attack", Attack2: "Smash", IdlePieces: "Idle" } });
 await pack("obelisk.glb", "obelisk.glb");
 // the hall itself: the throne room the live record already uses (`hall.py` trims it); its walls carry the stained glass, so they stay large
