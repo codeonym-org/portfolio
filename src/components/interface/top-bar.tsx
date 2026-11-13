@@ -81,7 +81,7 @@ export function TopBar() {
     <header className={cn("pointer-events-none fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-3 px-3 pt-3 transition-opacity duration-1000 sm:px-[4vw] sm:pt-6", !ready && "opacity-0")}>
       <button type="button" onClick={closeFocus} className="pointer-events-auto flex items-center gap-3 text-left" aria-label="codeonym — back to orbit">
         {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB local SVG mark */}
-        <img src="/brand/mark.svg" alt="" className="size-8" />
+        <img src="/brand/mark-small.svg" alt="" className="size-8" />
         <span>
           <span className="block font-display text-[13px] tracking-[0.34em] text-white">{player.handle.toUpperCase()}</span>
           <span className="eyebrow mt-0.5 block text-[9px]">
