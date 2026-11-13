@@ -1,4 +1,4 @@
-# HANDOFF — the portfolio "Gates" epic (last updated 2026-11-12, by the agent)
+# HANDOFF — the portfolio "Gates" epic (last updated 2026-11-13, by the agent)
 
 Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, drafts, `impl.md` per ticket,
 `history/CHANGES.md` per level).
@@ -30,7 +30,7 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
-| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68) | in progress (decisions 001–003); #62 and #63 left |
+| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68) | in progress (decisions 001–003); only #63 left, see "In progress right now" |
 | #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
@@ -38,6 +38,36 @@ What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight p
 the phone number as a contact channel; the gate registry (`src/config/gates.config.ts`), the catalog `/gates`,
 `/gates/the-surface` (same as `/`), `/gates/the-deep` (sealed screen); the one-minute brief (`open_brief`); live GitHub data
 (`github_live`, `/api/github/<project id>`, optional `GITHUB_TOKEN`); the map card (`show_map`).
+
+## In progress right now: ticket #63 (branch `63-holo-map`)
+
+The code is written and committed on the branch as one work-in-progress commit (pushed). Lint, `tsc`, the 57
+tests and the build passed. A headless run passed on desktop and phone: the four levels (Globe, Region, Country,
+City), wheel and arrow keys, Escape closes, no request to any other host.
+
+- New: `scripts/assets/holo-map.mjs` → `public/data/holo-map.json` (501 kB, 135 kB gzipped; Natural Earth land
+  and borders, OpenStreetMap roads around the base); `src/components/map/holo-scene.tsx` (the R3F scene);
+  `src/components/interface/holo-map.tsx` (the overlay window).
+- Changed: `player.config.ts` and `config/types.ts` (`base.countryCentre`), `world.config.ts` (`world.map`
+  copy and credits), `world-store.ts` (`mapOpen`), `shell.tsx`, `system-commands.ts` (`open_map`),
+  `system-snapshot.ts`, `palette.tsx`, `map-card.tsx` ("Open the hologram"), `globals.css` (`.holo-*`).
+- The source data files are not in the repository (they were in the agent's scratchpad). To build the JSON
+  again, download them as the header of `holo-map.mjs` says.
+
+**Left for #63:** look at how it renders (take screenshots at each level, desktop and phone) and fix what looks
+wrong; list the data sources in `scripts/assets/README.md`; write `tickets/GH-63-holographic-map/impl.md`;
+update the ticket's `meta.md` and `history/CHANGES.md`; open the pull request to `40-gates` ("feat(map): a
+holographic map, from the globe down to the city", `Fixes #63`), squash-merge, close #63 by hand.
+
+**Then:** mark story GH-57 done (`meta.md`, `history/CHANGES.md`), close #57, update this file, start GH-44.
+
+**Rules learned in this story:**
+
+- Do not stop or restart the owner's dev server (port 3001). Ask the owner to restart `pnpm dev` if styles look
+  stale. Run your own check server on another port from `.next-verify`.
+- Lint rule `react-hooks/immutability`: do not write to values a hook returns (for example
+  `gl.domElement.style`); put the style on `<Canvas>`. Do not run prettier.
+- The model may make an offer only every 45 s, and offer kinds are `quest`, `skill`, `item`.
 
 ## Waiting for the owner (nothing blocks the work)
 
@@ -47,7 +77,9 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
    (story GH-42, decision 001).
 3. The phone number is public once the epic reaches `main` (story GH-41, decision 008).
 4. Optional: add a read-only `GITHUB_TOKEN` on Vercel if GitHub rate limits ever show (story GH-43, decision 001).
-5. Not checked by the agent anywhere: voice (hold V), real phones, Safari, Firefox.
+5. Not checked by the agent anywhere: voice with a real microphone (hold V), real phones, pinch gestures,
+   Safari, Firefox.
+6. The hologram draws Morocco with the Sahara as one outline (`scripts/assets/holo-map.mjs`).
 
 ## Next: story GH-57, then GH-44
 
@@ -63,8 +95,8 @@ Tickets, in order (each has a `draft.md`; run its ticket pass, build, write `imp
 | #60 | The System persuades: one next step per answer, the `offer` tool | done, merged into `40-gates` |
 | #61 | The index as a wheel from the left edge (hover the edge, hold Q, tap the tab) | done, merged into `40-gates` (#67) |
 | #68 | From the owner's review (decision 003): answers in the System font; the camera frames the Monolith above the words; free camera | done, merged into `40-gates` (#69) |
-| #62 | A pulse on screen while the voice is live | not started |
-| #63 | A holographic map: globe to city, data shipped with the site | not started |
+| #62 | A pulse on screen while the voice is live (an ECG trace and a bpm readout) | done, merged into `40-gates` (#70) |
+| #63 | A holographic map: globe to city, data shipped with the site | **in progress on branch `63-holo-map`**, see below |
 
 Open for the owner from this story (nothing blocks): the names "First Light" and "Erebus" (one file,
 `src/config/gates.config.ts`); whether the System's long answers should also use the System font.

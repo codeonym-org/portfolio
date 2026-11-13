@@ -118,14 +118,25 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
+    name: "open_map",
+    description:
+      "Open the holographic map over the whole screen: a globe the visitor can turn and zoom, which flies from the planet down to the Player's city (Oujda, Morocco) and shows his local time. Use when the visitor asks to SEE or explore the map or the globe, or wants a closer look at where he lives. For a plain 'where is he based?' prefer show_map (the small card).",
+    parameters: z.object({}),
+    handler: () => {
+      store().setMapOpen(true);
+      return "The holographic map is open, flying from the globe down to Oujda. The visitor is looking at it. Reply with one short line; do not describe the map.";
+    },
+  }),
+  define({
     name: "close_windows",
-    description: "Send everything back to orbit: closes the sector window, the case file, the inspect card, the palette and the CV viewer.",
+    description: "Send everything back to orbit: closes the sector window, the case file, the inspect card, the palette, the map and the CV viewer.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
       s.closeFocus();
       s.setPaletteOpen(false);
       s.setCvOpen(false);
+      s.setMapOpen(false);
       return "All windows closed. The record is back in orbit.";
     },
   }),

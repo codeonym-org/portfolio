@@ -39,6 +39,7 @@ export interface SystemSnapshot {
     /** true when the one-minute brief is brought forward */
     briefOpen: boolean;
     cvOpen: boolean;
+    mapOpen: boolean;
     paletteOpen: boolean;
     inspectTarget: InspectTarget | null;
     sectors: SectorSnapshot[];
@@ -122,6 +123,7 @@ export function getSystemSnapshot(): SystemSnapshot {
       caseFile: s.caseFile,
       briefOpen: s.brief,
       cvOpen: s.cvOpen,
+      mapOpen: s.mapOpen,
       paletteOpen: s.paletteOpen,
       inspectTarget: s.inspect,
       sectors: sectors.map((z) => ({

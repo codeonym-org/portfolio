@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, Globe, MapPin } from "lucide-react";
+import { world } from "@/config/world.config";
+import { useWorldStore } from "@/store/world-store";
 import { player } from "@/config/player.config";
 import { clockIn, difference, offsetMinutes } from "@/record/time";
 import { WORLD_LAND } from "@/record/world-map";
@@ -50,6 +52,13 @@ export function MapCard() {
         </circle>
         <circle cx={x} cy={y} r="1.6" fill="oklch(0.8 0.15 80)" />
       </svg>
+      <button
+        type="button"
+        onClick={() => useWorldStore.getState().setMapOpen(true)}
+        className="pointer-events-auto flex w-full items-center justify-center gap-2 border-t border-white/[0.07] px-3 py-2 font-[family-name:var(--font-system)] text-xs font-bold tracking-[0.22em] text-system uppercase transition-colors hover:bg-system/10 hover:text-white focus-visible:bg-system/10 focus-visible:outline-none"
+      >
+        <Globe className="size-4" /> {world.map.open}
+      </button>
     </figure>
   );
 }

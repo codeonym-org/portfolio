@@ -219,6 +219,19 @@ export const world = {
     },
   },
 
+  /** the holographic map (`interface/holo-map.tsx`) */
+  map: {
+    title: "The System · where the Player is",
+    open: "Open the hologram",
+    level: "Level",
+    time: "His local time",
+    hint: "Drag to turn · wheel or pinch to zoom · ← → to change level · Esc to close",
+    rings: "Rings at 2, 5 and 10 km. Main roads of the city.",
+    noRoads: "Rings at 2, 5 and 10 km.",
+    loading: "Projecting…",
+    failed: "The map data could not be loaded. The position is still shown.",
+    credits: "Land and borders: Natural Earth (public domain) · Roads: © OpenStreetMap contributors",
+  },
   credits:
-    "The Monolith and every shard: generated in Blender for this site (scripts/assets/monolith.py) · Studio light: Studio Kontrast 04, Poly Haven (CC0) · Sounds: Kenney (CC0) · Map outline: Natural Earth (public domain)",
+    "The Monolith and every shard: generated in Blender for this site (scripts/assets/monolith.py) · Studio light: Studio Kontrast 04, Poly Haven (CC0) · Sounds: Kenney (CC0) · Maps: Natural Earth (public domain), roads © OpenStreetMap contributors",
 };

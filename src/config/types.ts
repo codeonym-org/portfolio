@@ -37,7 +37,7 @@ export interface Player {
   job: string;
   location: string;
   /** where the Player lives, for the map card: coordinates of the city, IANA time zone */
-  base: { city: string; country: string; lat: number; lon: number; timeZone: string };
+  base: { city: string; country: string; lat: number; lon: number; timeZone: string; countryCentre: { lon: number; lat: number } };
   guild: string;
   level: number;
   /** hunter rank letter (S/A/B...) shown beside the level */

@@ -683,6 +683,40 @@
     }
   }
 
+  /* ── the holographic map ── */
+  .holo-backdrop {
+    background: radial-gradient(ellipse at center, oklch(0.1 0.04 250 / 72%), oklch(0.03 0.02 280 / 92%));
+    backdrop-filter: blur(6px);
+    animation: holo-in 0.3s ease-out both;
+  }
+  @keyframes holo-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .holo-stage {
+    background:
+      radial-gradient(ellipse at 50% 55%, oklch(0.78 0.13 232 / 9%), transparent 62%),
+      linear-gradient(oklch(0.78 0.13 232 / 5%) 1px, transparent 1px) 0 0 / 100% 44px,
+      linear-gradient(90deg, oklch(0.78 0.13 232 / 5%) 1px, transparent 1px) 0 0 / 44px 100%;
+  }
+  /* the scan lines of the projection */
+  .holo-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, oklch(0 0 0 / 22%) 2px 3px);
+    mix-blend-mode: multiply;
+  }
+  /* the map's lines fade under the readouts at the top, so the words stay readable */
+  .holo-shade {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 9.5rem;
+    pointer-events: none;
+    background: linear-gradient(to bottom, oklch(0.07 0.03 255 / 94%) 0%, oklch(0.07 0.03 255 / 78%) 55%, transparent 100%);
+  }
+
   .system-frame {
     position: relative;
     border: 1px solid var(--hair);

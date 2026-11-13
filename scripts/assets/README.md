@@ -56,3 +56,22 @@ Turns Natural Earth 1:110m land (public domain) into one SVG path, `src/record/w
 ```bash
 node scripts/assets/world-map.mjs <ne_110m_land.geojson>
 ```
+
+## `holo-map.mjs`
+
+Builds `public/data/holo-map.json`, the only data the holographic map loads (about 500 kB, 135 kB gzipped):
+the world's coastlines, the borders around the base, the base country's outline and the city's main roads.
+
+| Input | Source · license |
+| ----- | ---------------- |
+| `ne_110m_land.geojson`, `ne_50m_admin_0_countries.geojson`, `ne_10m_admin_0_countries.geojson` | [Natural Earth](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson) · public domain |
+| `overpass-roads.json` | OpenStreetMap through the Overpass API, fetched once (the query is in the script's header) · © OpenStreetMap contributors, ODbL |
+
+```bash
+node scripts/assets/holo-map.mjs ne_110m_land.geojson ne_50m_admin_0_countries.geojson \
+  ne_10m_admin_0_countries.geojson overpass-roads.json
+```
+
+The inputs are not in the repository. Roads are cut at 12.5 km from the base (`BASE` and `REACH_KM` in the
+script; `BASE` must match `player.base`). To move the map to another city, change `player.base`, the Overpass
+box, `BASE` and `HOME`, then run the script again.
