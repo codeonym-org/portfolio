@@ -9,7 +9,7 @@ import { compactArgs, useSession } from "@/store/session-store";
 import { live, useWorldStore } from "@/store/world-store";
 import { mayOffer, suggestedAfter } from "./guide";
 import { answerLocally, type BrainAction, type BrainIndex } from "./local-brain";
-import { executeSystemCommand } from "./system-commands";
+import { dropPendingProposal, executeSystemCommand } from "./system-commands";
 
 /**
  * ── ONE WAY IN ────────────────────────────────────────────────
@@ -109,6 +109,7 @@ export async function converse(input: string) {
   if (!text || useSession.getState().running) return;
   useWorldStore.getState().completeQuest("awaken");
   // moving on without answering a proposal is ignoring it
+  dropPendingProposal();
   if (useWorldStore.getState().prompt?.id === "offer") useWorldStore.getState().ignore();
   // asking for more reopens the offers a visitor had declined
   if (ASKS_FOR_MORE.test(text)) useWorldStore.getState().invite();

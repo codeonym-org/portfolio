@@ -1,0 +1,2 @@
+- 2026-11-13: drafted by the agent from the owner's review; tracker issue created.
+- 2026-11-13: built by the agent (impl.md); merged into 40-gates.

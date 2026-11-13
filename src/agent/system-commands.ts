@@ -11,6 +11,7 @@ import { caseSchema, encodeCase, resolveCase } from "@/record/case-file";
 import { hasNode } from "@/record/nodes";
 import { ARISE_MS, levelFor, live, pulse, syncPercent, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
+import { useSession } from "@/store/session-store";
 import { MAX_DECLINED, OFFER_GAP_MS, proposalKey } from "./next-step";
 
 /**
@@ -384,19 +385,23 @@ export const systemCommands: SystemCommand[] = [
         (action === "open_map" && s.mapOpen);
       if (open) return "Not shown: that is already open in front of the visitor. Now answer the visitor normally, with no invitation.";
       // a proposal still waiting is replaced: the visitor ignored it
+      dropPendingProposal();
       if (s.prompt) s.ignore();
       s.raiseOffer(key);
-      store().ask({
-        id: "offer",
-        heading: world.prompts.offerHeading,
-        body: message,
-        accept: world.prompts.accept,
-        decline: world.prompts.refuse,
-        tone: "system",
-        command: { name: action, args },
-        onAnswer: (accepted) => store().settleOffer(accepted ? "accepted" : "refused"),
-        onIgnore: () => store().settleOffer("ignored"),
-      });
+      // the model calls this before it writes its answer: the window waits until the answer is on screen
+      afterTheReply(() =>
+        store().ask({
+          id: "offer",
+          heading: world.prompts.offerHeading,
+          body: message,
+          accept: world.prompts.accept,
+          decline: world.prompts.refuse,
+          tone: "system",
+          command: { name: action, args },
+          onAnswer: (accepted) => store().settleOffer(accepted ? "accepted" : "refused"),
+          onIgnore: () => store().settleOffer("ignored"),
+        }),
+      );
       return "Proposal shown in a System window. The visitor will answer in their own time. Finish your reply now: it must NOT contain another invitation, question or next step — the window is the proposal.";
     },
   }),
@@ -410,6 +415,33 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
 ];
+
+/** how long the System must have been silent before a proposal appears: the reply is complete and has been revealed */
+const QUIET_MS = 2200;
+let waiting: number | null = null;
+
+/** runs `show` once no reply has been running for QUIET_MS (a reply is several runs: tools, then text) */
+function afterTheReply(show: () => void) {
+  let quietSince = 0;
+  waiting = window.setInterval(() => {
+    const now = Date.now();
+    if (useSession.getState().running) quietSince = 0;
+    else if (!quietSince) quietSince = now;
+    else if (now - quietSince >= QUIET_MS) {
+      window.clearInterval(waiting!);
+      waiting = null;
+      show();
+    }
+  }, 200);
+}
+
+/** the visitor moved on before the proposal appeared: it was never seen, so it counts as ignored */
+export function dropPendingProposal() {
+  if (waiting === null) return;
+  window.clearInterval(waiting);
+  waiting = null;
+  store().settleOffer("ignored");
+}
 
 export function executeSystemCommand(name: string, args: Record<string, unknown> = {}): string | Promise<string> {
   const cmd = systemCommands.find((c) => c.name === name);
