@@ -1,22 +1,23 @@
 "use client";
 
-import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { PerformanceMonitor, Stars } from "@react-three/drei";
+import { PerformanceMonitor } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
-import { ACESFilmicToneMapping, AdditiveBlending, BackSide, Color, Object3D, Vector3, type DirectionalLight, type Fog, type HemisphereLight, type InstancedMesh, type Mesh, type MeshBasicMaterial, type PointLight, type ShaderMaterial } from "three";
+import { ACESFilmicToneMapping, AdditiveBlending, Color, Vector3, type DirectionalLight, type Fog, type HemisphereLight, type Mesh, type MeshBasicMaterial, type PointLight, type ShaderMaterial } from "three";
 import { frame, game } from "@/erebus/game";
 import { controls } from "@/erebus/input";
 import { rngFrom } from "@/erebus/rules";
 import { ARENA } from "@/erebus/sim";
 import { useWorldStore, type Quality } from "@/store/world-store";
 import { Foes, Hunter, Obelisks, Ruins, Soldiers } from "./models";
+import { Hall } from "./hall";
 import { Drops } from "./things";
 
 /**
- * Erebus, drawn: a black plateau cracked by something still burning
- * underneath, a ring of obelisks, ruins at the rim, a broken moon.
- * The ground is a shader; the bodies and the stone are models
+ * Erebus, drawn: a sealed hall of cut stone (hall.tsx) with a ring of
+ * obelisks, statues behind the columns and something still burning
+ * under the floor. The bodies and the carved stone are models
  * (models.tsx). The
  * simulation runs first in every frame (`Driver`), then the camera
  * follows the hunter, then everything draws what the simulation says.
@@ -80,26 +81,26 @@ const groundFragment = /* glsl */ `
   void main() {
     vec2 p = vWorld.xz;
     float radius = length(p);
-    float big = cracks(p * 0.11);
+    float big = cracks(p * 0.16);
     float small = cracks(p * 0.42 + 7.3);
     float pulse = 0.6 + 0.4 * sin(uTime * 0.7 + radius * 0.15);
     float glow = smoothstep(0.02, 0.0, big) * 1.15 + smoothstep(0.016, 0.0, small) * 0.1;
     // heat bleeding out of the wide cracks
     glow += smoothstep(0.3, 0.0, big) * 0.045;
-    vec3 rock = vec3(0.026, 0.022, 0.034) + 0.022 * smoothstep(0.0, 0.5, small);
+    vec3 rock = vec3(0.0);
     // the hunter's own light on the ground
     float near = 1.0 - smoothstep(0.0, 11.0, distance(p, uHunter.xz));
     rock += vec3(0.02, 0.035, 0.07) * near;
-    vec3 col = rock + uCrack * glow * pulse * uHeat;
+    vec3 col = rock + uCrack * glow * pulse * uHeat * 0.3;
     // the edge of the plateau
     float rim = smoothstep(0.5, 0.0, abs(radius - uArena));
-    col += uCrack * rim * 1.4;
+    col += uCrack * rim * 0.5;
     col *= 1.0 - 0.75 * smoothstep(uArena, uArena + 26.0, radius);
     // the burst: a ring that runs outward from the hunter
     float wave = abs(distance(p, uHunter.xz) - uBurst * 16.0);
     col += vec3(0.55, 0.45, 1.0) * smoothstep(0.9, 0.0, wave) * (1.0 - uBurst) * step(0.001, uBurst);
     float fog = smoothstep(uFogNear, uFogFar, distance(vWorld, cameraPosition));
-    gl_FragColor = vec4(mix(col, uSky, fog), 1.0);
+    gl_FragColor = vec4(col * (1.0 - fog), 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -148,58 +149,30 @@ function Plateau() {
     const burst = (sim.time - game.fx.burst) / 0.7;
     u.uBurst.value = burst > 0 && burst < 1 ? burst : 0;
     const near = 34 - d * 28;
-    const far = 120 - d * 96;
+    const far = 150 - d * 126;
     u.uFogNear.value = fog.current.near = near;
     u.uFogFar.value = fog.current.far = far;
-    hemi.current.intensity = 0.7 * (1 - d * 0.9);
-    sun.current.intensity = 1.5 * (1 - d * 0.95);
+    hemi.current.intensity = 1.1 * (1 - d * 0.9);
+    sun.current.intensity = 0.55 * (1 - d * 0.95);
     lamp.current.position.set(sim.hunter.x, 2.4, sim.hunter.z);
-    lamp.current.intensity = 26 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 120 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 160;
+    lamp.current.intensity = 9 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 120 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 160;
   });
 
   return (
     <>
       <fog ref={fog} attach="fog" args={[SKY, 34, 120]} />
-      <hemisphereLight ref={hemi} args={["#4a4470", "#120608", 0.7]} />
-      <directionalLight ref={sun} color="#b9c6ff" intensity={1.5} position={[-30, 50, -20]} />
-      <pointLight ref={lamp} color="#7aa8ff" intensity={26} distance={16} decay={2} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[ARENA + 46, 96]} />
-        <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={groundVertex} fragmentShader={groundFragment} />
+      <hemisphereLight ref={hemi} args={["#6a64a0", "#2a1410", 1.1]} />
+      <directionalLight ref={sun} color="#b9c6ff" intensity={0.55} position={[-30, 50, -20]} />
+      <pointLight ref={lamp} color="#a99bff" intensity={9} distance={22} decay={1.8} />
+      {/* light laid over the stone floor: the veins under it, the edge of the ring, the burst */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+        <circleGeometry args={[ARENA + 2, 96]} />
+        <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={groundVertex} fragmentShader={groundFragment} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
     </>
   );
 }
 const tint = new Color();
-
-const SPIRES = 90;
-/** obsidian spires around the plateau: the wall of the arena */
-function Spires() {
-  const mesh = useRef<InstancedMesh>(null);
-  useLayoutEffect(() => {
-    const m = mesh.current;
-    if (!m) return;
-    const r = rngFrom(41);
-    const o = new Object3D();
-    for (let i = 0; i < SPIRES; i++) {
-      const a = r() * Math.PI * 2;
-      const d = ARENA + 12 + Math.pow(r(), 1.6) * 34;
-      const h = 3 + r() * 9 + (d - ARENA) * 0.35;
-      o.position.set(Math.sin(a) * d, h / 2 - 0.4, Math.cos(a) * d);
-      o.rotation.set((r() - 0.5) * 0.35, r() * 6.28, (r() - 0.5) * 0.35);
-      o.scale.set(0.8 + r() * 1.8, h, 0.8 + r() * 1.8);
-      o.updateMatrix();
-      m.setMatrixAt(i, o.matrix);
-    }
-    m.instanceMatrix.needsUpdate = true;
-  }, []);
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, SPIRES]} frustumCulled={false}>
-      <coneGeometry args={[1, 1, 5]} />
-      <meshStandardMaterial color="#0a0910" roughness={0.35} metalness={0.6} flatShading />
-    </instancedMesh>
-  );
-}
 
 const emberVertex = /* glsl */ `
   uniform float uTime;
@@ -256,26 +229,6 @@ function Embers({ count }: { count: number }) {
       </bufferGeometry>
       <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={emberVertex} fragmentShader={emberFragment} transparent depthWrite={false} blending={AdditiveBlending} />
     </points>
-  );
-}
-
-/** a moon with a piece missing, low over the rim */
-function Moon() {
-  return (
-    <group position={[-70, 46, -150]}>
-      <mesh>
-        <sphereGeometry args={[22, 40, 32]} />
-        <meshStandardMaterial color="#1b1420" emissive="#2a0f12" emissiveIntensity={0.7} roughness={1} fog={false} />
-      </mesh>
-      <mesh scale={1.14}>
-        <sphereGeometry args={[22, 32, 24]} />
-        <meshBasicMaterial color="#ff3a14" transparent opacity={0.07} side={BackSide} blending={AdditiveBlending} depthWrite={false} fog={false} />
-      </mesh>
-      <mesh position={[15, 12, 12]}>
-        <sphereGeometry args={[10, 24, 20]} />
-        <meshBasicMaterial color={SKY} fog={false} />
-      </mesh>
-    </group>
   );
 }
 
@@ -344,9 +297,6 @@ export function World() {
       <Driver />
       <Rig />
       <Plateau />
-      <Spires />
-      <Moon />
-      <Stars radius={160} depth={60} count={quality === "low" ? 700 : 1800} factor={5} saturation={0} fade speed={0.4} />
       <Embers count={quality === "low" ? 120 : 320} />
       <Aura />
       <Drops />
@@ -356,6 +306,7 @@ export function World() {
         <Soldiers />
         <Foes />
         <Ruins />
+        <Hall />
       </Suspense>
       {quality !== "low" && (
         <EffectComposer multisampling={quality === "high" ? 4 : 0}>

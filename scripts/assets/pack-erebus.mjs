@@ -75,11 +75,11 @@ async function pack(input, output, { skinned = false, size = 512, keep = null, d
   console.log(`  ${output.padEnd(12)} ${(bytes.byteLength / 1024) | 0} KB  ${anims.join(", ")}`);
 }
 
-// the hunter: a hooded figure with no skeleton (it glides), and the blade that fights for it
-await pack("death_star_asuirila_shadow_wraith.glb", "hunter.glb", { size: 1024 });
-await pack("sword_of_the_defeated.glb", "blade.glb");
-// shadow soldiers and the fallen knights: one Mixamo rig, without the plume
-await pack("knight.glb", "knight.glb", { skinned: true, keep: { Idle: "Idle", Run: "Run", Slash: "Slash", StandUp: "Rise" }, drop: ["Igris_plume"] });
+// the colossus on the dais: a hooded figure, turned to stone at runtime
+await pack("death_star_asuirila_shadow_wraith.glb", "colossus.glb", { size: 1024 });
+// one Mixamo rig for the hunter (helmet hidden), the statues that wake and the shadow soldiers; no plume
+const clipsKept = { Idle: "Idle", Run: "Run", Slash: "Slash", Spin: "Spin", Kneel: "Kneel", PowerUp: "PowerUp", StandUp: "Rise" };
+await pack("knight.glb", "knight.glb", { skinned: true, size: 1024, keep: clipsKept, drop: ["Igris_plume"] });
 await pack("drugdor_the_golem_animated.glb", "golem.glb", { skinned: true, keep: { Walk: "Walk", Attack3: "Attack", Attack2: "Smash", IdlePieces: "Idle" } });
 await pack("obelisk.glb", "obelisk.glb");
 await pack("stylized_ruined_pillar.glb", "pillar.glb");

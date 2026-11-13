@@ -9,13 +9,11 @@ import {
   Box3,
   Color,
   DoubleSide,
-  Euler,
   Group,
   LoopOnce,
   LoopRepeat,
   Matrix4,
   Object3D,
-  Quaternion,
   Vector3,
   type AnimationAction,
   type AnimationClip,
@@ -28,18 +26,18 @@ import { clone as cloneRig } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { game } from "@/erebus/game";
 import { rngFrom } from "@/erebus/rules";
 import { ARENA, MAX_SOLDIERS, type Foe } from "@/erebus/sim";
+import { HALL } from "./hall";
 
 /**
- * Everything on Erebus that is a model: the hooded hunter and the
- * blade that fights for it, the knights (fallen ones against you,
- * risen ones behind you), the rock golems, the obelisks and the ruins
- * around the plateau. Sources and licenses: scripts/assets/README.md.
+ * Everything on Erebus that is a model: the hunter, the statues that
+ * wake against you and the ones that rise behind you (one knight rig,
+ * three skins), the rock golems, the obelisks, the colossus and what
+ * stands behind the columns. Sources and licenses: scripts/assets/README.md.
  * All of it is meshopt-compressed; the decoder ships with three.
  */
 
 const MODELS = {
-  hunter: "/models/erebus/hunter.glb",
-  blade: "/models/erebus/blade.glb",
+  colossus: "/models/erebus/colossus.glb",
   knight: "/models/erebus/knight.glb",
   golem: "/models/erebus/golem.glb",
   obelisk: "/models/erebus/obelisk.glb",
@@ -131,13 +129,14 @@ function play(p: Puppet, name: string, speed = 1) {
   p.current = name;
 }
 
-function once(p: Puppet, name: string, speed = 1) {
+function once(p: Puppet, name: string, speed = 1, from = 0) {
   const next = p.actions[name];
   if (!next) return;
   const prev = p.actions[p.current];
   next.reset().setLoop(LoopOnce, 1);
   next.clampWhenFinished = true;
   next.timeScale = speed;
+  next.time = from;
   next.fadeIn(0.08).play();
   if (prev && prev !== next) prev.fadeOut(0.08);
   p.current = name;
@@ -145,6 +144,11 @@ function once(p: Puppet, name: string, speed = 1) {
 }
 
 const WHITE = new Color("#ffffff");
+/** the one-shot is over: the body is free to walk again */
+function settle(p: Puppet) {
+  p.busy = null;
+}
+
 function flash(p: Puppet, on: boolean, fade = 1) {
   for (const m of p.mats) {
     m.mat.emissive.copy(on ? WHITE : m.glow);
@@ -153,12 +157,31 @@ function flash(p: Puppet, on: boolean, fade = 1) {
   }
 }
 
+/** a statue that woke: bare stone, and a blade that has started to burn */
 const fallen: Skin = (m) => {
-  m.color.set("#7d6570");
-  m.emissive.set(m.name === "Paladin_MAT" ? "#3a0906" : "#ff3b1f");
-  m.emissiveIntensity = m.name === "Paladin_MAT" ? 0.55 : 2.2;
-  m.metalness = 0.6;
-  m.roughness = 0.5;
+  const body = m.name === "Paladin_MAT";
+  if (body) m.map = null;
+  m.color.set(body ? "#77737f" : "#3a2a2a");
+  m.emissive.set(body ? "#1a0705" : "#ff3b1f");
+  m.emissiveIntensity = body ? 0.6 : 2.4;
+  m.metalness = 0;
+  m.roughness = 1;
+};
+/** a statue that has not: the same stone, nothing lit */
+const stone: Skin = (m) => {
+  m.map = null;
+  m.color.set("#7f7c8e");
+  m.emissive.set("#000000");
+  m.metalness = 0;
+  m.roughness = 1;
+};
+const hunterSkin: Skin = (m) => {
+  const body = m.name === "Paladin_MAT";
+  m.color.set(body ? "#34304f" : "#cfc4ff");
+  m.emissive.set(body ? "#3a22a8" : "#8f6bff");
+  m.emissiveIntensity = body ? 0.9 : 2.8;
+  m.metalness = 0.5;
+  m.roughness = 0.65;
 };
 const risen: Skin = (m) => {
   m.color.set("#162458");
@@ -174,88 +197,63 @@ const rock: Skin = (m) => {
     m.emissiveIntensity = 3;
     m.toneMapped = false;
   } else {
-    m.color.set("#5d5a78");
-    m.emissive.set("#0a0714");
+    m.color.set("#b5b1c6");
+    m.emissive.set("#15101f");
     m.emissiveIntensity = 1;
     m.roughness = 0.75;
   }
 };
 
-/* ── the hunter: a hooded figure that glides, and a blade that needs no hand ── */
-
-const restAt = new Vector3();
-const strikeAt = new Vector3();
-const turn = new Quaternion();
-const euler = new Euler(0, 0, 0, "YXZ");
+/* ── the hunter: the one body in the hall that is not stone ── */
 
 export function Hunter() {
-  const hooded = useModel(MODELS.hunter);
-  const sword = useModel(MODELS.blade);
-  const body = useMemo(
-    () =>
-      standing(hooded.scene, 2.05, (m) => {
-        m.color.set("#b9b4d8");
-        m.emissive.set("#191238");
-        m.emissiveIntensity = 0.9;
-        m.roughness = 0.7;
-      }),
-    [hooded],
-  );
-  const blade = useMemo(() => {
-    const b = standing(sword.scene, 1.55, (m) => {
-      m.emissive.set("#8f6bff");
-      m.emissiveIntensity = 1.3;
-      m.metalness = 0.8;
-      m.roughness = 0.3;
+  const knight = useModel(MODELS.knight);
+  const body = useMemo(() => {
+    const p = puppet(knight.scene, knight.animations, 1.1, hunterSkin);
+    // bare-headed: the helmet is for statues
+    p.root.traverse((o) => {
+      if (o.name.includes("Helmet")) o.visible = false;
     });
-    // held by the hilt: the model stands point down, so the hilt is the top
-    for (const child of b.children) child.position.y -= 1.3;
-    return b;
-  }, [sword]);
+    p.root.visible = true;
+    return p;
+  }, [knight]);
   const root = useRef<Group>(null);
   const lean = useRef<Group>(null);
   const arc = useRef<Mesh>(null);
   const arcMat = useRef<MeshBasicMaterial>(null);
-  const fall = useRef(0);
+  const was = useRef({ attack: 0, dead: false, arise: -9 });
 
-  useFrame((state, delta) => {
-    const h = game.sim?.hunter;
+  useFrame((_, delta) => {
+    const sim = game.sim;
     const g = root.current;
     if (!g || !lean.current || !arc.current || !arcMat.current) return;
-    g.visible = !!h;
-    if (!h) return;
+    g.visible = !!sim;
+    if (!sim) return;
+    const h = sim.hunter;
     const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
     const dashing = h.dashT > 0;
-    fall.current += ((h.dead ? 1 : 0) - fall.current) * Math.min(1, dt * 5);
+    const w = was.current;
     g.position.set(h.x, 0, h.z);
     g.rotation.y = h.yaw;
-    // it never walks: it hangs a hand's width over the ground and leans into where it goes
-    lean.current.position.y = 0.14 + Math.sin(t * 2.2) * 0.05 - fall.current * 0.1;
-    lean.current.rotation.x += ((dashing ? 0.75 : h.pace * 0.24) - fall.current * 1.5 - lean.current.rotation.x) * Math.min(1, dt * 12);
-    lean.current.rotation.z = Math.sin(t * 1.7) * 0.02;
-    lean.current.scale.setScalar(h.hurtT > 0.15 ? 0.94 : 1);
+    lean.current.rotation.x += ((dashing ? 0.55 : 0) - lean.current.rotation.x) * Math.min(1, dt * 14);
+    lean.current.scale.setScalar(h.hurtT > 0.15 ? 0.95 : 1);
 
-    // the blade: at rest it turns slowly behind the right shoulder; a blow throws it across the front
+    const heavy = h.combo === 2;
+    if (h.dead && !w.dead) once(body, "Kneel", 2.6);
+    else if (!h.dead && w.dead) once(body, "Rise", 2.4);
+    else if (!h.dead && h.attackT > w.attack + 0.01) once(body, heavy ? "Spin" : "Slash", heavy ? 2.6 : 2.3, heavy ? 0.4 : 0.3);
+    else if (!h.dead && game.fx.arise !== w.arise && sim.time - game.fx.arise < 0.3) once(body, "PowerUp", 1.7);
+    w.attack = h.attackT;
+    w.dead = h.dead;
+    w.arise = game.fx.arise;
+    if (body.busy && !h.dead && (!body.busy.isRunning() || body.busy.time >= body.busy.getClip().duration - 0.08)) settle(body);
+    // moving cuts a blow short: the feet matter more than the follow-through
+    if (body.busy && !h.dead && h.attackT <= 0 && h.pace > 0.5 && body.current !== "Rise" && body.busy.time > 0.75) settle(body);
+    if (!body.busy && !h.dead) play(body, h.pace > 0.12 ? "Run" : "Idle", dashing ? 1.9 : h.pace > 0.12 ? 0.8 + h.pace * 0.45 : 1);
+    body.mixer.update(dt);
+
     const k = h.attackT > 0 ? 1 - h.attackT / 0.26 : -1;
     const side = h.combo === 1 ? -1 : 1;
-    const heavy = h.combo === 2;
-    if (k >= 0 && !heavy) {
-      const a = side * (1.35 - k * 2.7);
-      strikeAt.set(Math.sin(a) * 0.5, 1.15, Math.cos(a) * 0.5);
-      euler.set(-Math.PI / 2, a, side * 0.5);
-    } else if (k >= 0) {
-      strikeAt.set(0, 1.5 + (1 - k) * 0.5, 0.45);
-      euler.set(0.9 - k * 2.9, 0, 0);
-    } else {
-      restAt.set(-0.62, 2.35 + Math.sin(t * 1.6) * 0.08 - fall.current * 1.6, -0.3);
-      euler.set(fall.current * 1.2, t * 0.7, 0.16);
-    }
-    turn.setFromEuler(euler);
-    const rate = Math.min(1, dt * (k >= 0 ? 40 : 9));
-    blade.position.lerp(k >= 0 ? strikeAt : restAt, rate);
-    blade.quaternion.slerp(turn, rate);
-
     arcMat.current.opacity = k >= 0 ? (1 - k) * 0.85 : 0;
     arc.current.visible = k >= 0;
     if (k >= 0) {
@@ -268,9 +266,8 @@ export function Hunter() {
   return (
     <group ref={root} visible={false}>
       <group ref={lean}>
-        <primitive object={body} />
+        <primitive object={body.root} />
       </group>
-      <primitive object={blade} />
       <group position={[0, 1.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <mesh ref={arc} visible={false}>
           <ringGeometry args={[1.5, 3.1, 28, 1, -Math.PI / 2 - 1.05, 2.1]} />
@@ -348,7 +345,7 @@ export function Foes() {
   const pool = useMemo(
     () => ({
       shade: Array.from({ length: SHADES }, () => puppet(knight.scene, knight.animations, 1, fallen)),
-      heavy: Array.from({ length: HEAVIES }, () => puppet(golem.scene, golem.animations, 0.066, rock)),
+      heavy: Array.from({ length: HEAVIES }, () => puppet(golem.scene, golem.animations, 0.11, rock)),
     }),
     [knight, golem],
   );
@@ -443,7 +440,7 @@ export function Foes() {
           }
         }
         if (p) drive(f, p);
-        if (f.kind !== "shade") top = 2 * f.scale;
+        if (f.kind !== "shade") top = 1.9 * f.scale;
       }
 
       if (f.dying < 0 && f.hp < f.maxHp) {
@@ -631,11 +628,67 @@ function ring(seed: number, count: number, near: number, far: number, small: num
   });
 }
 
+const STATUES = 14;
+/** the colossus on the dais, the statues that have not woken yet, and what fell from the vault */
 export function Ruins() {
-  const pillars = useMemo(() => ring(17, 22, 4, 13, 1.3, 2.4), []);
-  const rubble = useMemo(() => ring(23, 16, 2.5, 9, 0.55, 0.95), []);
+  const hooded = useModel(MODELS.colossus);
+  const knight = useModel(MODELS.knight);
+  const colossus = useMemo(
+    () =>
+      standing(hooded.scene, 19, (m) => {
+        m.color.set("#a9a4c4");
+        // its own texture lights it: the cloth is black, the eyes are not
+        m.emissiveMap = m.map;
+        m.emissive.set("#9fe6ff");
+        m.emissiveIntensity = 1.6;
+        m.roughness = 1;
+      }),
+    [hooded],
+  );
+  const statues = useMemo(() => {
+    const r = rngFrom(31);
+    return Array.from({ length: STATUES }, (_, i) => {
+      const p = puppet(knight.scene, knight.animations, 2.3, stone);
+      // two slots are taken: the colossus (north) and the door (south)
+      const slot = i < STATUES / 2 ? i + 1 : i + 2;
+      const a = Math.PI + (slot / (STATUES + 2)) * Math.PI * 2;
+      p.root.position.set(Math.sin(a) * HALL.aisle, 1.2, Math.cos(a) * HALL.aisle);
+      p.root.rotation.y = a + Math.PI;
+      p.root.visible = true;
+      // frozen mid-gesture, each at its own moment: the mixer never runs again
+      const pose = p.actions[i % 3 === 0 ? "Slash" : i % 3 === 1 ? "Idle" : "PowerUp"];
+      pose.play();
+      p.mixer.setTime(r() * pose.getClip().duration);
+      return p;
+    });
+  }, [knight]);
+  const plinths = useRef<InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const m = plinths.current;
+    if (!m) return;
+    statues.forEach((p, i) => {
+      dummy.position.set(p.root.position.x, 0.6, p.root.position.z);
+      dummy.rotation.set(0, p.root.rotation.y, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+  }, [statues]);
+  const pillars = useMemo(() => ring(17, 7, 4.5, 9.5, 0.8, 1.2), []);
+  const rubble = useMemo(() => ring(23, 12, 3.5, 9.5, 0.5, 0.85), []);
   return (
     <>
+      <group position={[0, 2.7, -HALL.aisle - 1]}>
+        <primitive object={colossus} />
+      </group>
+      {statues.map((p, i) => (
+        <primitive key={i} object={p.root} />
+      ))}
+      <instancedMesh ref={plinths} args={[undefined, undefined, STATUES]} frustumCulled={false}>
+        <boxGeometry args={[3.4, 1.2, 3.4]} />
+        <meshStandardMaterial color="#6f6c80" roughness={1} />
+      </instancedMesh>
       <Scatter url={MODELS.pillar} places={pillars} color="#8f8cb4" />
       <Scatter url={MODELS.remains} places={rubble} color="#7c7a9c" />
     </>

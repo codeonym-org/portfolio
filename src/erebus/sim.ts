@@ -12,8 +12,8 @@ import { foe, warden, type Derived, type EnemyKind, type FoeKind, type ProjectRa
  */
 
 /** radius the hunter can walk */
-export const ARENA = 54;
-export const OBELISK_RING = 42;
+export const ARENA = 38;
+export const OBELISK_RING = 31;
 const DASH_SPEED = 34;
 const DASH_TIME = 0.18;
 const BURST_RANGE = 6.5;

@@ -17,8 +17,8 @@ export const controls = {
   holding: false,
   /** where the camera stands around the hunter */
   yaw: Math.PI,
-  pitch: 0.4,
-  distance: 10.5,
+  pitch: 0.3,
+  distance: 9.5,
 };
 
 const MOVE: Record<string, [number, number]> = {
@@ -57,7 +57,7 @@ export function moveVector(): [number, number] {
 
 export function turnCamera(dx: number, dy: number) {
   controls.yaw -= dx * 0.006;
-  controls.pitch = Math.min(1.25, Math.max(0.22, controls.pitch + dy * 0.004));
+  controls.pitch = Math.min(1.25, Math.max(0.12, controls.pitch + dy * 0.004));
 }
 
 export function zoomCamera(delta: number) {
