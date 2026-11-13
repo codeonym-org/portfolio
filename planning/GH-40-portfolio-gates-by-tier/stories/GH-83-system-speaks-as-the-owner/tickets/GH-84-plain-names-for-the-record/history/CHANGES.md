@@ -1,0 +1,2 @@
+- 2026-11-13: drafted by the story's global pass.
+- 2026-11-13: issue #84 created (https://github.com/codeonym-org/portfolio/issues/84), status tracked.

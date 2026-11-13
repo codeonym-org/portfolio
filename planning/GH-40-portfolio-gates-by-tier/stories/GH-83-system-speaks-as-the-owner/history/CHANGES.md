@@ -1,0 +1,11 @@
+- 2026-11-13: story opened (shaping), from the owner's request to drop the Solo Leveling persona and make the System his replica.
+- 2026-11-13: decision 001 (plain record, gates kept).
+- 2026-11-13: decision 002 (first person, discloses it is a replica).
+- 2026-11-13: decision 003 (interview file, git tracked, refreshed by grilling).
+- 2026-11-13: decision 004 (no XP, levels, quests; replaces epic 006).
+- 2026-11-13: decision 005 (projects lit; chosen project as a hologram with an aura).
+- 2026-11-13: decision 006 (stock voice now, clone as a follow-up).
+- 2026-11-13: decision 007 (five tickets, cleanup first).
+- 2026-11-13: draft.md written, five tickets drafted (status: drafted).
+- 2026-11-13: issue #83 created (https://github.com/codeonym-org/portfolio/issues/83), status tracked.
+- 2026-11-13: issues #83 to #88 created; decision 008 (the agent works alone).
