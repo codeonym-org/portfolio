@@ -65,7 +65,7 @@ function Body({ target }: { target: InspectTarget }) {
       <>
         <Header icon={<skill.icon className="size-8" strokeWidth={1.4} />} rarity={skill.rarity} kind="SKILL" title={skill.name} sub={`${cat?.name ?? ""} · GRADE ${masteryGrade(skill.mastery)}`} />
         <Mastery mastery={skill.mastery} rarity={skill.rarity} />
-        <p className="text-[15px] leading-relaxed text-foreground/85 italic">“{skill.lore}”</p>
+        <p className="text-[15px] leading-relaxed text-foreground/85 ">{skill.lore}</p>
         <Tags tags={skill.tags} />
       </>
     );
@@ -88,11 +88,11 @@ function Body({ target }: { target: InspectTarget }) {
     return (
       <>
         <Header icon={<item.icon className="size-8" strokeWidth={1.4} />} rarity={item.rarity} kind={cat?.name ?? "ITEM"} title={item.name} sub={item.meta} />
-        <p className="text-[15px] leading-relaxed text-foreground/85 italic">“{item.lore}”</p>
+        <p className="text-[15px] leading-relaxed text-foreground/85 ">{item.lore}</p>
         <Tags tags={item.tags} />
         {usable && (
           <button type="button" data-active="true" onClick={use} className="hud-chip w-full py-3 font-display text-[11px] tracking-[0.3em]">
-            USE{item.unlocks && item.unlocks !== "cv" ? ` — ${sectorById[item.unlocks].name.toUpperCase()}` : ""}
+            OPEN{item.unlocks && item.unlocks !== "cv" ? ` — ${sectorById[item.unlocks].name.toUpperCase()}` : ""}
             {item.link && !item.unlocks && <ExternalLink className="size-3.5" />}
           </button>
         )}
@@ -107,7 +107,7 @@ function Body({ target }: { target: InspectTarget }) {
       <Header
         icon={<span className="font-display text-2xl">{quest.rank}</span>}
         rarity={quest.rank === "S" ? "legendary" : quest.rank === "A" ? "epic" : "rare"}
-        kind={`${quest.type.toUpperCase()} QUEST · ${(quest.stage ?? quest.status).toUpperCase()}`}
+        kind={`${quest.type === "main" ? "WORK" : "PERSONAL"} PROJECT · ${(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "delivered")).toUpperCase()}`}
         title={quest.name}
         sub={[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}
       />
@@ -142,7 +142,7 @@ function Header({ icon, rarity, kind, title, sub }: { icon: React.ReactNode; rar
       <span className={cn("grid size-16 shrink-0 place-items-center border", rarityTile[rarity])}>{icon}</span>
       <div className="min-w-0 flex-1 pr-8">
         <p className={cn("font-display text-[9px] tracking-[0.3em] uppercase", rarityText[rarity])}>
-          ◆ {rarity} · {kind}
+          ◆ {kind}
         </p>
         <h3 className="mt-1 text-xl leading-tight font-bold text-white">{title}</h3>
         {sub && <p className="mt-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{sub}</p>}
@@ -188,7 +188,7 @@ export function InspectCard() {
   );
 }
 
-/** the Hunter's License projected: the full CV */
+/** the full CV, in a viewer */
 export function CvModal() {
   const open = useWorldStore((s) => s.cvOpen);
   const setOpen = useWorldStore((s) => s.setCvOpen);
@@ -213,7 +213,7 @@ export function CvModal() {
           >
             <header className="flex items-center gap-3 border-b border-arcane/20 px-5 py-3">
               <div className="min-w-0 flex-1">
-                <p className="font-display text-[9px] tracking-[0.35em] text-rank-s">OFFICIAL RECORD · HUNTER&apos;S LICENSE</p>
+                <p className="font-display text-[9px] tracking-[0.35em] text-rank-s">CURRICULUM VITAE</p>
                 <p className="truncate font-semibold text-white">{player.name} — {player.job}</p>
               </div>
               <a href={CV_URL} download="bouarour-ayoub-cv.pdf" className="hud-chip px-3 py-2 text-sm">

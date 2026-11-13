@@ -49,10 +49,10 @@ export function unseenSteps(seen: Seen, index: StepIndex): NextStep[] {
         command: { name: "inspect_entity", args: { kind: "quest", id: index.flagship.id } },
       },
     !opened("projects") && { id: "projects", line: "You have not seen what he built. Shall I bring the projects forward?", command: { name: "open_sector", args: { sector: "projects" } } },
-    !opened("experience") && { id: "experience", line: "The chronicle shows where he did this work. Shall I open it?", command: { name: "open_sector", args: { sector: "experience" } } },
-    !opened("skills") && { id: "skills", line: "The arsenal lists every skill with its grade. Shall I open it?", command: { name: "open_sector", args: { sector: "skills" } } },
-    !seen.cvRead && { id: "cv", line: "The Hunter's License is his full CV. Shall I project it?", command: { name: "open_cv", args: {} } },
-    !opened("contact") && { id: "contact", line: `You have seen the record. The Gate reaches ${index.playerName} directly. Shall I open it?`, command: { name: "open_sector", args: { sector: "contact" } } },
+    !opened("experience") && { id: "experience", line: "His experience shows where he did this work. Shall I open it?", command: { name: "open_sector", args: { sector: "experience" } } },
+    !opened("skills") && { id: "skills", line: "The skills section lists every skill with its grade. Shall I open it?", command: { name: "open_sector", args: { sector: "skills" } } },
+    !seen.cvRead && { id: "cv", line: "His full CV is here. Shall I open it?", command: { name: "open_cv", args: {} } },
+    !opened("contact") && { id: "contact", line: `You have seen the record. Contact reaches ${index.playerName} directly. Shall I open it?`, command: { name: "open_sector", args: { sector: "contact" } } },
   ];
   return steps.filter((s): s is NextStep => !!s);
 }

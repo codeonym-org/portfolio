@@ -1,6 +1,6 @@
 /**
  * ── TIME BETWEEN TWO PLACES ───────────────────────────────────
- * The Player's local time and how far it is from the visitor's,
+ * Ayoub's local time and how far it is from the visitor's,
  * from the browser's own clock: no geolocation, no request.
  * Dependency-free (unit-tested with `node --test`).
  */

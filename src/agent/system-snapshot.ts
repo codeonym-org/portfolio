@@ -13,7 +13,7 @@ import { levelFor, syncPercent, useWorldStore } from "@/store/world-store";
  * ── AGENT BRIDGE · READ SIDE ──────────────────────────────────
  * One serializable snapshot of everything an AI agent needs to
  * reason about the record: which sector or case is brought forward,
- * the visitor's progress, and the Player's full dossier.
+ * the visitor's progress, and Ayoub's full dossier.
  * Icons and React types are stripped — every value survives
  * JSON.stringify.
  *

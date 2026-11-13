@@ -50,7 +50,7 @@ const SECTOR_WORDS: Record<string, string[]> = {
   experience: ["experience", "career", "job", "work history", "worked", "company", "employer", "education", "degree", "study", "studied", "university", "master", "opensnz", "parcours", "etudes", "formation", "diplome"],
   projects: ["project", "built", "build", "shipped", "quest", "shadow", "case stud", "projet", "realisation", "portfolio"],
   skills: ["skill", "stack", "tech", "tool", "framework", "arsenal", "competence", "language", "langage", "know"],
-  inventory: ["inventory", "vault", "credential", "certificate", "item", "relic", "license", "inventaire"],
+  inventory: ["inventory", "vault", "credential", "certificate", "item", "relic", "license", "inventaire", "document", "degree", "diploma", "diplome"],
   status: ["who", "about", "profile", "status", "player", "ayoub", "codeonym", "level", "rank", "creed", "title", "qui", "profil", "bio", "introduce", "himself"],
 };
 
@@ -79,8 +79,8 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   if (!text) return { text: "The System heard nothing.", actions: [] };
 
   if (has(text, "cv", "resume", "curriculum", "hunter card")) {
-    if (has(text, "download", "save", "telecharg")) return { text: "[ Record extracted. ] The Hunter's License is downloading.", actions: [{ name: "download_cv", args: {} }] };
-    return { text: "The Hunter's License — the complete record, as a document.", actions: [{ name: "open_cv", args: {} }] };
+    if (has(text, "download", "save", "telecharg")) return { text: "The CV is downloading.", actions: [{ name: "download_cv", args: {} }] };
+    return { text: "The full CV, as a document.", actions: [{ name: "open_cv", args: {} }] };
   }
 
   if (has(text, "brief", "summary", "overview", "short version", "in short", "tl;dr", "tldr", "one minute", "resume rapide", "en bref")) {
@@ -105,7 +105,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   }
 
   if (has(text, ...SECTOR_WORDS.contact)) {
-    return { text: `The Gate is open. Every channel below reaches ${p.name} directly.`, actions: [open("contact")], contact: true };
+    return { text: `Every channel below reaches ${p.name} directly.`, actions: [open("contact")], contact: true };
   }
 
   const quest = mention(text, index.quests);
@@ -113,9 +113,9 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: `${quest.name}. ${quest.summary}`, actions: [{ name: "inspect_entity", args: { kind: "quest", id: quest.id } }] };
   }
   const skill = mention(text, index.skills);
-  if (skill) return { text: `${skill.name} is in the arsenal. Its record is open.`, actions: [{ name: "inspect_entity", args: { kind: "skill", id: skill.id } }] };
+  if (skill) return { text: `${skill.name}. Its entry is open.`, actions: [{ name: "inspect_entity", args: { kind: "skill", id: skill.id } }] };
   const item = mention(text, index.items);
-  if (item) return { text: `${item.name}, from the vault.`, actions: [{ name: "inspect_entity", args: { kind: "item", id: item.id } }] };
+  if (item) return { text: `${item.name}, from the documents.`, actions: [{ name: "inspect_entity", args: { kind: "item", id: item.id } }] };
 
   if (has(text, "close", "back", "home", "reset view", "fermer", "retour")) return { text: "The record returns to orbit.", actions: [{ name: "close_windows", args: {} }] };
 
@@ -133,7 +133,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   }
 
   if (has(text, "hello", "hi", "hey", "salam", "bonjour", "salut", "yo")) {
-    return { text: `You have been noticed. Ask about ${p.name}'s projects, skills or experience — or say "contact".`, actions: [] };
+    return { text: `Hello. Ask about ${p.name}'s projects, skills or experience — or say "contact".`, actions: [] };
   }
 
   return {

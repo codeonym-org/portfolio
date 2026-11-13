@@ -1,9 +1,9 @@
 import type { Achievement, ChronicleEntry } from "./types";
 
 /**
- * ── CHRONICLE ─────────────────────────────────────────────────
+ * ── EXPERIENCE ─────────────────────────────────────────────────
  * `chronicle` = professional experience (newest first).
- * `achievements` = education / titles, rendered as gold medal tiles.
+ * `achievements` = education, rendered as gold tiles.
  */
 export const chronicle: ChronicleEntry[] = [
   {

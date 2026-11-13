@@ -47,13 +47,13 @@ function build(): RecordNode[] {
   const add = (n: Omit<RecordNode, "key" | "search"> & { search?: string }) =>
     nodes.push({ ...n, key: `${n.kind}:${n.id}`, search: `${n.label} ${n.sub ?? ""} ${n.search ?? ""}`.toLowerCase() });
 
-  // ── the Player: a crown above the Monolith, his titles around it ──
+  // ── Ayoub: a crown above the Monolith, his titles around it ──
   add({
     kind: "player",
     id: "player",
     sector: "status",
     label: player.name,
-    sub: `${player.title} · LV.${player.level}`,
+    sub: player.title,
     shape: "status",
     size: 0.62,
     hue: "gold",

@@ -1,27 +1,27 @@
 import type { Quest } from "./types";
 
 /**
- * ── QUEST LOG ─────────────────────────────────────────────────
- * main quests = the Player's engagements (the OpenSNZ questline);
- * side quests = personal projects, open source (codeonym-oss) and own
- * products (codeonym-org). Every quest names its guild (guilds.config).
- * Side-quest text restates the repository's README and nothing beyond it;
- * periods come from the Player's CV ("since").
+ * ── PROJECTS ──────────────────────────────────────────────────
+ * main = his engagements at OpenSNZ; side = personal projects, open
+ * source (codeonym-oss) and own products (codeonym-org). Every project
+ * names its organisation (guilds.config). Personal-project text restates
+ * the repository's README and nothing beyond it; periods come from his CV.
+ * (The identifiers still say quest and guild; what is shown does not.)
  * `stage` says whether a personal project is released or still in development.
  * rank: "S" | "A" | "B" (drives glow color), status: "cleared" | "ongoing".
- * `rewards` are the tech-stack badges revealed once the quest has risen.
+ * `rewards` are the tech-stack badges.
  */
 export const quests: Quest[] = [
   {
     id: "opensnz-contract",
-    name: "Guild Contract — OpenSNZ-Technology",
+    name: "Software Engineer at OpenSNZ-Technology",
     rank: "S",
     type: "main",
     guild: "opensnz",
     status: "ongoing",
     period: "2025/09 – Present",
     summary:
-      "The active main questline: Software Engineer at OpenSNZ-Technology — designing, building and maintaining production agentic AI systems end-to-end, from rapid prototyping to deployment.",
+      "His current role: Software Engineer at OpenSNZ-Technology — designing, building and maintaining production agentic AI systems end-to-end, from rapid prototyping to deployment.",
     details: [
       "Ship multi-agent architectures, LLM-driven workflows and agent-to-enterprise integrations to production.",
       "Architect agent systems around DDD, CQRS and Event-Driven Architecture, with RabbitMQ + Celery as the async backbone — containerized with Docker Compose behind Traefik and Authentik.",

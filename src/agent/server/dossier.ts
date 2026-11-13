@@ -25,8 +25,7 @@ function identity() {
     `Name: ${player.firstName} (handle "${player.handle}"; full name ${player.name}, given only when asked)`,
     `Role: ${player.job} — ${player.title}`,
     `Location: ${player.location}`,
-    `Guilds: ${guilds.map((g) => `${g.name} [${g.id}] — ${g.role} (${g.kind}). ${g.summary}${g.link ? ` ${g.link}` : ""}`).join(" | ")}`,
-    `Hunter rank ${player.rank} · LV.${player.level} (${player.rankNote})`,
+    `Organisations: ${guilds.map((g) => `${g.name} [${g.id}] — ${g.role} (${g.kind}). ${g.summary}${g.link ? ` ${g.link}` : ""}`).join(" | ")}`,
     `Languages: ${player.languages.map((l) => `${l.name} (${l.grade})`).join(", ")}`,
     `Links: GitHub ${player.links.github} · LinkedIn ${player.links.linkedin} · Email ${player.links.email} · Phone ${player.links.phone}`,
   ].join("\n");
@@ -36,8 +35,8 @@ function profile() {
   return [
     ...player.profile,
     `Creed: "${player.creed}"`,
-    `Titles: ${player.titles.map((t) => `${t.name} — ${t.description}`).join(" | ")}`,
-    `Stats: ${player.stats.map((s) => `${s.code} ${s.value} (${s.label})`).join(", ")}`,
+    `Known for: ${player.titles.map((t) => `${t.name} — ${t.description}`).join(" | ")}`,
+    `Strengths (self-rated, 0-100): ${player.stats.map((s) => `${s.code} ${s.value} (${s.label})`).join(", ")}`,
   ].join("\n");
 }
 
@@ -54,7 +53,7 @@ function education() {
 function projects(full: boolean) {
   return quests
     .map((q) => {
-      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "main quest" : "side quest"} · rank ${q.rank} · guild ${findGuild(q.guild)?.name ?? q.guild} · ${q.stage ?? q.status}${q.period ? ` · ${q.period}` : ""}`;
+      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "work at OpenSNZ" : "personal project"} · organisation ${findGuild(q.guild)?.name ?? q.guild} · ${q.stage ?? q.status}${q.period ? ` · ${q.period}` : ""}`;
       const body = full
         ? `\n  ${q.summary}\n  ${q.details.map((d) => `• ${d}`).join("\n  ")}\n  Stack: ${q.rewards.join(", ")}${q.link ? `\n  Link: ${q.link}` : ""}${q.docs ? `\n  Docs: ${q.docs}` : ""}`
         : `\n  ${q.summary} Stack: ${q.rewards.join(", ")}`;
@@ -90,7 +89,7 @@ function inventory(full: boolean) {
 function world() {
   const sectorLines = sectors.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
   const questLines = visitorQuests.map((q) => `- ${q.id}: "${q.name}" — ${q.objective} (+${q.xp} XP)`).join("\n");
-  return `Sectors of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
+  return `Sections of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
 }
 
 export const dossierDigest = [
@@ -102,7 +101,7 @@ export const dossierDigest = [
   experience(),
   "## EDUCATION (sector: experience; ids in brackets, evidence kind \"education\")",
   education(),
-  "## PROJECTS = QUESTS (sector: projects; ids in brackets, evidence kind \"quest\")",
+  "## PROJECTS (section: projects; ids in brackets, evidence kind \"quest\")",
   projects(false),
   "## SKILLS (sector: skills; ids in brackets, grade S≥90 A≥85 B≥78, evidence kind \"skill\")",
   skillTree(false),

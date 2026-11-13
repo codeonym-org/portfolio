@@ -20,19 +20,19 @@ import type { SectorDef, SectorId, VisitorQuest } from "./types";
 export const sectors: SectorDef[] = [
   {
     id: "status",
-    name: "The Player",
-    section: "Status & Profile",
-    epithet: "the one the System chose",
+    name: "Profile",
+    section: "Profile",
+    epithet: "who he is and what he is known for",
     icon: Gauge,
     tone: "gold",
     description:
-      "Player identity: name, job, rank, level, titles, core stats, profile, creed and languages.",
+      "Who he is: name, role, what he is known for, strengths, profile, how he works and languages.",
   },
   {
     id: "experience",
-    name: "Chronicle",
+    name: "Experience",
     section: "Experience & Education",
-    epithet: "every contract the Player has signed",
+    epithet: "where he has worked and studied",
     icon: Landmark,
     tone: "system",
     description:
@@ -40,43 +40,43 @@ export const sectors: SectorDef[] = [
   },
   {
     id: "projects",
-    name: "Shadows",
+    name: "Projects",
     section: "Projects",
-    epithet: "fallen quests, waiting for a command",
+    epithet: "what he has built, at work and on his own",
     icon: Skull,
     tone: "arcane",
     description:
-      "Projects, framed as fallen shadows. Each dormant blade is one quest (project); commanding ARISE wakes it, unseals its details and binds it to the Monolith.",
+      "His projects: engagements at OpenSNZ, open source (codeonym-oss) and own products (codeonym-org), each with its details and stack.",
   },
   {
     id: "skills",
-    name: "Arsenal",
+    name: "Skills",
     section: "Skills",
-    epithet: "the kit of a job-class awakened",
+    epithet: "what he works with",
     icon: Swords,
     tone: "ember",
     description:
-      "The skill tree: job skills (AI, agent stack, languages, web, databases, ops) and secondary skills (languages spoken, soft skills, pursuits), each with a mastery grade.",
+      "His skills: technical (AI, agent stack, languages, web, databases, ops) and beyond the job (languages spoken, soft skills, interests), each with a grade.",
   },
   {
     id: "inventory",
-    name: "Vault",
-    section: "Inventory & CV",
-    epithet: "relics, credentials, and the Hunter's License",
+    name: "Documents",
+    section: "Documents & CV",
+    epithet: "the CV, degrees and links",
     icon: Backpack,
     tone: "gold",
     description:
-      "Possessions: artifacts (the Hunter's License holds the full CV), credentials (degrees) and curios.",
+      "Documents: the full CV, links, degrees and interests.",
   },
   {
     id: "contact",
-    name: "The Gate",
+    name: "Contact",
     section: "Contact",
-    epithet: "step through to reach the Player",
+    epithet: "how to reach him",
     icon: DoorOpen,
     tone: "arcane",
     description:
-      "Contact channels — GitHub, LinkedIn and email. How to reach the Player and form a party.",
+      "Contact channels: email, phone, LinkedIn and GitHub.",
   },
 ];
 
@@ -141,9 +141,9 @@ export const world = {
     role: "Software Engineer · AI Agent Engineer",
     lines: [
       "Locating the Monolith…",
-      "Sealing the fractures…",
       "Hanging the record in orbit…",
-      "Waking the System…",
+      "Linking the sections…",
+      "Starting the System…",
     ],
   },
 
@@ -171,38 +171,38 @@ export const world = {
     offerHeading: "THE SYSTEM PROPOSES",
     greeting: {
       heading: "A STRANGER HAS ENTERED",
-      body: "You stand before the record of the Player. The System can brief you on him in one minute. Accept the briefing?",
+      body: "This is the record of Ayoub Bouarour. The System can brief you on him in one minute. Accept the briefing?",
     },
   },
 
   toasts: {
-    sectorOpened: "SECTOR OPENED",
+    sectorOpened: "SECTION OPENED",
     questComplete: "QUEST COMPLETE",
     levelUp: "LEVEL UP",
     arise: "ARISE",
     ariseBody: "has risen. It is bound to the Monolith.",
     allComplete:
-      "Every record unlocked. The Player would be glad to hear from you — the Gate is open.",
+      "You have seen the whole record. Ayoub would be glad to hear from you: his contact details are one click away.",
   },
 
   /** THE SYSTEM — the agent that lives in the Monolith */
   agent: {
     name: "THE SYSTEM",
-    /** how the System addresses whoever is visiting (it keeps its distance: it serves the Player, not them) */
+    /** how the System addresses whoever is visiting */
     visitor: "Stranger",
-    /** the project the System leads a new visitor to first (a quest id) */
+    /** the project the System leads a new visitor to first (a project id) */
     flagship: "pharma-mas",
-    epithet: "the entity that chose the Player",
+    epithet: "the agent that holds his record",
     greeting:
-      "You have been noticed. I hold the whole record of the Player — ask me anything, or tell me what to show you. I answer by rearranging this place.",
+      "I hold the whole record of Ayoub. Ask me anything, or tell me what to show you. I answer by rearranging this place.",
     placeholder: "Ask the System…",
     thinking: "The System is processing…",
     brief: "One-minute brief",
     suggestions: [
-      "Who is the Player?",
+      "Who is Ayoub?",
       "What has he built with agents?",
       "Build the case for hiring him",
-      "Raise a shadow for me",
+      "Show me his projects",
       "How do I reach him?",
     ],
     offline: "The link to the System is down. I am answering from the local index — it can open anything, but it cannot reason.",
@@ -225,7 +225,7 @@ export const world = {
 
   /** the holographic map (`interface/holo-map.tsx`) */
   map: {
-    title: "The System · where the Player is",
+    title: "The System · where he is based",
     open: "Open the hologram",
     level: "Level",
     time: "His local time",

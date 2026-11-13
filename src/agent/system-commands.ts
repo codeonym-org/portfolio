@@ -39,7 +39,7 @@ const define = <S extends z.ZodObject>(cmd: SystemCommand<S>) => cmd as unknown 
 const SECTOR = z
   .enum(sectorIds as [SectorId, ...SectorId[]])
   .describe(
-    "Sector of the record: status = STATUS window (profile, stats, titles), experience = jobs & education, projects = the shadows (quests), skills = the arsenal, inventory = the vault & CV, contact = the Gate.",
+    "Section of the record: status = Profile (who he is, what he is known for, strengths), experience = jobs & education, projects = his projects, skills = his skills, inventory = Documents (CV, degrees, links), contact = Contact.",
   );
 
 const store = () => useWorldStore.getState();
@@ -101,7 +101,7 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "open_sector",
     description:
-      "Bring a sector of the record forward — e.g. 'show me the status window' → status. Its shards leave their orbit and form a halo around the Monolith, and its window opens beside it.",
+      "Bring a section of the record forward — e.g. 'show me his profile' → status. Its shards leave their orbit and form a halo around the Monolith, and its window opens beside it.",
     parameters: z.object({ sector: SECTOR }),
     handler: ({ sector }) => {
       store().openSector(sector);
@@ -111,17 +111,17 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "open_brief",
     description:
-      "Open the one-minute brief: one window with who the Player is, his current role, his guilds, his work by rank, his signature skills and every contact channel. Use when the visitor wants the short version, a summary, an overview, or says they are in a hurry.",
+      "Open the one-minute brief: one window with who he is, his current role, his organisations, his projects, his signature skills and every contact channel. Use when the visitor wants the short version, a summary, an overview, or says they are in a hurry.",
     parameters: z.object({}),
     handler: () => {
       store().openBrief();
-      return "The brief is open: identity, current role, guilds, work by rank, signature skills, contact and CV. The visitor can read it — do not recite it; one line on what to look at first.";
+      return "The brief is open: identity, current role, organisations, projects, signature skills, contact and CV. The visitor can read it — do not recite it; one line on what to look at first.";
     },
   }),
   define({
     name: "open_map",
     description:
-      "Open the holographic map over the whole screen: a globe the visitor can turn and zoom, which flies from the planet down to the Player's city (Oujda, Morocco) and shows his local time. Use when the visitor asks to SEE or explore the map or the globe, or wants a closer look at where he lives. For a plain 'where is he based?' prefer show_map (the small card).",
+      "Open the holographic map over the whole screen: a globe the visitor can turn and zoom, which flies from the planet down to his city (Oujda, Morocco) and shows his local time. Use when the visitor asks to SEE or explore the map or the globe, or wants a closer look at where he lives. For a plain 'where is he based?' prefer show_map (the small card).",
     parameters: z.object({}),
     handler: () => {
       store().setMapOpen(true);
@@ -130,7 +130,7 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "close_windows",
-    description: "Send everything back to orbit: closes the sector window, the case file, the inspect card, the palette, the map and the CV viewer.",
+    description: "Send everything back to orbit: closes the section window, the case file, the inspect card, the palette, the map and the CV viewer.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
@@ -143,10 +143,10 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "inspect_entity",
-    description: "Open the detail card for one skill, inventory item or quest (project) by its id from the dossier. The Monolith fires a beam at its shard.",
+    description: "Open the detail card for one skill, document (kind item) or project (kind quest) by its id from the dossier. The Monolith fires a beam at its shard.",
     parameters: z.object({
       kind: z.enum(["skill", "item", "quest"]),
-      id: z.string().describe("Entity id, e.g. a skill id like 'langgraph', an item id like 'hunter-license', a quest id like 'pharma-mas'."),
+      id: z.string().describe("Entity id, e.g. a skill id like 'langgraph', an item id like 'hunter-license' (the CV), a project id like 'pharma-mas'."),
     }),
     handler: ({ kind, id }) => {
       const exists = kind === "skill" ? !!findSkill(id) : kind === "item" ? !!findItem(id) : quests.some((q) => q.id === id);
@@ -206,7 +206,7 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "open_cv",
-    description: "Project the Hunter's License: open the full CV (PDF) viewer with a download option.",
+    description: "Open the full CV (PDF) viewer, with a download option.",
     parameters: z.object({}),
     handler: () => {
       store().setCvOpen(true);
@@ -227,7 +227,7 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "download_cv",
     description:
-      "Download the Hunter's License — the Player's CV as a PDF file — straight to the visitor's device. Use when they want to download, save or get the CV / resume / hunter card.",
+      "Download his CV as a PDF file straight to the visitor's device. Use when they want to download, save or get the CV or resume.",
     parameters: z.object({}),
     handler: () => {
       download(CV_URL, CV_FILE);
@@ -237,7 +237,7 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "copy_contact",
-    description: "Copy one of the Player's channels (email address, phone number, GitHub, LinkedIn) or this portfolio's link to the visitor's clipboard.",
+    description: "Copy one of his channels (email address, phone number, GitHub, LinkedIn) or this portfolio's link to the visitor's clipboard.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: async ({ channel }) => {
       const { label, text } = channelTarget(channel, player.links, window.location.origin);
@@ -254,13 +254,13 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "open_link",
     description:
-      "Open one of the Player's channels for the visitor: GitHub or LinkedIn in a new tab, email in their mail app (a new message to the Player), the phone number in their dialer, or this portfolio's link.",
+      "Open one of his channels for the visitor: GitHub or LinkedIn in a new tab, email in their mail app (a new message to him), the phone number in their dialer, or this portfolio's link.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: ({ channel }) => {
       const { label, href } = channelTarget(channel, player.links, window.location.origin);
       if (channel === "email" || channel === "phone") {
         window.location.href = href;
-        return channel === "email" ? "Opened a new email to the Player in the visitor's mail app." : "Handed the Player's phone number to the visitor's dialer.";
+        return channel === "email" ? "Opened a new email to him in the visitor's mail app." : "Handed his phone number to the visitor's dialer.";
       }
       const tab = window.open(href, "_blank");
       if (!tab) {
@@ -330,9 +330,9 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "system_notification",
     description:
-      "Push a System notification (with the System chime) onto the visitor's screen — for quest hints, warnings, flavor announcements. Keep heading ≤ 4 words, body ≤ 140 chars.",
+      "Push a System notification (with the System chime) onto the visitor's screen — for hints and warnings. Keep heading ≤ 4 words, body ≤ 140 chars.",
     parameters: z.object({
-      heading: z.string().describe("Short uppercase heading, e.g. 'HIDDEN QUEST'"),
+      heading: z.string().describe("Short uppercase heading, e.g. 'NEW RELEASE'"),
       body: z.string(),
       tone: z.enum(["system", "arcane", "gold", "ember"]).optional().describe("system=blue info, arcane=purple mystic, gold=reward, ember=warning"),
     }),

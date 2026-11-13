@@ -18,12 +18,12 @@ test("voice tasks round-trip through the text agent's message", () => {
 
 test("task reports are tagged, clipped and batched", () => {
   const text = formatTaskReports([
-    { n: 1, task: "open the crypt", status: "done", result: "Opened the Shadow Crypt." },
+    { n: 1, task: "open the projects", status: "done", result: "Opened Projects." },
     { n: 2, task: "raise", status: "failed", result: "x".repeat(2000) },
   ]);
   assert.ok(isTaskReport(text));
   assert.match(text, /^\[TASK REPORT\]/);
-  assert.match(text, /#1 · DONE · task: open the crypt\nresult: Opened the Shadow Crypt\./);
+  assert.match(text, /#1 · DONE · task: open the projects\nresult: Opened Projects\./);
   assert.match(text, /#2 · FAILED/);
   assert.ok(text.length < 1400, "long results are clipped");
   assert.equal(isTaskReport("what is his best project?"), false);

@@ -7,13 +7,13 @@ agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 | File                  | What it controls                                                        |
 | --------------------- | ----------------------------------------------------------------------- |
 | `world.config.ts`     | The six sectors (names, sections, tones), visitor quests + XP, boot and HUD copy, the System's greeting and suggestions, credits |
-| `player.config.ts`    | Identity, level, rank, titles, stats, links, languages, profile, creed  |
+| `player.config.ts`    | Identity, what he is known for, strengths, links, languages, profile     |
 | `quests.config.ts`    | Projects — each one is a dormant shard until ARISE wakes it; each names its guild |
 | `gates.config.ts`     | The gates: named, ranked ways into the record, open or sealed (`/gates`) |
-| `guilds.config.ts`    | The organizations the Player works in and the role held in each         |
-| `skills.config.ts`    | Skill sets, categories (sections of the Arsenal window), skills         |
-| `inventory.config.ts` | Vault items, rarity tiers, lore; `unlocks` = `"cv"` or a sector id      |
-| `chronicle.config.ts` | Experience timeline and education (Chronicle)                           |
+| `guilds.config.ts`    | The organisations he works in and the role held in each                 |
+| `skills.config.ts`    | Skill sets, categories (sections of the Skills window), skills          |
+| `inventory.config.ts` | Documents, degrees and interests; `unlocks` = `"cv"` or a sector id      |
+| `chronicle.config.ts` | Experience timeline and education                                       |
 | `system.config.ts`    | Version, vitals, error / 404 screen copy                                |
 | `types.ts`            | Shared shapes — TypeScript will flag any invalid edit                   |
 
