@@ -12,6 +12,8 @@ import { useWorldStore } from "@/store/world-store";
 const copy = world.prompts;
 /** how long after the scene is up the first-visit offer waits */
 const GREETING_DELAY_MS = 2600;
+/** how long an unanswered proposal stays on screen */
+const PROPOSAL_STAYS_MS = 40_000;
 
 /** a first-time visitor is offered the one-minute brief, once */
 function useGreeting() {
@@ -32,12 +34,16 @@ function useGreeting() {
 /**
  * The System's question: a window in the middle of the stage with a
  * message and two answers. It never blocks: the page behind stays
- * usable, and Escape, N or "Later" close it. Accepting runs the
+ * usable, and Escape, N or "Later" close it. A proposal from the
+ * agent has three outcomes: accepted, refused ("Not now", N) or
+ * ignored (Escape, the cross, a new message, or 40 s). Accepting runs the
  * prompt's command, which is always one from the command list.
  */
 export function SystemDialog() {
   const prompt = useWorldStore((s) => s.prompt);
   const answer = useWorldStore((s) => s.answer);
+  const ignore = useWorldStore((s) => s.ignore);
+  const proposal = prompt?.id === "offer";
   const focused = useWorldStore((s) => !!s.sector || !!s.caseFile || s.brief);
   const acceptButton = useRef<HTMLButtonElement>(null);
   useGreeting();
@@ -57,6 +63,13 @@ export function SystemDialog() {
     window.addEventListener("system:answer", onAnswer);
     return () => window.removeEventListener("system:answer", onAnswer);
   }, [reply]);
+
+  // a proposal nobody answers goes away by itself: that is "ignored", not "refused"
+  useEffect(() => {
+    if (!proposal) return;
+    const timer = window.setTimeout(ignore, PROPOSAL_STAYS_MS);
+    return () => window.clearTimeout(timer);
+  }, [proposal, prompt, ignore]);
 
   // the keyboard lands on "Accept", unless the visitor is in the middle of typing
   useEffect(() => {
@@ -92,6 +105,11 @@ export function SystemDialog() {
                   !
                 </span>
                 <span id="system-prompt-heading">{prompt.heading}</span>
+                {proposal && (
+                  <button type="button" aria-label="Ignore this proposal" onClick={ignore} className="order-1 grid size-6 place-items-center text-lg leading-none tracking-normal opacity-70 hover:opacity-100">
+                    ×
+                  </button>
+                )}
               </p>
             </div>
             <p id="system-prompt-body" className="px-5 pt-4 text-center text-[19px] leading-snug font-medium text-balance">
@@ -105,7 +123,7 @@ export function SystemDialog() {
                 {prompt.decline}
               </button>
             </div>
-            <p className="hidden pb-3 text-center text-[11px] tracking-[0.18em] text-[color-mix(in_oklch,var(--sys)_70%,transparent)] uppercase sm:block">{copy.keys}</p>
+            <p className="hidden pb-3 text-center text-[11px] tracking-[0.18em] text-[color-mix(in_oklch,var(--sys)_70%,transparent)] uppercase sm:block">{proposal ? copy.offerKeys : copy.keys}</p>
           </div>
         </motion.div>
       )}

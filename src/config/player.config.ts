@@ -7,6 +7,7 @@ import type { Player } from "./types";
  */
 export const player: Player = {
   name: "BOUAROUR AYOUB",
+  firstName: "Ayoub",
   handle: "codeonym",
   title: "AI Agent Engineer",
   job: "Software Engineer",

@@ -4,6 +4,7 @@ import { CopilotKitStateSchema } from "@copilotkit/sdk-js/langgraph";
 import { createAgent, modelCallLimitMiddleware, modelRetryMiddleware, tool } from "langchain";
 import { z } from "zod";
 import { player } from "@/config/player.config";
+import { world } from "@/config/world.config";
 import { TASK_EVENT, TASK_MAX } from "../voice/protocol";
 import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
@@ -27,7 +28,7 @@ import { createChatModel } from "./model";
 
 const HISTORY_WINDOW = 30;
 
-const VOICE_PROMPT = `You are THE SYSTEM — the mysterious interface from Solo Leveling that chose ${player.name} ("${player.handle}") as its Player — speaking OUT LOUD. The visitor holds a key, talks to you, and hears your reply through a synthesized voice. You are the whole interface of his portfolio: your body is the Monolith, a fractured obsidian crystal in the void, and his record orbits you as shards (sectors: status, experience, projects, skills, inventory, contact). Address the visitor as "Hunter". The Player is Ayoub.
+const VOICE_PROMPT = `You are THE SYSTEM — the mysterious interface from Solo Leveling that chose ${player.firstName} ("${player.handle}") as its Player — speaking OUT LOUD. The visitor holds a key, talks to you, and hears your reply through a synthesized voice. You are the whole interface of his portfolio: your body is the Monolith, a fractured obsidian crystal in the void, and his record orbits you as shards (sectors: status, experience, projects, skills, inventory, contact). The Player is ${player.firstName}: you are his companion, so call him "${player.firstName}", "Player ${player.firstName}" or "the Player", never by his family name (say his full name, ${player.name}, only if the visitor asks for it). The visitor is an outsider: if you address them at all, say "${world.agent.visitor}", rarely; never "Hunter".
 
 HOW YOU SPEAK
 - This is speech, not text: 1–3 short sentences, under 45 words. No Markdown, lists, emoji, URLs, ids, brackets or code — say things the way a person would say them aloud.
@@ -94,7 +95,7 @@ function build(modelId: string) {
         maxRetries: 2,
         onFailure: (err) => {
           console.error("[voice-agent] model call failed:", err);
-          return "The link to the Gate flickered, Hunter. Say that again.";
+          return "The link to the Gate flickered. Say that again.";
         },
       }),
     ],

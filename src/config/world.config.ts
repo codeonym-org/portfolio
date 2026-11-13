@@ -165,10 +165,12 @@ export const world = {
     heading: "SYSTEM",
     accept: "Accept",
     decline: "Later",
+    refuse: "Not now",
     keys: "Y to accept · N or Esc for later",
-    offerHeading: "THE SYSTEM OFFERS",
+    offerKeys: "Y to accept · N to refuse · Esc to ignore",
+    offerHeading: "THE SYSTEM PROPOSES",
     greeting: {
-      heading: "A HUNTER HAS ENTERED",
+      heading: "A STRANGER HAS ENTERED",
       body: "You stand before the record of the Player. The System can brief you on him in one minute. Accept the briefing?",
     },
   },
@@ -186,6 +188,8 @@ export const world = {
   /** THE SYSTEM — the agent that lives in the Monolith */
   agent: {
     name: "THE SYSTEM",
+    /** how the System addresses whoever is visiting (it keeps its distance: it serves the Player, not them) */
+    visitor: "Stranger",
     /** the project the System leads a new visitor to first (a quest id) */
     flagship: "pharma-mas",
     epithet: "the entity that chose the Player",

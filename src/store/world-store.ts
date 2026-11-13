@@ -36,6 +36,15 @@ export interface SystemPrompt {
   command?: { name: string; args?: Record<string, unknown> };
   /** told to whoever raised it */
   onAnswer?: (accepted: boolean) => void;
+  /** the visitor closed it without answering, or moved on; without this it counts as a "no" */
+  onIgnore?: () => void;
+}
+
+/** one thing the System proposed during this visit, and what the visitor did with it */
+export interface Proposal {
+  /** the action and its arguments, as one string: the same key is never proposed twice */
+  key: string;
+  outcome: "waiting" | "accepted" | "refused" | "ignored";
 }
 
 /** a beam the Monolith fires at a shard (or a whole sector) when the System touches it */
@@ -105,8 +114,8 @@ interface WorldState {
   prompt: SystemPrompt | null;
   /** entity keys (`quest:<id>`) inspected during this visit */
   inspected: string[];
-  /** how the visitor has answered the System's offers during this visit */
-  offers: { declinedInARow: number; lastAt: number };
+  /** what the System proposed during this visit and how the visitor answered */
+  offers: { declinedInARow: number; lastAt: number; log: Proposal[] };
   /** persisted: the first-visit offer has been made */
   greeted: boolean;
 
@@ -132,9 +141,13 @@ interface WorldState {
   ask: (prompt: SystemPrompt) => void;
   /** closes the prompt; running its command is the dialog's job */
   answer: (accepted: boolean) => void;
+  /** closes the prompt without an answer */
+  ignore: () => void;
   setGreeted: () => void;
-  /** an offer was raised (`null`) or answered */
-  noteOffer: (accepted: boolean | null) => void;
+  /** the System proposed something */
+  raiseOffer: (key: string) => void;
+  /** the visitor accepted, refused or ignored the proposal that was waiting */
+  settleOffer: (outcome: Exclude<Proposal["outcome"], "waiting">) => void;
   /** the visitor asked what to see next: the System may offer again */
   invite: () => void;
   resetProgress: () => void;
@@ -179,7 +192,7 @@ export const useWorldStore = create<WorldState>()(
       toasts: [],
       prompt: null,
       inspected: [],
-      offers: { declinedInARow: 0, lastAt: 0 },
+      offers: { declinedInARow: 0, lastAt: 0, log: [] },
       greeted: false,
 
       setReady: () => set({ ready: true }),
@@ -274,9 +287,9 @@ export const useWorldStore = create<WorldState>()(
         set((s) => ({ toasts: [...s.toasts.slice(-3), { ...toast, id: ++toastSeq }] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       ask: (prompt) => {
-        // a new question replaces an unanswered one: the old one counts as declined
+        // a new question replaces an unanswered one: the old one was ignored
         const waiting = get().prompt;
-        if (waiting && waiting.id !== prompt.id) waiting.onAnswer?.(false);
+        if (waiting) (waiting.onIgnore ?? (() => waiting.onAnswer?.(false)))();
         set({ prompt });
       },
       answer: (accepted) => {
@@ -285,15 +298,24 @@ export const useWorldStore = create<WorldState>()(
         set({ prompt: null });
         prompt.onAnswer?.(accepted);
       },
+      ignore: () => {
+        const prompt = get().prompt;
+        if (!prompt) return;
+        set({ prompt: null });
+        (prompt.onIgnore ?? (() => prompt.onAnswer?.(false)))();
+      },
       setGreeted: () => set({ greeted: true }),
-      noteOffer: (accepted) =>
+      raiseOffer: (key) => set((s) => ({ offers: { ...s.offers, lastAt: Date.now(), log: [...s.offers.log.slice(-11), { key, outcome: "waiting" }] } })),
+      settleOffer: (outcome) =>
         set((s) => ({
-          offers:
-            accepted === null
-              ? { ...s.offers, lastAt: Date.now() }
-              : { ...s.offers, declinedInARow: accepted ? 0 : s.offers.declinedInARow + 1 },
+          offers: {
+            ...s.offers,
+            // only a clear "no" counts against further proposals; ignoring one does not
+            declinedInARow: outcome === "accepted" ? 0 : outcome === "refused" ? s.offers.declinedInARow + 1 : s.offers.declinedInARow,
+            log: s.offers.log.map((p) => (p.outcome === "waiting" ? { ...p, outcome } : p)),
+          },
         })),
-      invite: () => set({ offers: { declinedInARow: 0, lastAt: 0 } }),
+      invite: () => set((s) => ({ offers: { ...s.offers, declinedInARow: 0, lastAt: 0 } })),
       resetProgress: () => {
         clearTimeout(riseTimer);
         set({ visited: [], risen: [], completed: [], xp: 0, rising: null });

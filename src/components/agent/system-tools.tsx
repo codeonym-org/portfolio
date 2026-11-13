@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
-import { mayOffer, suggestedNext } from "@/agent/guide";
+import { mayOffer, unseen } from "@/agent/guide";
 import { systemCommands, type SystemCommand } from "@/agent/system-commands";
 import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
@@ -93,7 +93,7 @@ function RecordContext() {
   const offers = useWorldStore((s) => s.offers);
 
   const value = useMemo(() => {
-    const next = suggestedNext({ visited, completed, inspected });
+    const left = unseen({ visited, completed, inspected });
     const allowed = mayOffer({ offers });
     return {
       broughtForward: focusLabel({ sector, caseFile }),
@@ -108,14 +108,15 @@ function RecordContext() {
         shadowsRisen: risen,
         shadowsStillFallen: quests.filter((q) => !risen.includes(q.id)).map((q) => q.id),
       },
-      // the guide's duty (see the prompt, THE HUNTER): what to lead the visitor to next
+      // for the System's own decision to propose an action or not (see the prompt, THE VISITOR)
       guide: {
-        mayOffer: allowed,
-        suggestedNext: !allowed
-          ? `none: the visitor declined ${offers.declinedInARow} offers in a row. No offer and no closing invitation until they ask what to see next.`
-          : next
-            ? `"${next.line}" (to offer it: action ${next.command.name}${Object.entries(next.command.args).map(([k, v]) => `, ${k} ${v}`).join("")})`
-            : "nothing left unseen: point to the Gate (contact) once, then stop",
+        mayPropose: allowed
+          ? true
+          : `no: the visitor refused ${offers.declinedInARow} proposals in a row. No proposal and no invitation until they ask what to see next.`,
+        notSeenYet: left.length
+          ? left.map((n) => `${n.id}: ${n.command.name}${Object.entries(n.command.args).map(([k, v]) => ` ${k}=${v}`).join("")}`)
+          : "nothing: the visitor has seen the whole record. Propose nothing unless a specific entry answers their question.",
+        proposedThisVisit: offers.log.length ? offers.log.map((p) => `${p.key} → ${p.outcome}`) : "nothing yet",
       },
       settings: { soundMuted: muted, graphics: quality, device: touch ? "touch/mobile" : "desktop" },
     };

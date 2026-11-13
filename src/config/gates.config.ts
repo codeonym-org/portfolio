@@ -15,7 +15,7 @@ export const gates: Gate[] = [
     name: "First Light",
     rank: "C",
     state: "open",
-    tagline: "Where every Hunter awakens: the whole record in a minute.",
+    tagline: "Where every stranger begins: the whole record in a minute.",
     description:
       "A small bright world, the first one the star reaches. A single crystal holds the record: read the one-minute brief, ask the System a question, or open any sector. Light enough for a phone, quick enough for a hiring team.",
     holds: ["One-minute brief", "The System — an agent that answers from the record", "Experience, projects by guild, skills, CV, contact"],

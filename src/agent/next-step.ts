@@ -1,14 +1,12 @@
 /**
  * ── THE NEXT STEP ─────────────────────────────────────────────
- * The System does not only answer: it leads the Hunter one step
- * deeper into the record each turn. This picks that step from what
- * the visitor has not seen yet, in the order a hiring team needs it:
- * the brief, the strongest work, the projects, the experience, the
- * skills, the CV, and last the Gate (contact).
+ * What the visitor has not seen yet, in the order a hiring team
+ * needs it: the brief, the strongest work, the projects, the
+ * experience, the skills, the CV, and last the Gate (contact).
  *
  * Pure and dependency-free (unit-tested with `node --test`). The
- * live agent receives the pick as a suggestion; the local index
- * uses it as is.
+ * live agent receives the whole list and decides by itself whether
+ * to propose anything; the local index proposes the first entry.
  */
 
 export interface Seen {
@@ -37,9 +35,10 @@ export interface StepIndex {
 /** how many offers in a row a visitor may decline before the System stops offering */
 export const MAX_DECLINED = 2;
 /** the System does not raise two offers closer together than this */
-export const OFFER_GAP_MS = 45_000;
+export const OFFER_GAP_MS = 20_000;
 
-export function nextStep(seen: Seen, index: StepIndex): NextStep | null {
+/** everything the visitor has not seen yet, most useful first */
+export function unseenSteps(seen: Seen, index: StepIndex): NextStep[] {
   const opened = (id: string) => seen.sectors.includes(id);
   const steps: (NextStep | false | undefined)[] = [
     !seen.briefRead && { id: "brief", line: "The whole record fits in one minute. Shall I brief you?", command: { name: "open_brief", args: {} } },
@@ -52,11 +51,17 @@ export function nextStep(seen: Seen, index: StepIndex): NextStep | null {
     !opened("projects") && { id: "projects", line: "You have not seen what he built. Shall I bring the projects forward?", command: { name: "open_sector", args: { sector: "projects" } } },
     !opened("experience") && { id: "experience", line: "The chronicle shows where he did this work. Shall I open it?", command: { name: "open_sector", args: { sector: "experience" } } },
     !opened("skills") && { id: "skills", line: "The arsenal lists every skill with its grade. Shall I open it?", command: { name: "open_sector", args: { sector: "skills" } } },
-    !seen.cvRead && { id: "cv", line: "The Hunter's License is the full CV. Shall I project it?", command: { name: "open_cv", args: {} } },
+    !seen.cvRead && { id: "cv", line: "The Hunter's License is his full CV. Shall I project it?", command: { name: "open_cv", args: {} } },
     !opened("contact") && { id: "contact", line: `You have seen the record. The Gate reaches ${index.playerName} directly. Shall I open it?`, command: { name: "open_sector", args: { sector: "contact" } } },
   ];
-  return steps.find((s): s is NextStep => !!s) ?? null;
+  return steps.filter((s): s is NextStep => !!s);
 }
+
+export const nextStep = (seen: Seen, index: StepIndex): NextStep | null => unseenSteps(seen, index)[0] ?? null;
+
+/** a proposal's identity: the action and its arguments */
+export const proposalKey = (name: string, args: Record<string, unknown> = {}) =>
+  [name, ...Object.keys(args).sort().map((k) => String(args[k]))].join(" ");
 
 /** the step that follows `taken`, so an answer never offers what it just did */
 export function nextStepAfter(taken: { name: string; args: Record<string, unknown> }[], seen: Seen, index: StepIndex): NextStep | null {

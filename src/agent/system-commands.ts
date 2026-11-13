@@ -11,7 +11,7 @@ import { caseSchema, encodeCase, resolveCase } from "@/record/case-file";
 import { hasNode } from "@/record/nodes";
 import { ARISE_MS, levelFor, live, pulse, syncPercent, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
-import { MAX_DECLINED, OFFER_GAP_MS } from "./next-step";
+import { MAX_DECLINED, OFFER_GAP_MS, proposalKey } from "./next-step";
 
 /**
  * ── AGENT BRIDGE · WRITE SIDE ─────────────────────────────────
@@ -353,12 +353,12 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
-    name: "offer",
+    name: "propose_action",
     description:
-      "Put ONE next step to the visitor as a System prompt they can accept or decline (\"Accept\" / \"Later\"). Accepting runs the action for them. Use it to lead the Hunter deeper into the record: the brief, a project, a sector, the CV. It returns at once — the visitor answers in their own time, and the App Context later shows how they answered. At most one per reply; never offer what is already open or already seen.",
+      "Propose ONE action to the visitor in a System window they can accept, refuse or ignore. Accepting runs the action for them. OPTIONAL: call it only when a specific action clearly follows from what the visitor just asked and would show them something they have not seen (see THE VISITOR in your instructions); most replies need none. It returns at once — the visitor answers in their own time, and the App Context (guide.proposedThisVisit) shows how they answered. At most one per reply, after your other tools. Never propose what is already open, already seen, or already proposed during this visit.",
     parameters: z.object({
       message: z.string().min(8).max(170).describe("What the System proposes, one or two short sentences ending with a question, in the visitor's language. Only facts from the record."),
-      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "arise_all"]).describe("What accepting does."),
+      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "arise_all", "open_map"]).describe("What accepting does."),
       sector: SECTOR.optional().describe("For open_sector."),
       kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
       id: z.string().optional().describe("For inspect_entity: the exact id from the dossier."),
@@ -366,25 +366,38 @@ export const systemCommands: SystemCommand[] = [
     handler: ({ message, action, sector, kind, id }) => {
       const s = store();
       if (s.offers.declinedInARow >= MAX_DECLINED)
-        return `Skipped: the visitor declined ${s.offers.declinedInARow} offers in a row, so no more offers for now. That is fine. Now answer the visitor normally in one to three sentences, with no next step.`;
-      if (Date.now() - s.offers.lastAt < OFFER_GAP_MS) return "Skipped: the visitor was offered something a moment ago. That is fine. Now answer the visitor normally in one to three sentences.";
+        return `Skipped: the visitor refused ${s.offers.declinedInARow} proposals in a row, so no more proposals until they ask what to see next. That is fine. Now answer the visitor normally in one to three sentences, with no invitation.`;
       const args: Record<string, unknown> = action === "open_sector" ? { sector } : action === "inspect_entity" ? { kind, id } : {};
       const target = systemCommands.find((c) => c.name === action);
       const parsed = target?.parameters.safeParse(args);
       if (!target || !parsed?.success) return `Not shown: invalid arguments for ${action}${parsed && !parsed.success ? ` (${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")})` : ""}.`;
       if (action === "inspect_entity" && !hasNode(`${kind}:${id}`)) return `Not shown: there is no ${kind} "${id}" in the record.`;
-      s.noteOffer(null);
-      s.ask({
+      const key = proposalKey(action, args);
+      const before = s.offers.log.find((p) => p.key === key);
+      if (before) return `Not shown: you already proposed this during this visit (the visitor ${before.outcome === "waiting" ? "has not answered yet" : before.outcome + " it"}). Do not propose it again. Now answer the visitor normally, with no invitation.`;
+      if (Date.now() - s.offers.lastAt < OFFER_GAP_MS) return "Skipped: you proposed something a moment ago. That is fine. Now answer the visitor normally in one to three sentences, with no invitation.";
+      const open =
+        (action === "open_sector" && s.sector === sector) ||
+        (action === "inspect_entity" && s.inspect?.kind === kind && s.inspect?.id === id) ||
+        (action === "open_brief" && s.brief) ||
+        (action === "open_cv" && s.cvOpen) ||
+        (action === "open_map" && s.mapOpen);
+      if (open) return "Not shown: that is already open in front of the visitor. Now answer the visitor normally, with no invitation.";
+      // a proposal still waiting is replaced: the visitor ignored it
+      if (s.prompt) s.ignore();
+      s.raiseOffer(key);
+      store().ask({
         id: "offer",
         heading: world.prompts.offerHeading,
         body: message,
         accept: world.prompts.accept,
-        decline: world.prompts.decline,
+        decline: world.prompts.refuse,
         tone: "system",
         command: { name: action, args },
-        onAnswer: (accepted) => store().noteOffer(accepted),
+        onAnswer: (accepted) => store().settleOffer(accepted ? "accepted" : "refused"),
+        onIgnore: () => store().settleOffer("ignored"),
       });
-      return "Offer shown as a System prompt. The visitor will answer in their own time. Finish your reply now: it must NOT contain another invitation, question or next step — the prompt is the next step.";
+      return "Proposal shown in a System window. The visitor will answer in their own time. Finish your reply now: it must NOT contain another invitation, question or next step — the window is the proposal.";
     },
   }),
   define({

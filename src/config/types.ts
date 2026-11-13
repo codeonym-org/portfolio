@@ -32,6 +32,8 @@ export interface PlayerTitle {
 
 export interface Player {
   name: string;
+  /** what the System calls him: it is his companion, so it uses his first name */
+  firstName: string;
   handle: string;
   title: string;
   job: string;

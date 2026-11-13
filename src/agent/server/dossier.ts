@@ -22,7 +22,7 @@ const grade = (m: number) => (m >= 90 ? "S" : m >= 85 ? "A" : m >= 78 ? "B" : "C
 
 function identity() {
   return [
-    `Name: ${player.name} (handle "${player.handle}")`,
+    `Name: ${player.firstName} (handle "${player.handle}"; full name ${player.name}, given only when asked)`,
     `Role: ${player.job} — ${player.title}`,
     `Location: ${player.location}`,
     `Guilds: ${guilds.map((g) => `${g.name} [${g.id}] — ${g.role} (${g.kind}). ${g.summary}${g.link ? ` ${g.link}` : ""}`).join(" | ")}`,
