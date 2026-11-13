@@ -22,6 +22,7 @@ import { Trace } from "./trace";
 import { FocusWindow } from "./window";
 
 // the chat stack is the heaviest import on the page — it loads once the scene is up
+const HoloMap = dynamic(() => import("./holo-map"), { ssr: false });
 const SystemLink = dynamic(() => import("@/components/agent/system-link"), { ssr: false });
 
 const typing = (e: KeyboardEvent) => !!(e.target as HTMLElement | null)?.closest("input, textarea, [contenteditable=true]");
@@ -57,6 +58,7 @@ function useWorldSounds() {
  */
 export function Shell() {
   const ready = useWorldStore((s) => s.ready);
+  const mapOpen = useWorldStore((s) => s.mapOpen);
   const setTouch = useWorldStore((s) => s.setTouch);
   useWorldSounds();
 
@@ -109,14 +111,15 @@ export function Shell() {
         return;
       }
       if (e.key === "Escape") {
-        if (s.prompt) s.answer(false);
+        if (s.mapOpen) s.setMapOpen(false);
+        else if (s.prompt) s.answer(false);
         else if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);
         else if (s.sector || s.caseFile || s.brief) s.closeFocus();
         return;
       }
-      if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen) return;
+      if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen || s.mapOpen) return;
       if (s.prompt && (e.key.toLowerCase() === "y" || e.key.toLowerCase() === "n")) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("system:answer", { detail: e.key.toLowerCase() === "y" }));
@@ -152,6 +155,7 @@ export function Shell() {
       <InspectCard />
       <CvModal />
       <Palette />
+      {mapOpen && <HoloMap />}
       <Boot />
       {ready && <SystemLink />}
     </>

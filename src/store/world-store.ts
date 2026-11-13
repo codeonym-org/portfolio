@@ -86,6 +86,8 @@ interface WorldState {
   brief: boolean;
   inspect: InspectTarget | null;
   cvOpen: boolean;
+  /** the holographic map, over everything */
+  mapOpen: boolean;
   paletteOpen: boolean;
   /** node key under the pointer (or hovered in a window) */
   hovered: string | null;
@@ -119,6 +121,7 @@ interface WorldState {
   closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
   setCvOpen: (open: boolean) => void;
+  setMapOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   setHovered: (key: string | null) => void;
   arise: (questId: string) => void;
@@ -163,6 +166,7 @@ export const useWorldStore = create<WorldState>()(
       inspect: null,
       brief: false,
       cvOpen: false,
+      mapOpen: false,
       paletteOpen: false,
       hovered: null,
       rising: null,
@@ -213,6 +217,7 @@ export const useWorldStore = create<WorldState>()(
         }
         if (inspect?.kind === "item" && inspect.id === "hunter-license") get().completeQuest("license");
       },
+      setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, paletteOpen: false } : { mapOpen }),
       setCvOpen: (cvOpen) => {
         set({ cvOpen });
         if (cvOpen) get().completeQuest("license");
