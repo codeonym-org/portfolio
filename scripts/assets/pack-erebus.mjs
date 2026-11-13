@@ -12,9 +12,9 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS, KHRDracoMeshCompression, KHRMaterialsSpecular } from "@gltf-transform/extensions";
-import { dedup, flatten, meshopt, prune, resample, textureCompress, weld } from "@gltf-transform/functions";
+import { dedup, flatten, meshopt, prune, resample, simplify, textureCompress, weld } from "@gltf-transform/functions";
 import draco3d from "draco3dgltf";
-import { MeshoptDecoder, MeshoptEncoder } from "meshoptimizer";
+import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
 import sharp from "sharp";
 
 const IN = process.env.IN_DIR ?? ".";
@@ -23,6 +23,7 @@ const ONLY = process.env.ONLY?.split(",");
 
 await MeshoptDecoder.ready;
 await MeshoptEncoder.ready;
+await MeshoptSimplifier.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
   "draco3d.decoder": await draco3d.createDecoderModule(),
   "meshopt.decoder": MeshoptDecoder,
@@ -30,14 +31,27 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
 });
 
 /** keep the named clips (source name → name in the game) and start each at zero */
-function clips(doc, keep) {
+function clips(doc, keep, bonesTurnOnly) {
   for (const anim of doc.getRoot().listAnimations()) {
     const name = keep[anim.getName()];
     if (!name) {
+      // its channels and samplers first: left behind, they keep every keyframe in the file
+      for (const channel of anim.listChannels()) channel.dispose();
+      for (const sampler of anim.listSamplers()) sampler.dispose();
       anim.dispose();
       continue;
     }
     anim.setName(name);
+    // a Mixamo bone only turns; the hips alone travel. Its scale and position tracks are two thirds of the file and say nothing
+    if (bonesTurnOnly) {
+      for (const channel of anim.listChannels()) {
+        const path = channel.getTargetPath();
+        if (path === "rotation" || (path === "translation" && /Hips/.test(channel.getTargetNode()?.getName() ?? ""))) continue;
+        const sampler = channel.getSampler();
+        channel.dispose();
+        sampler?.dispose();
+      }
+    }
     const inputs = new Set(anim.listSamplers().map((s) => s.getInput()));
     let start = Infinity;
     for (const acc of inputs) start = Math.min(start, acc.getMin([])[0]);
@@ -51,22 +65,25 @@ function clips(doc, keep) {
   }
 }
 
-async function pack(input, output, { skinned = false, size = 512, keep = null, drop = [] } = {}) {
+/** `ratio`: the share of triangles kept; `detail`: the size of normal and roughness maps, when smaller than the colour */
+async function pack(input, output, { skinned = false, size = 512, detail = size, ratio = 1, keep = null, mixamo = false, drop = [] } = {}) {
   if (ONLY && !ONLY.includes(output)) return;
   const doc = await io.read(join(IN, input));
   // specular maps barely register here, and the old sources are draco: both go
   const gone = [KHRMaterialsSpecular.EXTENSION_NAME, KHRDracoMeshCompression.EXTENSION_NAME];
   doc.getRoot().listExtensionsUsed().filter((e) => gone.includes(e.extensionName)).forEach((e) => e.dispose());
   for (const node of doc.getRoot().listNodes()) if (drop.includes(node.getName())) node.dispose();
-  if (keep) clips(doc, keep);
+  if (keep) clips(doc, keep, mixamo);
   // flatten would detach joints from their skeleton: static meshes only
   if (!skinned) await doc.transform(flatten());
   await doc.transform(
     dedup(),
     prune(),
     weld(),
+    ...(ratio < 1 ? [simplify({ simplifier: MeshoptSimplifier, ratio, error: 0.01 })] : []),
     resample({ tolerance: 0.002 }),
-    textureCompress({ encoder: sharp, targetFormat: "webp", resize: [size, size], quality: 78 }),
+    textureCompress({ encoder: sharp, targetFormat: "webp", resize: [size, size], quality: 78, slots: /^(baseColor|emissive)/ }),
+    textureCompress({ encoder: sharp, targetFormat: "webp", resize: [detail, detail], quality: 78, slots: /^(?!baseColor|emissive)/ }),
     meshopt({ encoder: MeshoptEncoder, level: "medium" }),
   );
   const bytes = await io.writeBinary(doc);
@@ -76,13 +93,14 @@ async function pack(input, output, { skinned = false, size = 512, keep = null, d
 }
 
 // the colossus on the dais: a hooded figure, turned to stone at runtime
-await pack("death_star_asuirila_shadow_wraith.glb", "colossus.glb", { size: 1024 });
+await pack("death_star_asuirila_shadow_wraith.glb", "colossus.glb", { size: 512, ratio: 0.5 });
 // one Mixamo rig for the hunter (helmet hidden), the statues that wake and the shadow soldiers; no plume
 const clipsKept = { Idle: "Idle", Run: "Run", Slash: "Slash", Spin: "Spin", Kneel: "Kneel", PowerUp: "PowerUp", StandUp: "Rise" };
-await pack("knight.glb", "knight.glb", { skinned: true, size: 1024, keep: clipsKept, drop: ["Igris_plume"] });
-// the hunter: a hooded figure skinned to the same rig (`rig-hunter.py`), so it plays the same clips and carries the same blade
-await pack("hunter.glb", "hunter.glb", { skinned: true, size: 1024, keep: clipsKept });
+// there are twenty of them on the floor at once, each drawn twice (once for its shadow): a third of the triangles
+await pack("knight.glb", "knight.glb", { skinned: true, size: 512, ratio: 0.35, keep: clipsKept, mixamo: true, drop: ["Igris_plume"] });
+// the hunter: a hooded figure skinned to the same rig (`rig-hunter.py`), so it carries the same blade and plays the knight's clips: it ships none of its own
+await pack("hunter.glb", "hunter.glb", { skinned: true, size: 1024, ratio: 0.4, keep: {} });
 await pack("drugdor_the_golem_animated.glb", "golem.glb", { skinned: true, keep: { Walk: "Walk", Attack3: "Attack", Attack2: "Smash", IdlePieces: "Idle" } });
 await pack("obelisk.glb", "obelisk.glb");
 // the hall itself: the throne room the live record already uses (`hall.py` trims it); its walls carry the stained glass, so they stay large
-await pack("hall.glb", "hall.glb", { size: 2048 });
+await pack("hall.glb", "hall.glb", { size: 1024, detail: 512 });

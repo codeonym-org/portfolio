@@ -21,7 +21,9 @@ import { Drops } from "./things";
  * everything draws what the simulation says.
  */
 
-const DPR: Record<Quality, [number, number]> = { high: [1, 2], medium: [1, 1.5], low: [0.75, 1] };
+const DPR: Record<Quality, [number, number]> = { high: [1, 1.5], medium: [1, 1.25], low: [0.75, 1] };
+/** soft shadows cost a third of the frame on a laptop GPU; hard ones cost next to nothing */
+const SHADOWS: Record<Quality, "percentage" | "basic"> = { high: "percentage", medium: "basic", low: "basic" };
 const FOG = "#07060f";
 
 function Driver() {
@@ -30,7 +32,7 @@ function Driver() {
 }
 
 /** the light that is not fire: moon, sky and the hunter's own lamp. They answer to what the System has done */
-function Air({ shadows }: { shadows: boolean }) {
+function Air() {
   const fog = useRef<FogExp2>(null);
   const hemi = useRef<HemisphereLight>(null);
   const moon = useRef<DirectionalLight>(null);
@@ -60,7 +62,7 @@ function Air({ shadows }: { shadows: boolean }) {
         color="#9fb0ff"
         intensity={1.6}
         position={[18, 24, 2]}
-        castShadow={shadows}
+        castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-30}
         shadow-camera-right={30}
@@ -177,18 +179,17 @@ function Effects({ quality }: { quality: Quality }) {
 export function World() {
   const quality = useWorldStore((s) => s.quality);
   const setQuality = useWorldStore((s) => s.setQuality);
-  const shadows = quality !== "low";
   return (
     <Canvas
       style={{ touchAction: "none" }}
-      shadows={shadows}
+      shadows={SHADOWS[quality]}
       dpr={DPR[quality]}
       camera={{ position: [HALL.spawn[0], 4, HALL.spawn[1] + 6], fov: 50, near: 0.2, far: 160 }}
       gl={{ antialias: false, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
     >
       <PerformanceMonitor
         flipflops={2}
-        bounds={() => [35, 60]}
+        bounds={() => [42, 60]}
         onDecline={() => {
           // a backgrounded tab starves the frame loop: that is not the GPU struggling
           if (document.hidden) return;
@@ -199,7 +200,7 @@ export function World() {
       <color attach="background" args={[FOG]} />
       <Driver />
       <Rig />
-      <Air shadows={shadows} />
+      <Air />
       <Aura />
       <Drops />
       <Suspense fallback={null}>

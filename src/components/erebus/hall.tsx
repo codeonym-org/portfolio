@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Sparkles, useGLTF } from "@react-three/drei";
-import { AdditiveBlending, Color, DoubleSide, MeshBasicMaterial, Raycaster, ShaderMaterial, Vector3, type Mesh, type MeshStandardMaterial, type Object3D, type PointLight } from "three";
+import { AdditiveBlending, Color, DoubleSide, MeshBasicMaterial, MeshLambertMaterial, Raycaster, ShaderMaterial, Vector3, type Mesh, type MeshStandardMaterial, type Object3D, type PointLight } from "three";
 import { HALL } from "@/erebus/hall";
 import type { Quality } from "@/store/world-store";
 
@@ -113,12 +113,18 @@ function moonlitGlass(material: MeshStandardMaterial) {
   material.customProgramCacheKey = () => "erebus-moonlit";
 }
 
-function restyle(scene: Object3D) {
+/**
+ * `cheap`: matte stone lit per pixel without the metal-and-gloss model or
+ * normal maps. On a laptop GPU that model, times every light, is most of
+ * the frame, and in a hall this dark the difference is hard to find.
+ */
+function restyle(scene: Object3D, cheap: boolean) {
   const floors: Mesh[] = [];
   scene.traverse((node) => {
     const mesh = node as Mesh;
     if (!mesh.isMesh) return;
-    const src = mesh.material as MeshStandardMaterial;
+    // the material the file came with: kept, so the hall can be restyled again when the quality changes
+    const src = ((mesh.userData.src as MeshStandardMaterial | undefined) ?? (mesh.userData.src = mesh.material)) as MeshStandardMaterial;
     const name = `${mesh.name} ${src.name}`;
     mesh.receiveShadow = true;
     mesh.castShadow = !/Glass|Chandelier|Flag/.test(name);
@@ -129,7 +135,10 @@ function restyle(scene: Object3D) {
       mesh.castShadow = false;
       return;
     }
-    const m = src.clone();
+    const matte = cheap && !/Throne/.test(name);
+    const m = matte
+      ? (new MeshLambertMaterial({ name: src.name, map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap, emissiveIntensity: src.emissiveIntensity, side: src.side, transparent: src.transparent, alphaTest: src.alphaTest }) as unknown as MeshStandardMaterial)
+      : src.clone();
     if (/Carpet/.test(name)) {
       m.color = new Color("#1a1422");
       m.roughness = 0.95;
@@ -304,6 +313,7 @@ const BOWLS: [number, number, number][] = [
   [7.3, 3.55, -8.1],
 ];
 /** real lights cost every lit pixel: one for each pair of torches, on alternate walls */
+const NAVE_LIGHT: [number, number, number][] = [[0, 5.5, 12]];
 const TORCH_LIGHTS: [number, number, number][] = [
   [-6.6, 4.1, 21.5],
   [6.6, 4.1, 13.7],
@@ -327,12 +337,13 @@ function TorchLight({ position, seed, intensity }: { position: [number, number, 
     const t = c.elapsedTime * 7 + seed * 13;
     if (light.current) light.current.intensity = intensity * (0.86 + Math.sin(t) * 0.06 + Math.sin(t * 2.7) * 0.05) * (1 - air.dark * 0.9);
   });
-  return <pointLight ref={light} position={position} color={EMBER} intensity={intensity} distance={15} decay={1.7} />;
+  return <pointLight ref={light} position={position} color={EMBER} intensity={intensity} distance={intensity > 50 ? 30 : intensity > 30 ? 20 : 15} decay={1.7} />;
 }
 
 export function Hall({ quality }: { quality: Quality }) {
   const { scene } = useGLTF(HALL_MODEL, false, true);
-  useMemo(() => restyle(scene), [scene]);
+  const cheap = quality !== "high";
+  useMemo(() => restyle(scene, cheap), [scene, cheap]);
   const mist = useMemo(() => mistMaterial(quality === "low" ? 0.45 : 0.6), [quality]);
   const thin = useMemo(() => mistMaterial(0.3), []);
   const shaft = useMemo(() => shaftMaterial(quality === "high" ? 1 : 0.7), [quality]);
@@ -340,7 +351,9 @@ export function Hall({ quality }: { quality: Quality }) {
     clock.value = state.clock.elapsedTime;
     power.value = 1 - air.dark * 0.75;
   });
-  const lights = quality === "low" ? TORCH_LIGHTS.slice(0, 2) : TORCH_LIGHTS;
+  // fewer and stronger as the quality falls: the hall keeps its warmth, the pixel shader loses its loops
+  const lights = quality === "high" ? TORCH_LIGHTS : quality === "medium" ? [TORCH_LIGHTS[1], TORCH_LIGHTS[2]] : NAVE_LIGHT;
+  const torch = quality === "high" ? 24 : quality === "medium" ? 38 : 60;
   const length = HALL.south - HALL.north;
   const middle = (HALL.south + HALL.north) / 2;
 
@@ -354,7 +367,7 @@ export function Hall({ quality }: { quality: Quality }) {
         <Flame key={`b${i}`} position={p} size={2.2} seed={20 + i} />
       ))}
       {lights.map((p, i) => (
-        <TorchLight key={i} position={p} seed={i} intensity={24} />
+        <TorchLight key={`${quality}${i}`} position={p} seed={i} intensity={torch} />
       ))}
       {/* one light for both fire bowls, over the dais */}
       <TorchLight position={[0, 4.6, -7.4]} seed={9} intensity={36} />
@@ -369,9 +382,11 @@ export function Hall({ quality }: { quality: Quality }) {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.25, 14]} material={mist} renderOrder={2}>
         <planeGeometry args={[HALL.halfWidth * 2, 19]} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.4, middle]} material={thin} renderOrder={2}>
-        <planeGeometry args={[HALL.halfWidth * 2, length]} />
-      </mesh>
+      {quality !== "low" && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.4, middle]} material={thin} renderOrder={2}>
+          <planeGeometry args={[HALL.halfWidth * 2, length]} />
+        </mesh>
+      )}
       <Sparkles count={quality === "low" ? 60 : 180} scale={[15, 12, 44]} position={[0, 6, 4]} size={2.2} speed={0.18} color="#c9bcff" opacity={0.45} />
     </group>
   );

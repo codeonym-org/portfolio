@@ -233,11 +233,13 @@ const rock: Skin = (m) => {
 
 export function Hunter() {
   const hunter = useModel(MODELS.hunter);
+  // the same skeleton as the knight: the motion is the knight's, and ships once
+  const knight = useModel(MODELS.knight);
   const body = useMemo(() => {
-    const p = puppet(hunter.scene, hunter.animations, 1.04, hunterSkin);
+    const p = puppet(hunter.scene, knight.animations, 1.04, hunterSkin);
     p.root.visible = true;
     return p;
-  }, [hunter]);
+  }, [hunter, knight]);
   const root = useRef<Group>(null);
   const lean = useRef<Group>(null);
   const arc = useRef<Mesh>(null);
