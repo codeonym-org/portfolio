@@ -4,3 +4,4 @@
 - 2026-11-12: tickets GH-68 (#69) and GH-62 (#70) built and merged.
 - 2026-11-13: ticket GH-63 built and merged (#71). All seven tickets are done; the story is done and its issue closed.
 - 2026-11-13: owner's review of the offers: decision 004; the story is reopened for one ticket, GH-72.
+- 2026-11-13: owner's review: ticket GH-74 (a long answer scrolls; a proposal waits for the answer).

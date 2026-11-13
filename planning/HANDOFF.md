@@ -30,7 +30,7 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #41 | Story 1: refresh the record (#45, #46) | done, merged into `40-gates` (#47, #48) |
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
-| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68, #72) | done, merged into `40-gates` (#64–#67, #69–#71) |
+| #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68, #72, #74) | done, merged into `40-gates` (#64–#67, #69–#71) |
 | #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
@@ -76,6 +76,7 @@ what was built, what was checked and what was not.
 | #62 | A pulse on screen while the voice is live (an ECG trace and a bpm readout) | done, merged into `40-gates` (#70) |
 | #63 | A holographic map: globe to city, data shipped with the site | done, merged into `40-gates` (#71) |
 | #72 | From the owner's review (decision 004): the System decides when to propose an action, never the same twice; "Ayoub" and "Stranger" | done, merged into `40-gates` |
+| #74 | From the owner's review: a long answer scrolls; a proposal window waits until the reply is finished | done, merged into `40-gates` |
 
 What this story added on `40-gates`: `/gates` as seven planets; the System font and window; the `offer` tool;
 the index wheel; a camera the visitor can move; the voice pulse; the holographic map (`open_map`,

@@ -748,6 +748,12 @@
   .fade-top {
     mask-image: linear-gradient(to bottom, transparent, #000 2.2rem);
   }
+  /* a long answer: a thin bar shows there is more below */
+  .answer-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.62 0.22 295 / 70%) transparent;
+    touch-action: pan-y;
+  }
 }
 
 @keyframes grain {

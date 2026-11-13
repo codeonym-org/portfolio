@@ -119,6 +119,26 @@ export function Console() {
   const [history, setHistory] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
   const section = useRef<HTMLElement>(null);
+  const words = useRef<HTMLDivElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  // An answer longer than its room scrolls. Only then does it take the pointer: a short one lets the
+  // wheel and the drag through to the scene behind it.
+  useEffect(() => {
+    const el = words.current;
+    if (!el) return;
+    const measure = () => setOverflowing(el.scrollHeight > el.clientHeight + 4);
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    for (const child of el.children) observer.observe(child);
+    const mutations = new MutationObserver(measure);
+    mutations.observe(el, { childList: true, subtree: true, characterData: true });
+    measure();
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+    };
+  }, [history, touch, focused]);
 
   // tell the stage how much of the bottom of the screen the words take (the rig frames the Monolith above them)
   useEffect(() => {
@@ -194,7 +214,17 @@ export function Console() {
       <VoicePulse />
 
       {!history && !compact && (
-        <div className={cn("fade-top max-h-[38dvh] space-y-3 overflow-y-auto overscroll-contain pt-8 pr-2", !touch && !focused && "text-center")}>
+        <div
+          ref={words}
+          tabIndex={overflowing ? 0 : undefined}
+          role={overflowing ? "region" : undefined}
+          aria-label={overflowing ? "The System's answer (scrolls)" : undefined}
+          className={cn(
+            "fade-top answer-scroll max-h-[38dvh] space-y-3 overflow-y-auto overscroll-contain pt-8 pr-2 focus-visible:outline-none",
+            overflowing && "pointer-events-auto",
+            !touch && !focused && "text-center",
+          )}
+        >
           {question && (
             <p className="font-mono text-xs text-muted-foreground">
               <span className="text-arcane-hot">{speaking ? "voice ›" : lastVisitor?.voice ? "voice ›" : "you ›"}</span> {question}
