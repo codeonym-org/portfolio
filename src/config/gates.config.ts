@@ -25,13 +25,13 @@ export const gates: Gate[] = [
   {
     id: "erebus",
     name: "Erebus",
-    rank: "S",
-    state: "sealed",
-    tagline: "The last world before the dark: the record as a world to play.",
+    rank: "B",
+    state: "open",
+    tagline: "The last world before the dark: the record as a world to fight through.",
     description:
-      "A black world at the edge of the system, its crust split by something still burning underneath. The same record as full gameplay: an extended 3D world and rewards that build on what you earned on First Light. Sealed until it is ready.",
-    holds: ["Full gameplay", "Extended 3D world", "Rewards built on your progress"],
-    audience: "Visitors with time to explore",
+      "A black world at the edge of the system, its crust split by something still burning underneath. His projects stand here as sealed obelisks, each held by a Warden. Name your hunter, bring a Warden down and say ARISE: the project follows you, and you read what it is. The System runs this world, and it does not follow a script.",
+    holds: ["A hunter you name and level", "Ten Wardens, ten projects to raise", "A System that changes the rules as you play", "Progress from First Light comes with you"],
+    audience: "Visitors with time to play",
     cost: "Heavy",
   },
 ];

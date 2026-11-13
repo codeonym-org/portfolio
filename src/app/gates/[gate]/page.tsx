@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { PlanetArt } from "@/components/gates/planet-art";
 import { RankBadge } from "@/components/gates/rank-badge";
+import { ErebusLoader } from "@/components/erebus/erebus-loader";
 import { FirstLightGate } from "@/components/gates/first-light-gate";
 import { defaultGate, findGate, gates } from "@/config/gates.config";
 import { planetOfGate } from "@/config/realm.config";
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GatePage({ params }: Props) {
   const gate = findGate((await params).gate);
   if (!gate) notFound();
-  if (gate.state === "open") return <FirstLightGate />;
+  if (gate.state === "open") return gate.id === "erebus" ? <ErebusLoader /> : <FirstLightGate />;
   const planet = planetOfGate(gate.id);
 
   return (
