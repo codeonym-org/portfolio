@@ -103,7 +103,7 @@ export function GateRealm() {
       <header className="pointer-events-none relative z-10 flex items-center justify-between px-5 pt-5 sm:px-[5vw] sm:pt-8">
         <Link href="/" prefetch={false} className="pointer-events-auto flex items-center gap-3" aria-label="codeonym — open the default gate">
           {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB local SVG mark */}
-          <img src="/brand/mark.svg" alt="" className="size-8" />
+          <img src="/brand/mark-small.svg" alt="" className="size-8" />
           <span className="hidden font-display text-[13px] tracking-[0.34em] text-white sm:inline">CODEONYM</span>
         </Link>
         <nav className="pointer-events-auto flex shrink-0 gap-4 font-mono text-[11px] tracking-[0.14em] whitespace-nowrap text-muted-foreground uppercase">

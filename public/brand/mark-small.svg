@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><title>codeonym</title><defs>
+    <linearGradient id="s-arc" gradientUnits="userSpaceOnUse" x1="300" y1="96" x2="300" y2="416">
+      <stop offset="0" stop-color="#e3d4ff"/><stop offset=".42" stop-color="#9d70ff"/><stop offset=".78" stop-color="#5a7dff"/><stop offset="1" stop-color="#3fc8f6"/>
+    </linearGradient>
+    <linearGradient id="s-counter" gradientUnits="userSpaceOnUse" x1="150" y1="360" x2="360" y2="150">
+      <stop offset="0" stop-color="#3fc8f6"/><stop offset=".55" stop-color="#7f8dff"/><stop offset="1" stop-color="#d9c8ff"/>
+    </linearGradient>
+    <radialGradient id="s-aura" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#7a4dff" stop-opacity=".42"/><stop offset=".55" stop-color="#5a3de0" stop-opacity=".14"/><stop offset="1" stop-color="#5a3de0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s-orb" cx=".38" cy=".34" r=".75">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cfe9ff"/><stop offset="1" stop-color="#6fb6ff"/>
+    </radialGradient>
+    <filter id="s-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="s-halo" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+    <path d="M389.96,151.34 A170,170 0 1 0 389.96,360.66" fill="none" stroke="url(#s-arc)" stroke-width="34" stroke-linecap="round" filter="url(#s-glow)" opacity=".6"/>
+    <path d="M389.96,151.34 A170,170 0 1 0 389.96,360.66" fill="none" stroke="url(#s-arc)" stroke-width="34" stroke-linecap="round"/>
+    <path d="M339.96,98.09 A178.84,178.84 0 0 0 81.07,218.82" fill="none" stroke="#ffffff" stroke-width="3.06" stroke-linecap="round" opacity=".5"/>
+    <path d="M184.83,347.09 A115.6,115.6 0 1 0 142.93,231.97" fill="none" stroke="url(#s-counter)" stroke-width="12.24" stroke-linecap="round"/>
+    <circle cx="146.06" cy="291.72" r="8.5" fill="#bca4ff"/>
+    <circle cx="256" cy="256" r="40.8" fill="#9d70ff" filter="url(#s-halo)" opacity=".75"/>
+    <path d="M256,205 Q263.14,248.86 307,256 Q263.14,263.14 256,307 Q248.86,263.14 205,256 Q248.86,248.86 256,205Z" fill="url(#s-orb)"/>
+    <circle cx="426" cy="256" r="42" fill="#8fd0ff" filter="url(#s-halo)" opacity=".85"/>
+    <circle cx="426" cy="256" r="28" fill="url(#s-orb)"/>
+</svg>
