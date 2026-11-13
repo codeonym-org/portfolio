@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { nextStep, nextStepAfter, type Seen } from "./next-step.ts";
+import { nextStep, nextStepAfter, proposalKey, unseenSteps, type Seen } from "./next-step.ts";
 
 const index = { playerName: "AYOUB", flagship: { id: "pharma-mas", name: "the pharma system" } };
 const fresh: Seen = { sectors: [], briefRead: false, cvRead: false, inspected: [] };
@@ -36,4 +36,17 @@ test("an answer never offers what it just did", () => {
 
 test("without a flagship the projects come after the brief", () => {
   assert.equal(nextStep({ ...fresh, briefRead: true }, { playerName: "AYOUB" })?.id, "projects");
+});
+
+test("the agent is given everything left to see, not one pick", () => {
+  assert.deepEqual(
+    unseenSteps({ ...fresh, briefRead: true, sectors: ["projects"] }, index).map((s) => s.id),
+    ["flagship", "experience", "skills", "cv", "contact"],
+  );
+});
+
+test("a proposal's key is the action and its arguments, in any order", () => {
+  assert.equal(proposalKey("inspect_entity", { kind: "quest", id: "pharma-mas" }), proposalKey("inspect_entity", { id: "pharma-mas", kind: "quest" }));
+  assert.notEqual(proposalKey("open_sector", { sector: "skills" }), proposalKey("open_sector", { sector: "projects" }));
+  assert.equal(proposalKey("open_brief"), "open_brief");
 });

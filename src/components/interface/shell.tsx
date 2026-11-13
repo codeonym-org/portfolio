@@ -112,7 +112,7 @@ export function Shell() {
       }
       if (e.key === "Escape") {
         if (s.mapOpen) s.setMapOpen(false);
-        else if (s.prompt) s.answer(false);
+        else if (s.prompt) s.ignore();
         else if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);

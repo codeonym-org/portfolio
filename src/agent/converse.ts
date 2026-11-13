@@ -43,7 +43,7 @@ function defaultCase(): CaseFile {
 let index: BrainIndex | null = null;
 function brainIndex(): BrainIndex {
   index ??= {
-    player: { name: player.name, title: player.title, job: player.job, guild: player.guild, location: player.location, creed: player.creed },
+    player: { name: player.firstName, title: player.title, job: player.job, guild: player.guild, location: player.location, creed: player.creed },
     sectors: sectors.map(({ id, name, section }) => ({ id, name, section })),
     quests: quests.map((q) => ({ id: q.id, name: q.name, summary: q.summary, stack: q.rewards })),
     skills: skills.map(({ id, name }) => ({ id, name })),
@@ -57,6 +57,8 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let localSeq = 0;
 /** the step the local index last invited the visitor to: a plain "yes" takes it */
 let invited: BrainAction | null = null;
+let localAnswers = 0;
+const invitedTo = new Set<string>();
 const YES = /^(yes|yeah|yep|ok|okay|sure|go|do it|please|accept|oui|d'accord|vas-y|na3am|نعم)\b/i;
 
 /** answer from the local index, running its commands the way the agent would — visibly, one by one */
@@ -80,10 +82,13 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
       session.step({ id: step, status: /^(Invalid|Unknown|Command .* failed)/.test(result) ? "failed" : "done" });
       await wait(140);
     }
-    // the guide's duty, without a model: close with the next thing worth seeing
+    // without a model there is no judgement: invite to the next unseen thing on every other answer, and never twice to the same one
     const closesTheVisit = reply.contact || reply.actions.some((a) => a.name === "close_windows" || (a.name === "open_sector" && a.args.sector === "contact"));
-    const step = !closesTheVisit && mayOffer(useWorldStore.getState()) ? suggestedAfter(reply.actions) : null;
+    const due = ++localAnswers % 2 === 1;
+    const next = due && !closesTheVisit && mayOffer(useWorldStore.getState()) ? suggestedAfter(reply.actions) : null;
+    const step = next && !invitedTo.has(next.id) ? next : null;
     if (step) {
+      invitedTo.add(step.id);
       invited = step.command;
       reply.text = `${reply.text}\n\n${step.line}`;
     }
@@ -103,6 +108,8 @@ export async function converse(input: string) {
   const text = input.trim().slice(0, 1200);
   if (!text || useSession.getState().running) return;
   useWorldStore.getState().completeQuest("awaken");
+  // moving on without answering a proposal is ignoring it
+  if (useWorldStore.getState().prompt?.id === "offer") useWorldStore.getState().ignore();
   // asking for more reopens the offers a visitor had declined
   if (ASKS_FOR_MORE.test(text)) useWorldStore.getState().invite();
   useSession.getState().set({ mode: "text" });
