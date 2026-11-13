@@ -3,7 +3,8 @@ import { test } from "node:test";
 import { parseReply, sanitize, type Limits, type Snapshot } from "./directive.ts";
 import { localDirective } from "./local-director.ts";
 import { dailyTrial, derive, hunterRank, levelOf, nextStreak, rngFrom, unlockedKinds, xpToLeave } from "./rules.ts";
-import { ARENA, createSim, type SimEvent } from "./sim.ts";
+import { BLOCKS, HALL, clamp, obeliskSpots, resolve } from "./hall.ts";
+import { RISE, createSim, type SimEvent } from "./sim.ts";
 
 const limits: Limits = { kinds: ["shade"], projects: ["acli-py", "i18n-ai"], level: 1 };
 const snap: Snapshot = { name: "Tester", level: 1, rank: "E", hp: 100, enemies: 0, kills: 0, deaths: 0, minutes: 0, idleSeconds: 0, quest: null, twist: null, raid: null, sealed: ["acli-py", "i18n-ai"], fallen: [], risen: [], titles: [], said: [], returning: false };
@@ -118,8 +119,8 @@ test("a strike kills what stands in front and the kill counts for a slay quest",
   sim.setQuest({ type: "slay", target: 1, seconds: 0, title: "one", xp: 10 });
   sim.spawn("shade", 1, "front");
   const f = sim.foes[0];
-  f.x = 0;
-  f.z = 2;
+  f.x = sim.hunter.x;
+  f.z = sim.hunter.z - 2;
   for (let i = 0; i < 200 && sim.foes.length; i++) sim.step(1 / 60, { ...still, attack: true });
   assert.ok(events.some((e) => e.type === "kill" && e.kind === "shade"));
   assert.ok(events.some((e) => e.type === "quest_done"));
@@ -140,13 +141,43 @@ test("an enemy left alone hurts the hunter, and the hunter dies and comes back",
   assert.equal(sim.hunter.hp, sim.derived.maxHp);
 });
 
-test("the hunter cannot leave the plateau, and a dash moves it about six metres", () => {
+test("the hunter cannot leave the hall, and a dash moves it about six metres", () => {
   const { sim } = world();
+  const from = sim.hunter.z;
   sim.step(1 / 60, { ...still, dash: true });
   for (let i = 0; i < 20; i++) sim.step(1 / 60, still);
-  assert.ok(sim.hunter.z > 5 && sim.hunter.z < 7.5, String(sim.hunter.z));
-  for (let i = 0; i < 60 * 20; i++) sim.step(1 / 60, { ...still, mz: 1 });
-  assert.ok(Math.hypot(sim.hunter.x, sim.hunter.z) <= ARENA);
+  // it comes in facing the throne (north, -z)
+  assert.ok(from - sim.hunter.z > 5 && from - sim.hunter.z < 7.5, String(sim.hunter.z));
+  for (let i = 0; i < 60 * 20; i++) sim.step(1 / 60, { ...still, mz: 1, mx: 1 });
+  assert.ok(sim.hunter.z < HALL.south && sim.hunter.x < HALL.halfWidth);
+  for (let i = 0; i < 60 * 20; i++) sim.step(1 / 60, { ...still, mz: -1 });
+  assert.ok(sim.hunter.z > HALL.north);
+});
+
+test("the hall: walls hold, the throne and the pedestals are solid, the obelisks line the nave", () => {
+  assert.deepEqual(clamp(40, 0), [HALL.halfWidth, 0]);
+  assert.deepEqual(clamp(0, 99), [0, HALL.south]);
+  // the apse is narrower than the nave
+  assert.ok(clamp(8, -14)[0] < 6);
+  for (const b of BLOCKS) {
+    const [x, z] = resolve(b.x + 0.1, b.z, 0.45);
+    assert.ok(Math.hypot(x - b.x, z - b.z) >= b.r + 0.44, `${b.x},${b.z}`);
+  }
+  const spots = obeliskSpots(11);
+  assert.equal(new Set(spots.map((s) => `${s.x},${s.z.toFixed(2)}`)).size, 11);
+  for (const s of spots) assert.deepEqual(clamp(s.x, s.z, 0.9), [s.x, s.z]);
+});
+
+test("an enemy comes up out of the floor before it moves", () => {
+  const { sim } = world();
+  sim.spawn("shade", 1, "front");
+  const f = sim.foes[0];
+  const at = [f.x, f.z];
+  assert.ok(Math.hypot(f.x - sim.hunter.x, f.z - sim.hunter.z) > 4);
+  for (let i = 0; i < 60 * RISE - 2; i++) sim.step(1 / 60, still);
+  assert.deepEqual([f.x, f.z], at);
+  for (let i = 0; i < 30; i++) sim.step(1 / 60, still);
+  assert.notDeepEqual([f.x, f.z], at);
 });
 
 test("a raid: challenge the obelisk, beat the Warden, say ARISE", () => {
@@ -187,7 +218,7 @@ test("twists: calm clears the field, mirror turns the controls, a twist ends", (
   assert.equal(sim.foes.length, 0);
   sim.setTwist("mirror", 6);
   for (let i = 0; i < 30; i++) sim.step(1 / 60, { ...still, mz: 1 });
-  assert.ok(sim.hunter.z < 0);
+  assert.ok(sim.hunter.z < HALL.spawn[1]);
   for (let i = 0; i < 60 * 7; i++) sim.step(1 / 60, still);
   assert.equal(sim.twist, null);
   assert.ok(events.some((e) => e.type === "twist_end" && e.kind === "mirror"));
@@ -199,6 +230,7 @@ test("quests: reach a beacon, stay untouched or fail, gather echoes", () => {
   assert.equal(sim.setQuest({ type: "slay", target: 1, seconds: 0, title: "second", xp: 10 }), false);
   const q = sim.quest!;
   assert.ok(Math.hypot(q.x - sim.hunter.x, q.z - sim.hunter.z) >= 14);
+  assert.deepEqual(clamp(q.x, q.z), [q.x, q.z]);
   [sim.hunter.x, sim.hunter.z] = [q.x, q.z];
   sim.step(1 / 60, still);
   assert.ok(events.some((e) => e.type === "quest_done" && e.title === "go"));
@@ -218,7 +250,7 @@ test("quests: reach a beacon, stay untouched or fail, gather echoes", () => {
   assert.ok(events.some((e) => e.type === "quest_failed" && e.title === "clean"));
 });
 
-test("runes lie on the plateau and picking one up reports its skill", () => {
+test("runes lie on the floor of the hall and picking one up reports its skill", () => {
   const { sim, events } = world();
   const rune = sim.pickups.find((p) => p.kind === "rune")!;
   [sim.hunter.x, sim.hunter.z] = [rune.x, rune.z];

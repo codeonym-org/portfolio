@@ -20,12 +20,12 @@ import { createSim, type Sim, type SimEvent } from "./sim";
  */
 
 const RANK_ORDER: Record<ProjectRank, number> = { B: 0, A: 1, S: 2 };
-/** the obelisks, weakest first around the ring */
+/** the obelisks, weakest first from the door */
 export const projects = quests.slice().sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
 export const projectById = (id: string) => projects.find((p) => p.id === id);
 
 const jobCategories = new Set(skillCategories.filter((c) => c.set === "job").map((c) => c.id));
-/** the skills that lie on the plateau as runes: the strongest of the craft */
+/** the skills that lie on the floor as runes: the strongest of the craft */
 export const runeSkills = skills
   .filter((s) => jobCategories.has(s.category))
   .sort((a, b) => b.mastery - a.mastery)
@@ -293,6 +293,8 @@ export function startGame() {
     emit: onSim,
   });
   game.sim.deploy(p.shadows);
+  // the camera starts behind the hunter, looking up the nave at the throne
+  Object.assign(controls, { yaw: 0, pitch: 0.3, distance: 7.5 });
   Object.assign(timers, { lull: 0, pulse: 35, idle: 0, low: 0, hud: 0, seconds: 0, session: 0 });
   said.length = 0;
   report({ type: "enter" });

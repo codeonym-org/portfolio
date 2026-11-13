@@ -1,19 +1,23 @@
 import type { Gift, QuestType, Twist, Where } from "./directive.ts";
+import { HALL, anywhere, clamp, obeliskSpots, resolve, type Circle } from "./hall.ts";
 import { foe, warden, type Derived, type EnemyKind, type FoeKind, type ProjectRank } from "./rules.ts";
 
 /**
  * ── EREBUS: THE SIMULATION ────────────────────────────────────
- * The whole game as plain numbers on a flat plateau (x, z): the
- * hunter, the enemies, the shadow soldiers, what lies on the ground
- * and what the System has set in motion. `step` advances it; the 3D
+ * The whole game as plain numbers on the floor of the hall (x, z;
+ * its shape is in `hall.ts`): the hunter, the enemies, the shadow
+ * soldiers, what lies on the ground and what the System has set in
+ * motion. `step` advances it; the 3D
  * scene only draws it, and the bridge (`game.ts`) listens to what it
  * emits. No three.js, no React, no storage: unit-tested with
  * `node --test`.
  */
 
-/** radius the hunter can walk */
-export const ARENA = 38;
-export const OBELISK_RING = 31;
+/** seconds an enemy takes to come up out of the floor; it does nothing until then */
+export const RISE = 0.8;
+/** how close the hunter must stand to an obelisk to act on it */
+const TOUCH = 3.6;
+const BODY = 0.45;
 const DASH_SPEED = 34;
 const DASH_TIME = 0.18;
 const BURST_RANGE = 6.5;
@@ -74,6 +78,8 @@ export interface Foe {
   /** above 0 while the blow is announced */
   windup: number;
   flash: number;
+  /** seconds since it appeared */
+  born: number;
   /** below 0 while alive, then seconds since it fell */
   dying: number;
   kx: number;
@@ -182,16 +188,16 @@ export function createSim(opts: SimOptions) {
   const { rng, emit } = opts;
   let ids = 0;
 
-  const hunter: Hunter = { x: 0, z: 0, yaw: 0, hp: opts.derived.maxHp, pace: 0, attackT: 0, attackCd: 0, combo: 0, comboT: 0, dashT: 0, dashCd: 0, dx: 0, dz: 1, burstCd: 0, burstT: 0, invuln: 1.5, hurtT: 0, dead: false, idle: 0 };
+  const hunter: Hunter = { x: HALL.spawn[0], z: HALL.spawn[1], yaw: Math.PI, hp: opts.derived.maxHp, pace: 0, attackT: 0, attackCd: 0, combo: 0, comboT: 0, dashT: 0, dashCd: 0, dx: 0, dz: -1, burstCd: 0, burstT: 0, invuln: 1.5, hurtT: 0, dead: false, idle: 0 };
   const foes: Foe[] = [];
   const soldiers: Soldier[] = [];
   const pickups: Pickup[] = [];
   const shots: Shot[] = [];
   const hazards: Hazard[] = [];
-  const obelisks: Obelisk[] = opts.projects.map((p, i) => {
-    const a = (i / opts.projects.length) * Math.PI * 2;
-    return { project: p.id, rank: p.rank, x: Math.sin(a) * OBELISK_RING, z: Math.cos(a) * OBELISK_RING, state: opts.risen.includes(p.id) ? "risen" : "sealed", revealed: false };
-  });
+  const spots = obeliskSpots(opts.projects.length);
+  const obelisks: Obelisk[] = opts.projects.map((p, i) => ({ project: p.id, rank: p.rank, x: spots[i].x, z: spots[i].z, state: opts.risen.includes(p.id) ? "risen" : "sealed", revealed: false }));
+  /** the obelisks are stone: nothing walks through them */
+  const stones: Circle[] = obelisks.map((o) => ({ x: o.x, z: o.z, r: 0.9 }));
   const runePool = opts.runes.slice();
   const dashed = new Set<number>();
 
@@ -229,7 +235,8 @@ export function createSim(opts: SimOptions) {
       for (let i = soldiers.length - 1; i >= 0; i--) if (!want.includes(soldiers[i].project)) soldiers.splice(i, 1);
       for (const project of want) {
         if (soldiers.some((s) => s.project === project)) continue;
-        soldiers.push({ project, x: hunter.x - 1.5 + rng() * 3, z: hunter.z - 1.5 + rng() * 3, yaw: hunter.yaw, pace: 0, cd: 0, attackT: 0 });
+        const [x, z] = put(hunter.x - 1.5 + rng() * 3, hunter.z - 1.5 + rng() * 3);
+        soldiers.push({ project, x, z, yaw: hunter.yaw, pace: 0, cd: 0, attackT: 0 });
       }
     },
 
@@ -238,8 +245,7 @@ export function createSim(opts: SimOptions) {
       for (let i = 0; i < count && foes.length < MAX_FOES; i++) {
         const base = hunter.yaw + (where === "front" ? 0 : where === "behind" ? Math.PI : rng() * Math.PI * 2);
         const a = where === "ring" ? (i / count) * Math.PI * 2 + rng() * 0.5 : base + (rng() - 0.5) * 1.4;
-        const d = where === "far" ? 16 + rng() * 6 : 9 + rng() * 5;
-        const [x, z] = inside(hunter.x + Math.sin(a) * d, hunter.z + Math.cos(a) * d);
+        const [x, z] = away(a, where === "far" ? 14 + rng() * 6 : 7 + rng() * 4);
         const f = add(kind, foe(kind, sim.level), x, z);
         if (giant) enlarge(f);
       }
@@ -249,11 +255,14 @@ export function createSim(opts: SimOptions) {
       if (sim.quest || hunter.dead) return false;
       let [x, z] = [0, 0];
       if (q.type === "reach") {
-        const a = rng() * Math.PI * 2;
-        const d = 22 + rng() * 10;
-        [x, z] = inside(hunter.x + Math.sin(a) * d, hunter.z + Math.cos(a) * d, ARENA - 5);
-        // a point pushed back inside the plateau can land too close: go the other way
-        if (dist(x, z, hunter.x, hunter.z) < 14) [x, z] = inside(hunter.x - Math.sin(a) * d, hunter.z - Math.cos(a) * d, ARENA - 5);
+        // somewhere in the hall that is a walk away; failing that, its far end
+        [x, z] = hunter.z > 4 ? [0, -3] : [0, 21];
+        for (let i = 0; i < 12; i++) {
+          const [px, pz] = anywhere(rng, stones);
+          if (dist(px, pz, hunter.x, hunter.z) < 15) continue;
+          [x, z] = [px, pz];
+          break;
+        }
       }
       if (q.type === "collect") scatter("echo", q.target + 3, 6, 16);
       sim.quest = { ...q, progress: 0, left: q.seconds, x, z };
@@ -299,11 +308,11 @@ export function createSim(opts: SimOptions) {
       o.state = "raid";
       o.revealed = false;
       sim.raid = o.project;
-      const inward = Math.atan2(-o.x, -o.z);
-      const w = add("warden", warden(o.rank, sim.level), o.x + Math.sin(inward) * 5, o.z + Math.cos(inward) * 5);
+      // it comes up in the middle of the nave, in front of its stone
+      const w = add("warden", warden(o.rank, sim.level), -Math.sign(o.x) * 0.6, o.z);
       w.project = o.project;
       const escorts = o.rank === "S" ? 4 : o.rank === "A" ? 3 : 2;
-      for (let i = 0; i < escorts; i++) add("shade", foe("shade", sim.level), w.x + (rng() - 0.5) * 6, w.z + (rng() - 0.5) * 6);
+      for (let i = 0; i < escorts; i++) add("shade", foe("shade", sim.level), ...put(w.x + (rng() - 0.5) * 6, w.z + (rng() - 0.5) * 6));
       emit({ type: "raid", project: o.project });
       return true;
     },
@@ -323,16 +332,13 @@ export function createSim(opts: SimOptions) {
       shots.length = 0;
       hazards.length = 0;
       sim.twist = null;
-      hunter.x = 0;
-      hunter.z = 0;
+      [hunter.x, hunter.z] = HALL.spawn;
+      hunter.yaw = Math.PI;
       hunter.hp = sim.derived.maxHp;
       hunter.dead = false;
       hunter.invuln = 2.5;
       hunter.idle = 0;
-      for (const s of soldiers) {
-        s.x = rng() * 3 - 1.5;
-        s.z = rng() * 3 - 1.5;
-      }
+      for (const s of soldiers) [s.x, s.z] = put(hunter.x + rng() * 3 - 1.5, hunter.z + 1 + rng() * 2);
     },
 
     step(dt: number, input: Input) {
@@ -349,13 +355,24 @@ export function createSim(opts: SimOptions) {
     },
   };
 
-  function inside(x: number, z: number, radius = ARENA - 1): [number, number] {
-    const d = Math.hypot(x, z);
-    return d > radius ? [(x / d) * radius, (z / d) * radius] : [x, z];
+  /** a spot for something small: on the floor, clear of everything that stands on it */
+  const put = (x: number, z: number, radius = 0.6): [number, number] => resolve(x, z, radius, stones);
+
+  /** a spot `d` away from the hunter toward angle `a`; the walls are close, so try the other ways before settling */
+  function away(a: number, d: number): [number, number] {
+    let best: [number, number] = [hunter.x, hunter.z];
+    let far = -1;
+    for (const turnBy of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) {
+      const p = put(hunter.x + Math.sin(a + turnBy) * d, hunter.z + Math.cos(a + turnBy) * d, 0.8);
+      const got = dist(p[0], p[1], hunter.x, hunter.z);
+      if (got >= d * 0.7) return p;
+      if (got > far) [best, far] = [p, got];
+    }
+    return best;
   }
 
   function add(kind: FoeKind, s: ReturnType<typeof foe>, x: number, z: number): Foe {
-    const f: Foe = { id: ++ids, kind, x, z, yaw: 0, hp: s.hp, maxHp: s.hp, dmg: s.dmg, speed: s.speed, xp: s.xp, reach: s.reach, windupTime: s.windup, scale: s.scale, cd: 0.6 + rng() * 0.6, windup: 0, flash: 0, dying: -1, kx: 0, kz: 0, phase: 0, special: 5 };
+    const f: Foe = { id: ++ids, kind, x, z, yaw: 0, hp: s.hp, maxHp: s.hp, dmg: s.dmg, speed: s.speed, xp: s.xp, reach: s.reach, windupTime: s.windup, scale: s.scale, cd: 0.6 + rng() * 0.6, windup: 0, flash: 0, born: 0, dying: -1, kx: 0, kz: 0, phase: 0, special: 5 };
     foes.push(f);
     return f;
   }
@@ -372,16 +389,15 @@ export function createSim(opts: SimOptions) {
     for (let i = 0; i < count && pickups.length < MAX_PICKUPS; i++) {
       const a = rng() * Math.PI * 2;
       const d = from + rng() * (to - from);
-      const [x, z] = inside(hunter.x + Math.sin(a) * d, hunter.z + Math.cos(a) * d);
+      const [x, z] = put(hunter.x + Math.sin(a) * d, hunter.z + Math.cos(a) * d);
       pickups.push({ id: ++ids, kind, x, z, age: 0 });
     }
   }
 
   function placeRunes() {
     while (runePool.length && pickups.filter((p) => p.kind === "rune").length < RUNES_ON_FIELD) {
-      const a = rng() * Math.PI * 2;
-      const d = 10 + rng() * 38;
-      pickups.push({ id: ++ids, kind: "rune", x: Math.sin(a) * d, z: Math.cos(a) * d, age: 0, skill: runePool.shift() });
+      const [x, z] = anywhere(rng, stones);
+      pickups.push({ id: ++ids, kind: "rune", x, z, age: 0, skill: runePool.shift() });
     }
   }
   placeRunes();
@@ -503,7 +519,7 @@ export function createSim(opts: SimOptions) {
 
     if (h.dashT > 0) {
       h.dashT -= dt;
-      [h.x, h.z] = inside(h.x + h.dx * DASH_SPEED * dt, h.z + h.dz * DASH_SPEED * dt);
+      [h.x, h.z] = resolve(h.x + h.dx * DASH_SPEED * dt, h.z + h.dz * DASH_SPEED * dt, BODY, stones);
       for (const f of foes) {
         if (f.dying >= 0 || dashed.has(f.id) || dist(f.x, f.z, h.x, h.z) > 1.5 + f.scale * 0.4) continue;
         dashed.add(f.id);
@@ -512,7 +528,7 @@ export function createSim(opts: SimOptions) {
       h.pace = 1;
     } else {
       const speed = sim.derived.speed * (sim.buffs.haste > 0 ? 1.35 : 1) * (h.attackT > 0 ? 0.45 : 1);
-      [h.x, h.z] = inside(h.x + mx * speed * dt, h.z + mz * speed * dt);
+      [h.x, h.z] = resolve(h.x + mx * speed * dt, h.z + mz * speed * dt, BODY, stones);
       h.pace += ((moving ? Math.min(1, len) : 0) - h.pace) * Math.min(1, dt * 12);
       if (moving && h.attackT <= 0) h.yaw += turn(h.yaw, Math.atan2(mx, mz)) * Math.min(1, dt * 14);
     }
@@ -575,7 +591,14 @@ export function createSim(opts: SimOptions) {
       f.z += f.kz * dt;
       f.kx *= Math.max(0, 1 - dt * 7);
       f.kz *= Math.max(0, 1 - dt * 7);
+      [f.x, f.z] = resolve(f.x, f.z, 0.4 * f.scale, stones);
       if (h.dead) continue;
+      if (f.born < RISE) {
+        // still coming up out of the floor
+        f.born += edt;
+        f.yaw = Math.atan2(h.x - f.x, h.z - f.z);
+        continue;
+      }
 
       const dx = h.x - f.x;
       const dz = h.z - f.z;
@@ -622,7 +645,7 @@ export function createSim(opts: SimOptions) {
           for (let k = 0; k < 3; k++) add("shade", foe("shade", sim.level), f.x + (rng() - 0.5) * 5, f.z + (rng() - 0.5) * 5);
         }
       }
-      [f.x, f.z] = inside(f.x, f.z, ARENA + 2);
+      [f.x, f.z] = resolve(f.x, f.z, 0.4 * f.scale, stones);
     }
     // enemies do not stand inside each other
     for (let i = 0; i < foes.length; i++) {
@@ -682,6 +705,7 @@ export function createSim(opts: SimOptions) {
         s.x += (dx / d) * speed * dt;
         s.z += (dz / d) * speed * dt;
       }
+      [s.x, s.z] = resolve(s.x, s.z, 0.4, stones);
       if (d > 0.3) s.yaw += turn(s.yaw, Math.atan2(dx, dz)) * Math.min(1, dt * 10);
       s.pace += ((go ? 1 : 0) - s.pace) * Math.min(1, dt * 10);
     });
@@ -697,7 +721,7 @@ export function createSim(opts: SimOptions) {
       if (dist(s.x, s.z, hunter.x, hunter.z) < 0.9) {
         hurt(s.dmg);
         shots.splice(i, 1);
-      } else if (s.life <= 0) shots.splice(i, 1);
+      } else if (s.life <= 0 || clamp(s.x, s.z)[0] !== s.x || clamp(s.x, s.z)[1] !== s.z) shots.splice(i, 1);
     }
   }
 
@@ -755,13 +779,13 @@ export function createSim(opts: SimOptions) {
 
   function findNear() {
     sim.near = null;
-    let best = 7;
+    let best = TOUCH + 1;
     for (const o of obelisks) {
       const d = dist(o.x, o.z, hunter.x, hunter.z);
       if (d >= best) continue;
       if (o.state === "fallen") [sim.near, best] = [{ action: "arise", project: o.project }, d];
-      else if (d < 5.5 && o.state === "sealed" && !sim.raid) [sim.near, best] = [{ action: "raid", project: o.project }, d];
-      else if (d < 5.5 && o.state === "risen") [sim.near, best] = [{ action: "read", project: o.project }, d];
+      else if (d < TOUCH && o.state === "sealed" && !sim.raid) [sim.near, best] = [{ action: "raid", project: o.project }, d];
+      else if (d < TOUCH && o.state === "risen") [sim.near, best] = [{ action: "read", project: o.project }, d];
     }
   }
 

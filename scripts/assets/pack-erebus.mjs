@@ -82,3 +82,5 @@ const clipsKept = { Idle: "Idle", Run: "Run", Slash: "Slash", Spin: "Spin", Knee
 await pack("knight.glb", "knight.glb", { skinned: true, size: 1024, keep: clipsKept, drop: ["Igris_plume"] });
 await pack("drugdor_the_golem_animated.glb", "golem.glb", { skinned: true, keep: { Walk: "Walk", Attack3: "Attack", Attack2: "Smash", IdlePieces: "Idle" } });
 await pack("obelisk.glb", "obelisk.glb");
+// the hall itself: the throne room the live record already uses (`hall.py` trims it); its walls carry the stained glass, so they stay large
+await pack("hall.glb", "hall.glb", { size: 2048 });

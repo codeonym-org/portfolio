@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import {
@@ -24,14 +24,16 @@ import {
 import { clone as cloneRig } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { game } from "@/erebus/game";
 import { rngFrom } from "@/erebus/rules";
-import { MAX_SOLDIERS, type Foe } from "@/erebus/sim";
-import { CAVE } from "./cavern";
+import { MAX_SOLDIERS, RISE, type Foe } from "@/erebus/sim";
+import { floorAt } from "./hall";
 
 /**
  * Everything on Erebus that is a model: the hunter, the statues that
  * wake against you and the ones that rise behind you (one knight rig,
- * three skins), the rock golems, the obelisks, the colossus and what
- * stands in the dark behind the rock columns. Sources and licenses: scripts/assets/README.md.
+ * three skins), the rock golems, the obelisks along the nave, the
+ * statues on the hall's pedestals and the colossus behind the throne.
+ * Every body stands on the hall's floor, which is not flat (`floorAt`).
+ * Sources and licenses: scripts/assets/README.md.
  * All of it is meshopt-compressed; the decoder ships with three.
  */
 
@@ -57,6 +59,8 @@ function standing(source: Object3D, height: number, restyle: (m: MeshStandardMat
     restyle(mat);
     mesh.material = mat;
     mesh.frustumCulled = false;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
   });
   model.updateMatrixWorld(true);
   box.setFromObject(model).getSize(size);
@@ -88,6 +92,20 @@ interface Puppet {
 
 type Skin = (mat: MeshStandardMaterial) => void;
 
+/** a glow on the outline, facing away from the camera: a dark body still reads against a dark hall */
+function rim(m: MeshStandardMaterial, color: string, strength: number, sharp = 2.8) {
+  const uniforms = { uRimColor: { value: new Color(color) }, uRimStrength: { value: strength }, uRimPower: { value: sharp } };
+  m.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimColor;\nuniform float uRimStrength;\nuniform float uRimPower;").replace(
+      "#include <emissivemap_fragment>",
+      `#include <emissivemap_fragment>
+        totalEmissiveRadiance += uRimColor * pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), uRimPower) * uRimStrength;`,
+    );
+  };
+  m.customProgramCacheKey = () => `erebus-rim-${color}-${strength}-${sharp}`;
+}
+
 function puppet(source: Object3D, clips: AnimationClip[], scale: number, skin: Skin): Puppet {
   const body = cloneRig(source);
   const mats: Puppet["mats"] = [];
@@ -99,6 +117,7 @@ function puppet(source: Object3D, clips: AnimationClip[], scale: number, skin: S
     mesh.material = mat;
     // a skinned mesh's bounds are those of its rest pose: never cull by them
     mesh.frustumCulled = false;
+    mesh.castShadow = true;
     mats.push({ mat, glow: mat.emissive.clone(), power: mat.emissiveIntensity });
   });
   body.scale.multiplyScalar(scale);
@@ -174,20 +193,26 @@ const stone: Skin = (m) => {
 };
 const hunterSkin: Skin = (m) => {
   const body = m.name === "Paladin_MAT";
-  // black iron, and the one blade in the cavern that is clean steel
+  // black iron, and the one blade in the hall that is clean steel
   m.color.set(body ? "#30333c" : "#b4bccb");
   m.emissive.set(body ? "#070b16" : "#5f74a8");
   m.emissiveIntensity = body ? 0.8 : 0.55;
   m.metalness = body ? 0.7 : 0.95;
   m.roughness = body ? 0.5 : 0.28;
+  rim(m, "#9a8cff", body ? 0.55 : 0.3, 3);
 };
+/** a shadow: black all through, and lit only along its outline */
 const risen: Skin = (m) => {
-  m.color.set("#2a3448");
-  m.emissive.set(m.name === "Paladin_MAT" ? "#1c2f66" : "#8fb8e6");
-  m.emissiveIntensity = m.name === "Paladin_MAT" ? 0.45 : 1.1;
+  const body = m.name === "Paladin_MAT";
+  m.map = null;
+  m.color.set("#0b0a14");
+  m.emissive.set(body ? "#05040c" : "#7a6cff");
+  m.emissiveIntensity = body ? 1 : 0.9;
+  m.metalness = 0;
+  m.roughness = 1;
   m.transparent = true;
   m.opacity = 0.9;
-  m.roughness = 0.9;
+  rim(m, "#8f7dff", body ? 1.5 : 0.6, 2.2);
 };
 const rock: Skin = (m) => {
   if (m.name === "Emission") {
@@ -228,7 +253,8 @@ export function Hunter() {
     const dt = Math.min(delta, 0.05);
     const dashing = h.dashT > 0;
     const w = was.current;
-    g.position.set(h.x, 0, h.z);
+    const ground = floorAt(h.x, h.z);
+    g.position.set(h.x, g.position.y + (ground - g.position.y) * Math.min(1, dt * 14), h.z);
     g.rotation.y = h.yaw;
     lean.current.rotation.x += ((dashing ? 0.55 : 0) - lean.current.rotation.x) * Math.min(1, dt * 14);
     lean.current.scale.setScalar(h.hurtT > 0.15 ? 0.95 : 1);
@@ -297,7 +323,8 @@ export function Soldiers() {
         p.current = "";
         once(p, "Rise", 1.5);
       }
-      p.root.position.set(s.x, 0, s.z);
+      const ground = floorAt(s.x, s.z);
+      p.root.position.set(s.x, p.root.position.y + (ground - p.root.position.y) * Math.min(1, dt * 14), s.z);
       p.root.rotation.y = s.yaw;
       if (s.attackT > 0 && p.windup <= 0) once(p, "Slash", 2.4);
       p.windup = s.attackT;
@@ -374,7 +401,10 @@ export function Foes() {
       const moved = Math.hypot(f.x - p.x, f.z - p.z) / dt;
       p.x = f.x;
       p.z = f.z;
-      p.root.position.set(f.x, -(1 - fade) * 0.6, f.z);
+      // it comes up out of the floor, and goes back into it
+      const up = Math.min(1, f.born / RISE);
+      const height = (heavy ? 1.9 : 2.2) * f.scale;
+      p.root.position.set(f.x, floorAt(f.x, f.z) - (1 - fade) * 0.6 - (1 - up) * (1 - up) * height, f.z);
       p.root.rotation.set(f.dying >= 0 && !heavy ? -(1 - fade) * 1.3 : 0, f.yaw, 0);
       p.root.scale.setScalar(f.scale * (heavy ? 0.6 + fade * 0.4 : 1));
       const blow = heavy ? "Attack" : "Slash";
@@ -397,13 +427,14 @@ export function Foes() {
       cm.setMatrixAt(i, dummy.matrix);
       if (!f) continue;
       alive.add(f.id);
+      const ground = floorAt(f.x, f.z);
       let top = 2.2 * f.scale;
       if (f.kind === "spitter") {
         // a seer: a black shard with one eye, hanging in the air
         if (seer < SEERS) {
           const fade = f.dying >= 0 ? Math.max(0, 1 - f.dying / 0.6) : 1;
           const warn = f.windup > 0 ? 1 - f.windup / f.windupTime : 0;
-          const y = 1.5 * f.scale + Math.sin(t * 2.2 + f.id) * 0.18;
+          const y = ground + 1.5 * f.scale * Math.min(1, f.born / RISE) + Math.sin(t * 2.2 + f.id) * 0.18;
           dummy.position.set(f.x, y, f.z);
           dummy.rotation.set(0, f.yaw + Math.sin(t * 1.3 + f.id) * 0.3, 0);
           dummy.scale.set(0.42 * f.scale * fade, 1.05 * f.scale * fade, 0.42 * f.scale * fade);
@@ -439,14 +470,14 @@ export function Foes() {
       }
 
       if (f.dying < 0 && f.hp < f.maxHp) {
-        dummy.position.set(f.x, top + 0.3, f.z);
+        dummy.position.set(f.x, ground + top + 0.3, f.z);
         dummy.quaternion.copy(state.camera.quaternion);
         dummy.scale.set(Math.max(0.02, (f.hp / f.maxHp) * (0.9 + f.scale * 0.5)), 1, 1);
         dummy.updateMatrix();
         bm.setMatrixAt(i, dummy.matrix);
       }
       if (f.kind === "warden" && f.dying < 0) {
-        dummy.position.set(f.x, top + 0.9, f.z);
+        dummy.position.set(f.x, ground + top + 0.9, f.z);
         dummy.rotation.set(0, t * 1.5, 0);
         dummy.scale.setScalar(0.4);
         dummy.updateMatrix();
@@ -498,7 +529,7 @@ export function Foes() {
 /* ── the obelisks: carved stone whose glyphs light up with what happens to them ── */
 
 const STATE_COLOR = { sealed: "#5e1b15", raid: "#c8402c", fallen: "#5fa8cf", risen: "#8f86c8" };
-const OBELISK_HEIGHT = 9;
+const OBELISK_HEIGHT = 4.4;
 
 /** an obelisk, and the one thing that changes on it: the light in its carvings */
 function carvedStone(source: Object3D) {
@@ -533,7 +564,7 @@ function Obelisk({ index, source }: { index: number; source: Object3D }) {
     const t = state.clock.elapsedTime;
     const busy = ob.state === "raid" || ob.state === "fallen";
     gem.current.rotation.y = t * (busy ? 2.4 : 0.6);
-    gem.current.position.y = OBELISK_HEIGHT + 1 + Math.sin(t * 1.3 + index) * 0.25;
+    gem.current.position.y = OBELISK_HEIGHT + 0.7 + Math.sin(t * 1.3 + index) * 0.12;
     const glow = busy ? 0.75 + Math.sin(t * 6) * 0.25 : ob.revealed ? 1 : 0.7;
     gemMat.current.color.set(STATE_COLOR[ob.state]).multiplyScalar(glow * (ob.state === "sealed" && !ob.revealed ? 0.9 : 1.15));
     ringMat.current.color.copy(gemMat.current.color);
@@ -542,15 +573,15 @@ function Obelisk({ index, source }: { index: number; source: Object3D }) {
 
   if (!o) return null;
   return (
-    <group position={[o.x, 0, o.z]} rotation={[0, Math.atan2(o.x, o.z), 0]}>
+    <group position={[o.x, floorAt(o.x, o.z), o.z]} rotation={[0, o.x < 0 ? Math.PI / 2 : -Math.PI / 2, 0]}>
       <primitive object={stone.model} />
-      <mesh ref={gem} position={[0, OBELISK_HEIGHT + 1, 0]}>
-        <octahedronGeometry args={[0.6, 0]} />
+      <mesh ref={gem} position={[0, OBELISK_HEIGHT + 0.7, 0]}>
+        <octahedronGeometry args={[0.3, 0]} />
         <meshBasicMaterial ref={gemMat} toneMapped={false} />
       </mesh>
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.7, 2.8, 64]} />
-        <meshBasicMaterial ref={ringMat} toneMapped={false} transparent opacity={0.45} depthWrite={false} />
+        <ringGeometry args={[1.5, 1.56, 64]} />
+        <meshBasicMaterial ref={ringMat} toneMapped={false} transparent opacity={0.22} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -568,67 +599,54 @@ export function Obelisks() {
   );
 }
 
-/* ── the ruin the rock closed over ── */
+/* ── what the hall keeps: the colossus behind the throne, and the statues on its pedestals ── */
 
-const STATUES = 14;
-/** the colossus on the dais and the statues that have not woken yet */
-export function Ruins() {
+/** the tops of the hall's four pedestals: [x, y, z] */
+const PEDESTALS: [number, number, number][] = [
+  [-4.78, 2.9, -11.73],
+  [4.87, 2.85, -11.73],
+  [-7.44, 1.84, 2.16],
+  [7.31, 1.84, 2.16],
+];
+
+export function Statues() {
   const hooded = useModel(MODELS.colossus);
   const knight = useModel(MODELS.knight);
   const colossus = useMemo(
     () =>
-      standing(hooded.scene, 16, (m) => {
+      standing(hooded.scene, 10.5, (m) => {
         m.color.set("#8b8986");
         // its own texture lights it: the cloth is black, the eyes are not
         m.emissiveMap = m.map;
-        m.emissive.set("#9fe6ff");
-        m.emissiveIntensity = 0.9;
+        m.emissive.set("#b9a8ff");
+        m.emissiveIntensity = 0.8;
         m.roughness = 1;
       }),
     [hooded],
   );
   const statues = useMemo(() => {
     const r = rngFrom(31);
-    return Array.from({ length: STATUES }, (_, i) => {
-      const p = puppet(knight.scene, knight.animations, 2.3, stone);
-      // two slots are taken: the colossus (north) and the door (south)
-      const slot = i < STATUES / 2 ? i + 1 : i + 2;
-      const a = Math.PI + (slot / (STATUES + 2)) * Math.PI * 2;
-      p.root.position.set(Math.sin(a) * CAVE.aisle, 1.2, Math.cos(a) * CAVE.aisle);
-      p.root.rotation.y = a + Math.PI;
+    return PEDESTALS.map(([x, y, z], i) => {
+      const p = puppet(knight.scene, knight.animations, 1.5, stone);
+      p.root.position.set(x, y, z);
+      // they face the nave
+      p.root.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2;
       p.root.visible = true;
       // frozen mid-gesture, each at its own moment: the mixer never runs again
-      const pose = p.actions[i % 3 === 0 ? "Slash" : i % 3 === 1 ? "Idle" : "PowerUp"];
+      const pose = p.actions[i % 2 === 0 ? "Idle" : "PowerUp"];
       pose.play();
       p.mixer.setTime(r() * pose.getClip().duration);
       return p;
     });
   }, [knight]);
-  const plinths = useRef<InstancedMesh>(null);
-  useLayoutEffect(() => {
-    const m = plinths.current;
-    if (!m) return;
-    statues.forEach((p, i) => {
-      dummy.position.set(p.root.position.x, 0.6, p.root.position.z);
-      dummy.rotation.set(0, p.root.rotation.y, 0);
-      dummy.scale.setScalar(1);
-      dummy.updateMatrix();
-      m.setMatrixAt(i, dummy.matrix);
-    });
-    m.instanceMatrix.needsUpdate = true;
-  }, [statues]);
   return (
     <>
-      <group position={[0, 2.4, -CAVE.aisle]}>
+      <group position={[0, 1, -15.6]}>
         <primitive object={colossus} />
       </group>
       {statues.map((p, i) => (
         <primitive key={i} object={p.root} />
       ))}
-      <instancedMesh ref={plinths} args={[undefined, undefined, STATUES]} frustumCulled={false}>
-        <boxGeometry args={[3.4, 1.2, 3.4]} />
-        <meshStandardMaterial color="#5d5b58" roughness={1} />
-      </instancedMesh>
     </>
   );
 }

@@ -79,13 +79,14 @@ export interface FoeStats {
 const BASE: Record<EnemyKind, FoeStats> = {
   shade: { hp: 34, dmg: 8, speed: 5.2, xp: 8, reach: 1.5, windup: 0.45, scale: 1 },
   spitter: { hp: 24, dmg: 7, speed: 4, xp: 10, reach: 10, windup: 0.5, scale: 0.85 },
-  brute: { hp: 120, dmg: 20, speed: 2.9, xp: 26, reach: 2.3, windup: 0.8, scale: 1.7 },
+  brute: { hp: 120, dmg: 20, speed: 2.9, xp: 26, reach: 2.2, windup: 0.8, scale: 1.45 },
 };
 
 const WARDEN: Record<ProjectRank, FoeStats> = {
-  B: { hp: 420, dmg: 20, speed: 3.6, xp: 120, reach: 2.8, windup: 0.75, scale: 2.4 },
-  A: { hp: 700, dmg: 26, speed: 3.8, xp: 200, reach: 3, windup: 0.7, scale: 2.8 },
-  S: { hp: 1100, dmg: 32, speed: 4, xp: 320, reach: 3.2, windup: 0.65, scale: 3.3 },
+  // sized for a hall, not a plain: the largest still leaves room to get round it
+  B: { hp: 420, dmg: 20, speed: 3.6, xp: 120, reach: 2.6, windup: 0.75, scale: 1.9 },
+  A: { hp: 700, dmg: 26, speed: 3.8, xp: 200, reach: 2.8, windup: 0.7, scale: 2.2 },
+  S: { hp: 1100, dmg: 32, speed: 4, xp: 320, reach: 3, windup: 0.65, scale: 2.5 },
 };
 
 /** an enemy's numbers against a hunter of `level` */

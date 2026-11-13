@@ -73,7 +73,7 @@ export const erebus = {
   ] as [string, string][],
   /** CC BY 4.0 asks for the authors to be named where the work is shown */
   credits:
-    "Models: Shadow Wraith by patromes · Drugdör the Golem by Phons · Obelisk by Ankledot · knight's sword by missafe (Sketchfab, CC BY 4.0) · knights and their motion: Mixamo · rock and stone textures: Poly Haven (CC0).",
+    "Models: Throne Room by Uğur Yakışık · Shadow Wraith by patromes · Drugdör the Golem by Phons · Obelisk by Ankledot · knight's sword by missafe (Sketchfab, CC BY 4.0) · knights and their motion: Mixamo.",
   dead: { title: "YOU DIED", body: "The System is undoing it." },
   bargainHeading: "THE SYSTEM OFFERS A BARGAIN",
   accept: "Accept",

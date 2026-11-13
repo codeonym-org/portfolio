@@ -1,212 +1,190 @@
 "use client";
 
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { PerformanceMonitor } from "@react-three/drei";
-import { Bloom, EffectComposer, HueSaturation, Noise, Vignette } from "@react-three/postprocessing";
-import { ACESFilmicToneMapping, AdditiveBlending, Color, Vector3, type FogExp2, type HemisphereLight, type Mesh, type MeshBasicMaterial, type PointLight, type ShaderMaterial } from "three";
+import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
+import { Bloom, BrightnessContrast, EffectComposer, HueSaturation, N8AO, Noise, SMAA, Vignette } from "@react-three/postprocessing";
+import { ACESFilmicToneMapping, AdditiveBlending, Vector3, type DirectionalLight, type FogExp2, type HemisphereLight, type Mesh, type MeshBasicMaterial, type PointLight } from "three";
 import { frame, game } from "@/erebus/game";
+import { HALL, halfWidthAt } from "@/erebus/hall";
 import { controls } from "@/erebus/input";
-import { rngFrom } from "@/erebus/rules";
-import { ARENA } from "@/erebus/sim";
 import { useWorldStore, type Quality } from "@/store/world-store";
-import { Foes, Hunter, Obelisks, Ruins, Soldiers } from "./models";
-import { Cavern, FOG } from "./cavern";
+import { Hall, air, floorAt } from "./hall";
+import { Foes, Hunter, Obelisks, Soldiers, Statues } from "./models";
 import { Drops } from "./things";
 
 /**
- * Erebus, drawn: a cavern with a ruin left inside it (cavern.tsx), a
- * ring of obelisks on the flat ground and statues in the dark behind
- * the rock columns. The bodies and the carved stone are models
+ * Erebus, drawn: the hall (hall.tsx), the obelisks along its nave, the
+ * statues on its pedestals and the colossus behind the throne
  * (models.tsx). The simulation runs first in every frame (`Driver`),
- * then the camera follows the hunter, then everything draws what the
- * simulation says.
+ * then the camera follows the hunter without leaving the walls, then
+ * everything draws what the simulation says.
  */
 
 const DPR: Record<Quality, [number, number]> = { high: [1, 2], medium: [1, 1.5], low: [0.75, 1] };
+const FOG = "#07060f";
 
 function Driver() {
   useFrame((_, delta) => frame(delta));
   return null;
 }
 
-const groundVertex = /* glsl */ `
-  varying vec3 vWorld;
-  void main() {
-    vec4 world = modelMatrix * vec4(position, 1.0);
-    vWorld = world.xyz;
-    gl_Position = projectionMatrix * viewMatrix * world;
-  }
-`;
-const groundFragment = /* glsl */ `
-  uniform vec3 uHunter;
-  uniform float uBurst;
-  uniform float uHurt;
-  varying vec3 vWorld;
-  void main() {
-    float d = distance(vWorld.xz, uHunter.xz);
-    // the burst: one ring that runs outward from the hunter
-    float wave = abs(d - uBurst * 16.0);
-    vec3 col = vec3(0.62, 0.72, 0.95) * smoothstep(0.7, 0.0, wave) * (1.0 - uBurst) * step(0.001, uBurst);
-    // a blow taken: the ground under the hunter darkens red for a moment
-    col += vec3(0.28, 0.02, 0.01) * uHurt * smoothstep(5.0, 0.0, d);
-    gl_FragColor = vec4(col, 1.0);
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
-  }
-`;
-
-/** the air and the little light that is not fire or sky: they answer to what the System has done */
-function Air() {
-  const mat = useRef<ShaderMaterial>(null);
+/** the light that is not fire: moon, sky and the hunter's own lamp. They answer to what the System has done */
+function Air({ shadows }: { shadows: boolean }) {
   const fog = useRef<FogExp2>(null);
   const hemi = useRef<HemisphereLight>(null);
+  const moon = useRef<DirectionalLight>(null);
   const lamp = useRef<PointLight>(null);
-  const dark = useRef(0);
-  const uniforms = useMemo(() => ({ uHunter: { value: new Vector3() }, uBurst: { value: 0 }, uHurt: { value: 0 } }), []);
 
   useFrame((_, delta) => {
     const sim = game.sim;
-    const m = mat.current;
-    if (!sim || !m || !fog.current || !hemi.current || !lamp.current) return;
+    if (!sim || !fog.current || !hemi.current || !lamp.current || !moon.current) return;
     const dt = Math.min(delta, 0.05);
-    dark.current += ((sim.twist?.kind === "blackout" ? 1 : 0) - dark.current) * Math.min(1, dt * 2.5);
-    const d = dark.current;
-    const u = m.uniforms;
-    u.uHunter.value.set(sim.hunter.x, 0, sim.hunter.z);
-    const burst = (sim.time - game.fx.burst) / 0.7;
-    u.uBurst.value = burst > 0 && burst < 1 ? burst : 0;
-    u.uHurt.value = Math.max(0, 1 - (sim.time - game.fx.hurt) * 3);
-    fog.current.density = 0.015 + d * 0.06;
-    hemi.current.intensity = 0.6 * (1 - d * 0.9);
-    lamp.current.position.set(sim.hunter.x, 2.6, sim.hunter.z);
-    lamp.current.intensity = 5 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 90 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 130;
+    air.dark += ((sim.twist?.kind === "blackout" ? 1 : 0) - air.dark) * Math.min(1, dt * 2.5);
+    const d = air.dark;
+    fog.current.density = 0.024 + d * 0.07;
+    hemi.current.intensity = 0.34 * (1 - d * 0.9);
+    moon.current.intensity = 1.6 * (1 - d * 0.95);
+    const h = sim.hunter;
+    lamp.current.position.set(h.x - Math.sin(h.yaw) * 1.2, floorAt(h.x, h.z) + 2.8, h.z - Math.cos(h.yaw) * 1.2);
+    lamp.current.intensity = 2.6 + Math.max(0, 1 - (sim.time - game.fx.level) * 0.8) * 40 + Math.max(0, 1 - (sim.time - game.fx.arise) * 0.7) * 60;
   });
 
   return (
     <>
-      <fogExp2 ref={fog} attach="fog" args={[FOG, 0.015]} />
-      <hemisphereLight ref={hemi} args={["#56657c", "#1a1410", 0.6]} />
-      <pointLight ref={lamp} color="#b9c6dc" intensity={5} distance={20} decay={1.8} />
-      {/* light laid over the floor: the burst, and a blow taken */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-        <circleGeometry args={[ARENA + 2, 64]} />
-        <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={groundVertex} fragmentShader={groundFragment} transparent depthWrite={false} blending={AdditiveBlending} />
+      <fogExp2 ref={fog} attach="fog" args={[FOG, 0.024]} />
+      <hemisphereLight ref={hemi} args={["#2c3060", "#0a0710", 0.34]} />
+      {/* moonlight through the east windows: the one light that casts shadows, and it covers the whole hall */}
+      <directionalLight
+        ref={moon}
+        color="#9fb0ff"
+        intensity={1.6}
+        position={[18, 24, 2]}
+        castShadow={shadows}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-30}
+        shadow-camera-right={30}
+        shadow-camera-top={30}
+        shadow-camera-bottom={-30}
+        shadow-camera-near={1}
+        shadow-camera-far={80}
+        shadow-bias={-0.0005}
+        shadow-normalBias={0.05}
+      />
+      <pointLight ref={lamp} color="#b18cff" intensity={2.6} distance={7} decay={1.8} />
+    </>
+  );
+}
+
+/** reflections only: a dark studio of cold strips, so armour and stone catch a highlight */
+function Reflections() {
+  return (
+    <Environment resolution={128} frames={1}>
+      <color attach="background" args={["#05040b"]} />
+      <Lightformer intensity={0.6} color="#8f96c8" position={[0, 10, -20]} scale={[20, 6, 1]} />
+      <Lightformer intensity={0.7} color="#9fb4ff" position={[20, 8, 0]} rotation-y={-Math.PI / 2} scale={[40, 3, 1]} />
+      <Lightformer intensity={0.6} color="#ff9a5a" position={[-20, 4, 0]} rotation-y={Math.PI / 2} scale={[40, 2, 1]} />
+    </Environment>
+  );
+}
+
+/** rings on the floor under the hunter: the ward, a level or an ARISE, and the burst running outward */
+function Aura() {
+  const ring = useRef<Mesh>(null);
+  const mat = useRef<MeshBasicMaterial>(null);
+  const wave = useRef<Mesh>(null);
+  const waveMat = useRef<MeshBasicMaterial>(null);
+  useFrame((state) => {
+    const sim = game.sim;
+    if (!sim || !ring.current || !mat.current || !wave.current || !waveMat.current) return;
+    const y = floorAt(sim.hunter.x, sim.hunter.z);
+    const flash = Math.max(0, 1 - (sim.time - game.fx.level) * 0.9, 1 - (sim.time - game.fx.arise) * 0.7);
+    ring.current.position.set(sim.hunter.x, y + 0.07, sim.hunter.z);
+    ring.current.rotation.z = state.clock.elapsedTime * 0.8;
+    ring.current.scale.setScalar(1 + (1 - flash) * (flash > 0 ? 4 : 0) + (sim.buffs.ward > 0 ? 0.25 : 0));
+    mat.current.opacity = Math.max(flash, sim.buffs.ward > 0 ? 0.8 : sim.buffs.might > 0 || sim.buffs.haste > 0 ? 0.4 : 0.08);
+    mat.current.color.set(flash > 0 ? "#e6cf9a" : sim.buffs.ward > 0 ? "#d9a441" : sim.buffs.might > 0 ? "#d9583a" : sim.buffs.haste > 0 ? "#7fcf9d" : "#a99cff");
+    const burst = (sim.time - game.fx.burst) / 0.6;
+    const on = burst > 0 && burst < 1;
+    wave.current.visible = on;
+    if (!on) return;
+    wave.current.position.set(sim.hunter.x, y + 0.12, sim.hunter.z);
+    wave.current.scale.setScalar(0.6 + burst * 6.5);
+    waveMat.current.opacity = (1 - burst) * 0.9;
+  });
+  return (
+    <>
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.9, 0.94, 48]} />
+        <meshBasicMaterial ref={mat} toneMapped={false} transparent opacity={0.1} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <mesh ref={wave} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+        <ringGeometry args={[0.9, 1, 64]} />
+        <meshBasicMaterial ref={waveMat} color="#b9a8ff" toneMapped={false} transparent opacity={0} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
     </>
   );
 }
 
-const emberVertex = /* glsl */ `
-  uniform float uTime;
-  uniform vec3 uCentre;
-  attribute float aSeed;
-  varying float vLife;
-  void main() {
-    vec3 p = position;
-    // dust: it hangs, and sinks so slowly you only see it where the light is
-    float rise = 1.0 - fract(aSeed * 7.0 + uTime * (0.006 + aSeed * 0.012));
-    p.y = rise * 14.0;
-    // the cloud travels with the hunter
-    p.xz = mod(p.xz - uCentre.xz + 35.0, 70.0) - 35.0 + uCentre.xz;
-    p.x += sin(uTime * 0.21 + aSeed * 40.0) * 0.9;
-    p.z += cos(uTime * 0.17 + aSeed * 23.0) * 0.9;
-    vLife = sin(rise * 3.1416);
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = (1.0 + aSeed * 2.4) * (30.0 / -mv.z);
-    gl_Position = projectionMatrix * mv;
-  }
-`;
-const emberFragment = /* glsl */ `
-  uniform vec3 uColor;
-  varying float vLife;
-  void main() {
-    float d = length(gl_PointCoord - 0.5);
-    gl_FragColor = vec4(uColor, smoothstep(0.5, 0.0, d) * vLife * 0.2);
-  }
-`;
-
-function Dust({ count }: { count: number }) {
-  const mat = useRef<ShaderMaterial>(null);
-  const [positions, seeds] = useMemo(() => {
-    const r = rngFrom(9);
-    const p = new Float32Array(count * 3);
-    const s = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      p[i * 3] = r() * 70;
-      p[i * 3 + 2] = r() * 70;
-      s[i] = r();
-    }
-    return [p, s];
-  }, [count]);
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uCentre: { value: new Vector3() }, uColor: { value: new Color("#8fa0b8") } }), []);
-  useFrame((state) => {
-    const sim = game.sim;
-    if (!mat.current || !sim) return;
-    mat.current.uniforms.uTime.value = state.clock.elapsedTime;
-    mat.current.uniforms.uCentre.value.set(sim.hunter.x, 0, sim.hunter.z);
-  });
-  return (
-    <points frustumCulled={false}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-aSeed" args={[seeds, 1]} />
-      </bufferGeometry>
-      <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={emberVertex} fragmentShader={emberFragment} transparent depthWrite={false} blending={AdditiveBlending} />
-    </points>
-  );
-}
-
-/** rings on the ground under the hunter: the ward, and the flash of a level or an ARISE */
-function Aura() {
-  const ring = useRef<Mesh>(null);
-  const mat = useRef<MeshBasicMaterial>(null);
-  useFrame((state) => {
-    const sim = game.sim;
-    if (!sim || !ring.current || !mat.current) return;
-    const flash = Math.max(0, 1 - (sim.time - game.fx.level) * 0.9, 1 - (sim.time - game.fx.arise) * 0.7);
-    ring.current.position.set(sim.hunter.x, 0.07, sim.hunter.z);
-    ring.current.rotation.z = state.clock.elapsedTime * 0.8;
-    ring.current.scale.setScalar(1 + (1 - flash) * (flash > 0 ? 5 : 0) + (sim.buffs.ward > 0 ? 0.25 : 0));
-    mat.current.opacity = Math.max(flash, sim.buffs.ward > 0 ? 0.8 : sim.buffs.might > 0 || sim.buffs.haste > 0 ? 0.4 : 0.1);
-    mat.current.color.set(flash > 0 ? "#e6cf9a" : sim.buffs.ward > 0 ? "#d9a441" : sim.buffs.might > 0 ? "#d9583a" : sim.buffs.haste > 0 ? "#7fcf9d" : "#9fb4d6");
-  });
-  return (
-    <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[1.0, 1.05, 48]} />
-      <meshBasicMaterial ref={mat} toneMapped={false} transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
-    </mesh>
-  );
-}
-
 const target = new Vector3();
 const want = new Vector3();
+const WALL = 0.8;
+/** behind the hunter, drag to turn, wheel to zoom; it never leaves the hall */
 function Rig() {
-  const focus = useRef(new Vector3(0, 1.4, 0));
+  const focus = useRef(new Vector3(HALL.spawn[0], 1.6, HALL.spawn[1]));
+  const at = useRef(new Vector3(HALL.spawn[0], 4, HALL.spawn[1] + 6));
   useFrame((state, delta) => {
     const sim = game.sim;
     if (!sim) return;
     const dt = Math.min(delta, 0.05);
-    target.set(sim.hunter.x, 1.5, sim.hunter.z);
+    const ground = floorAt(sim.hunter.x, sim.hunter.z);
+    target.set(sim.hunter.x, ground + 1.7, sim.hunter.z);
     focus.current.lerp(target, Math.min(1, dt * 9));
     const flat = Math.cos(controls.pitch) * controls.distance;
     want.set(focus.current.x + Math.sin(controls.yaw) * flat, focus.current.y + Math.sin(controls.pitch) * controls.distance, focus.current.z + Math.cos(controls.yaw) * flat);
-    const shake = game.fx.shake * 0.35;
-    state.camera.position.set(want.x + (Math.random() - 0.5) * shake, want.y + (Math.random() - 0.5) * shake, want.z + (Math.random() - 0.5) * shake);
+    // inside the walls, under the vault, above the floor it stands over
+    want.z = Math.min(HALL.south + 1.4, Math.max(HALL.north + WALL, want.z));
+    const hw = halfWidthAt(Math.min(HALL.south, want.z)) - WALL;
+    want.x = Math.min(hw, Math.max(-hw, want.x));
+    // a wall has pushed it closer than it wanted: it goes up instead, to see over what stands near
+    const squeezed = Math.max(0, flat - Math.hypot(want.x - focus.current.x, want.z - focus.current.z));
+    want.y = Math.min(HALL.ceiling, Math.max(floorAt(want.x, want.z) + 0.9, want.y + squeezed * 0.75));
+    at.current.lerp(want, Math.min(1, dt * 10));
+    const shake = game.fx.shake * 0.28;
+    state.camera.position.set(at.current.x + (Math.random() - 0.5) * shake, at.current.y + (Math.random() - 0.5) * shake, at.current.z + (Math.random() - 0.5) * shake);
     state.camera.lookAt(focus.current);
   });
   return null;
 }
 
+function Effects({ quality }: { quality: Quality }) {
+  if (quality === "low") return null;
+  const high = quality === "high";
+  return (
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      {/* contact shadows under every body and step: the dearest pass, so only on high, at half size */}
+      {high ? <N8AO aoRadius={1.2} intensity={2.4} distanceFalloff={0.6} quality="performance" halfRes /> : <></>}
+      <Bloom mipmapBlur intensity={high ? 0.85 : 0.7} luminanceThreshold={0.72} luminanceSmoothing={0.25} radius={0.7} />
+      <HueSaturation saturation={-0.14} />
+      <BrightnessContrast brightness={0.02} contrast={0.12} />
+      <Vignette offset={0.22} darkness={0.74} />
+      <Noise opacity={0.04} premultiply />
+      {high ? <SMAA /> : <></>}
+    </EffectComposer>
+  );
+}
+
 export function World() {
   const quality = useWorldStore((s) => s.quality);
   const setQuality = useWorldStore((s) => s.setQuality);
+  const shadows = quality !== "low";
   return (
     <Canvas
       style={{ touchAction: "none" }}
+      shadows={shadows}
       dpr={DPR[quality]}
-      camera={{ position: [0, 9, -12], fov: 50, near: 0.2, far: 400 }}
-      gl={{ antialias: quality === "low", powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
+      camera={{ position: [HALL.spawn[0], 4, HALL.spawn[1] + 6], fov: 50, near: 0.2, far: 160 }}
+      gl={{ antialias: false, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
     >
       <PerformanceMonitor
         flipflops={2}
@@ -221,26 +199,19 @@ export function World() {
       <color attach="background" args={[FOG]} />
       <Driver />
       <Rig />
-      <Air />
-      <Dust count={quality === "low" ? 140 : 380} />
+      <Air shadows={shadows} />
       <Aura />
       <Drops />
       <Suspense fallback={null}>
+        <Reflections />
+        <Hall quality={quality} />
         <Obelisks />
+        <Statues />
         <Hunter />
         <Soldiers />
         <Foes />
-        <Ruins />
-        <Cavern />
       </Suspense>
-      {quality !== "low" && (
-        <EffectComposer multisampling={quality === "high" ? 4 : 0}>
-          <Bloom mipmapBlur intensity={quality === "high" ? 0.55 : 0.45} luminanceThreshold={0.78} luminanceSmoothing={0.25} radius={0.65} />
-          <HueSaturation saturation={-0.12} />
-          <Noise opacity={0.07} premultiply />
-          <Vignette darkness={0.86} offset={0.22} />
-        </EffectComposer>
-      )}
+      <Effects quality={quality} />
     </Canvas>
   );
 }

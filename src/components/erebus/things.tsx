@@ -4,9 +4,10 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { AdditiveBlending, Color, Object3D, type InstancedMesh } from "three";
 import { game } from "@/erebus/game";
+import { floorAt } from "./hall";
 
 /**
- * The small things on the cavern floor: what enemies drop, what they throw,
+ * The small things on the hall's floor: what enemies drop, what they throw,
  * the ground that is about to break and the pillars of light. Each
  * kind is one instanced mesh, rewritten every frame from the
  * simulation. The bodies are in models.tsx.
@@ -20,7 +21,7 @@ const hidden = () => {
   dummy.updateMatrix();
 };
 
-const PICKUP: Record<string, string> = { echo: "#7fc4e0", heal: "#74c796", rune: "#d9a441" };
+const PICKUP: Record<string, string> = { echo: "#7fc4e0", heal: "#74c796", rune: "#b08a3c" };
 const MAX_DROPS = 60;
 const MAX_SHOTS = 30;
 const MAX_HAZARDS = 24;
@@ -45,7 +46,7 @@ export function Drops() {
     let beam = 0;
     const pillar = (x: number, z: number, radius: number, height: number, hex: string) => {
       if (beam >= MAX_BEAMS) return;
-      dummy.position.set(x, height / 2, z);
+      dummy.position.set(x, floorAt(x, z) + height / 2, z);
       dummy.rotation.set(0, 0, 0);
       dummy.scale.set(radius * (1 + Math.sin(t * 3 + x) * 0.12), height, radius * (1 + Math.sin(t * 3 + x) * 0.12));
       dummy.updateMatrix();
@@ -57,13 +58,12 @@ export function Drops() {
       const p = sim.pickups[i];
       if (!p) hidden();
       else {
-        const size = p.kind === "rune" ? 0.42 : p.kind === "heal" ? 0.24 : 0.16;
-        dummy.position.set(p.x, 0.9 + Math.sin(t * 2.5 + p.id) * 0.18, p.z);
+        const size = p.kind === "rune" ? 0.2 : p.kind === "heal" ? 0.2 : 0.13;
+        dummy.position.set(p.x, floorAt(p.x, p.z) + 0.9 + Math.sin(t * 2.5 + p.id) * 0.18, p.z);
         dummy.rotation.set(0, t * 1.8 + p.id, 0);
         dummy.scale.set(size, size * 1.5, size);
         dummy.updateMatrix();
         d.setColorAt(i, color.set(PICKUP[p.kind]));
-        if (p.kind === "rune") pillar(p.x, p.z, 0.07, 4, "#c9983f");
       }
       d.setMatrixAt(i, dummy.matrix);
     }
@@ -71,7 +71,7 @@ export function Drops() {
       const p = sim.shots[i];
       if (!p) hidden();
       else {
-        dummy.position.set(p.x, 1.1, p.z);
+        dummy.position.set(p.x, floorAt(p.x, p.z) + 1.1, p.z);
         dummy.rotation.set(0, 0, 0);
         dummy.scale.setScalar(0.2);
         dummy.updateMatrix();
@@ -86,22 +86,23 @@ export function Drops() {
         f.setMatrixAt(i, dummy.matrix);
         continue;
       }
-      dummy.position.set(z.x, 0.06, z.z);
+      const ground = floorAt(z.x, z.z);
+      dummy.position.set(z.x, ground + 0.08, z.z);
       dummy.rotation.set(-Math.PI / 2, 0, 0);
       dummy.scale.setScalar(z.r);
       dummy.updateMatrix();
       r.setMatrixAt(i, dummy.matrix);
-      dummy.position.y = 0.05;
+      dummy.position.y = ground + 0.07;
       dummy.scale.setScalar(z.r * Math.min(1, 1 - z.t / z.total));
       dummy.updateMatrix();
       f.setMatrixAt(i, dummy.matrix);
     }
 
     for (const o of sim.obelisks) {
-      if (o.revealed) pillar(o.x, o.z, 0.55, 30, "#a9a0d8");
-      else if (o.state === "fallen") pillar(o.x, o.z, 0.7, 30, "#6fb4d9");
+      if (o.revealed) pillar(o.x, o.z, 0.5, 16, "#a9a0d8");
+      else if (o.state === "fallen") pillar(o.x, o.z, 0.6, 16, "#6fb4d9");
     }
-    if (sim.quest?.type === "reach") pillar(sim.quest.x, sim.quest.z, 1.0, 30, "#d7e2ee");
+    if (sim.quest?.type === "reach") pillar(sim.quest.x, sim.quest.z, 0.9, 16, "#d7e2ee");
     for (let i = beam; i < MAX_BEAMS; i++) {
       hidden();
       b.setMatrixAt(i, dummy.matrix);

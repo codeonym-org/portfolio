@@ -29,7 +29,7 @@ export const gates: Gate[] = [
     state: "open",
     tagline: "The last world before the dark: the record as a world to fight through.",
     description:
-      "A black world at the edge of the system, hidden under fog that never lifts. Under the fog is a cavern, and in the cavern a ruin: his projects stand there as sealed obelisks, each held by a Warden. Name your hunter, bring a Warden down and say ARISE: the project follows you, and you read what it is. The System runs this world, and it does not follow a script.",
+      "A black world at the edge of the system, hidden under fog that never lifts. Under the fog is a hall with an empty throne: his projects stand along its nave as sealed obelisks, each held by a Warden. Name your hunter, bring a Warden down and say ARISE: the project follows you, and you read what it is. The System runs this world, and it does not follow a script.",
     holds: ["A hunter you name and level", "Ten Wardens, ten projects to raise", "A System that changes the rules as you play", "Progress from First Light comes with you"],
     audience: "Visitors with time to play",
     cost: "Heavy",
