@@ -2,6 +2,9 @@
     <linearGradient id="i-arc" gradientUnits="userSpaceOnUse" x1="300" y1="96" x2="300" y2="416">
       <stop offset="0" stop-color="#e3d4ff"/><stop offset=".42" stop-color="#9d70ff"/><stop offset=".78" stop-color="#5a7dff"/><stop offset="1" stop-color="#3fc8f6"/>
     </linearGradient>
+    <linearGradient id="i-counter" gradientUnits="userSpaceOnUse" x1="150" y1="360" x2="360" y2="150">
+      <stop offset="0" stop-color="#3fc8f6"/><stop offset=".55" stop-color="#7f8dff"/><stop offset="1" stop-color="#d9c8ff"/>
+    </linearGradient>
     <radialGradient id="i-aura" cx=".5" cy=".5" r=".5">
       <stop offset="0" stop-color="#7a4dff" stop-opacity=".42"/><stop offset=".55" stop-color="#5a3de0" stop-opacity=".14"/><stop offset="1" stop-color="#5a3de0" stop-opacity="0"/>
     </radialGradient>
@@ -15,6 +18,8 @@
     <circle cx="256" cy="256" r="250" fill="url(#i-aura)"/>
     <path d="M364.75,171.04 A138,138 0 1 0 364.75,340.96" fill="none" stroke="url(#i-arc)" stroke-width="46" stroke-linecap="round" filter="url(#i-glow)" opacity=".6"/>
     <path d="M364.75,171.04 A138,138 0 1 0 364.75,340.96" fill="none" stroke="url(#i-arc)" stroke-width="46" stroke-linecap="round"/>
+    <circle cx="256" cy="256" r="44.16" fill="#9d70ff" filter="url(#i-halo)" opacity=".75"/>
+    <path d="M256,200.8 Q263.73,248.27 311.2,256 Q263.73,263.73 256,311.2 Q248.27,263.73 200.8,256 Q248.27,248.27 256,200.8Z" fill="url(#i-orb)"/>
     <circle cx="394" cy="256" r="51" fill="#8fd0ff" filter="url(#i-halo)" opacity=".85"/>
     <circle cx="394" cy="256" r="34" fill="url(#i-orb)"/>
 </svg>
