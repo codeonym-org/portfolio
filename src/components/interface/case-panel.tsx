@@ -24,7 +24,7 @@ function factsOf(e: Evidence): { kind: string; title: string; meta?: string; tag
     }
     case "skill": {
       const s = findSkill(e.id);
-      return s ? { kind: `Skill · grade ${masteryGrade(s.mastery)}`, title: s.name, meta: `mastery ${s.mastery} · ${s.rarity}`, tags: s.tags } : null;
+      return s ? { kind: `Skill · grade ${masteryGrade(s.mastery)}`, title: s.name, meta: `self-rated ${s.mastery}/100`, tags: s.tags } : null;
     }
     case "experience": {
       const c = chronicle.find((x) => x.id === e.id);
@@ -36,7 +36,7 @@ function factsOf(e: Evidence): { kind: string; title: string; meta?: string; tag
     }
     case "item": {
       const i = findItem(e.id);
-      return i ? { kind: "Vault", title: i.name, meta: i.meta, tags: i.tags } : null;
+      return i ? { kind: "Document", title: i.name, meta: i.meta, tags: i.tags } : null;
     }
   }
 }

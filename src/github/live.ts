@@ -19,7 +19,7 @@ import { repoOf, type RepoLive } from "./format";
 const OWNERS = guilds.flatMap((g) => g.link?.match(/github\.com\/([\w.-]+)\/?$/)?.[1] ?? []);
 const REVALIDATE_S = 600;
 
-/** project id → owner/name, for every project whose link is a repository of one of the Player's guilds */
+/** project id → owner/name, for every project whose link is a repository of one of Ayoub's guilds */
 export const liveRepos: Record<string, string> = Object.fromEntries(quests.flatMap((q) => {
   const repo = repoOf(q.link, OWNERS);
   return repo ? [[q.id, repo]] : [];

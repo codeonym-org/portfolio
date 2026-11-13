@@ -6,7 +6,7 @@ export type Tone = "system" | "arcane" | "gold" | "ember";
 export type Rarity = "legendary" | "epic" | "rare" | "common";
 
 export interface Stat {
-  /** Solo Leveling stat code (STR, INT, ...) */
+  /** short code beside the bar (AI, BE, ...) */
   code: string;
   /** What the stat actually measures */
   label: string;
@@ -38,14 +38,9 @@ export interface Player {
   title: string;
   job: string;
   location: string;
-  /** where the Player lives, for the map card: coordinates of the city, IANA time zone */
+  /** where Ayoub lives, for the map card: coordinates of the city, IANA time zone */
   base: { city: string; country: string; lat: number; lon: number; timeZone: string; countryCentre: { lon: number; lat: number } };
   guild: string;
-  level: number;
-  /** hunter rank letter (S/A/B...) shown beside the level */
-  rank: string;
-  /** flavor line under the rank (e.g. next assessment) */
-  rankNote: string;
   titles: PlayerTitle[];
   profile: string[];
   creed: string;
@@ -96,12 +91,12 @@ export interface Planet {
   tilt: number;
 }
 
-/** an organization the Player works in */
+/** an organization Ayoub works in */
 export interface Guild {
   id: string;
   name: string;
-  /** the Player's role there: employed, or founder and maintainer */
-  role: "Engineer" | "Guild Master";
+  /** Ayoub's role there: employed, or founder and maintainer */
+  role: "Engineer" | "Founder";
   /** what kind of place it is, in two words */
   kind: string;
   summary: string;
@@ -128,7 +123,7 @@ export interface Quest {
   docs?: string;
 }
 
-/** job = the Player's craft; secondary = everything the job isn't */
+/** job = Ayoub's craft; secondary = everything the job isn't */
 export type SkillSet = "job" | "secondary";
 
 export interface SkillSetDef {

@@ -58,8 +58,8 @@ export const plainSections: PlainSection[] = [
   },
   {
     id: "guilds",
-    title: "Guilds",
-    note: "The organizations he works in. Engineer = employed there; Guild Master = founded and runs it.",
+    title: "Organisations",
+    note: "The organizations he works in. Engineer = employed there; Founder = founded and runs it.",
     entries: guilds.map((g) => ({ id: g.id, title: `${g.name} — ${g.role}`, meta: g.kind, body: g.summary, link: g.link })),
   },
   {
@@ -96,7 +96,7 @@ export const plainSections: PlainSection[] = [
   },
   {
     id: "inventory",
-    title: "Tools & artefacts",
+    title: "Documents, degrees and interests",
     entries: inventoryCategories.map((cat) => ({
       id: cat.id,
       title: cat.name,

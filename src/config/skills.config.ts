@@ -38,7 +38,7 @@ import type { SkillCategoryDef, SkillDetail, SkillSetDef } from "./types";
 
 /**
  * ── SKILL TREE ────────────────────────────────────────────────
- * Two sets: `job` (the Player's craft) and `secondary` (everything
+ * Two sets: `job` (Ayoub's craft) and `secondary` (everything
  * the job isn't — tongues, soft skills, pursuits). Mastery is
  * 0–100 and maps to grades in the UI: ≥90 S · ≥85 A · ≥78 B · else C.
  * rarity drives the glow: legendary > epic > rare > common.
@@ -47,13 +47,13 @@ import type { SkillCategoryDef, SkillDetail, SkillSetDef } from "./types";
 export const skillSets: SkillSetDef[] = [
   {
     id: "job",
-    name: "JOB SKILLS",
-    blurb: "class: agentic systems developer — active combat kit",
+    name: "TECHNICAL SKILLS",
+    blurb: "what the job is done with",
   },
   {
     id: "secondary",
-    name: "SECONDARY SKILLS",
-    blurb: "passives acquired outside the job — always equipped",
+    name: "BEYOND THE JOB",
+    blurb: "languages spoken, ways of working and interests",
   },
 ];
 
@@ -66,9 +66,9 @@ export const skillCategories: SkillCategoryDef[] = [
   { id: "data", name: "Databases", icon: Database, set: "job", tone: "gold" },
   { id: "ops", name: "DevOps & Observability", icon: Container, set: "job", tone: "ember" },
   // ── secondary ──
-  { id: "tongues", name: "Tongues", icon: MessagesSquare, set: "secondary", tone: "system" },
+  { id: "tongues", name: "Languages Spoken", icon: MessagesSquare, set: "secondary", tone: "system" },
   { id: "soft", name: "Soft Skills", icon: Users, set: "secondary", tone: "gold" },
-  { id: "pursuits", name: "Pursuits", icon: Swords, set: "secondary", tone: "arcane" },
+  { id: "pursuits", name: "Interests", icon: Swords, set: "secondary", tone: "arcane" },
 ];
 
 export const skills: SkillDetail[] = [
@@ -80,7 +80,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 95,
-    lore: "The signature art. Autonomous entities given goals, tools and memory — raised to act in the world, not just answer it.",
+    lore: "Autonomous agents given goals, tools and memory, built to act and not only to answer.",
     tags: ["autonomy", "tool-use"],
   },
   {
@@ -90,7 +90,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 92,
-    lore: "Blueprint of the citadel. Specialized agents coordinated into modular, scalable architectures — the meta-skill behind every raid.",
+    lore: "Specialized agents coordinated in modular, scalable architectures.",
     tags: ["architecture", "orchestration"],
   },
   {
@@ -100,7 +100,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 94,
-    lore: "Mana shaping. Deciding what an agent perceives — the difference between a sharp mind and a drowned one.",
+    lore: "Deciding what an agent sees at each step, so it stays reliable on long tasks.",
     tags: ["context", "reliability"],
   },
   {
@@ -110,7 +110,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 93,
-    lore: "Incantation craft. Words arranged so reasoning holds under pressure and output lands exactly where aimed.",
+    lore: "Prompts written so reasoning holds under pressure and the output has the expected shape.",
     tags: ["reasoning", "quality"],
   },
   {
@@ -120,7 +120,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 90,
-    lore: "Tome of recall. Retrieval-grounded generation over knowledge graphs and raw archives.",
+    lore: "Retrieval-grounded generation over knowledge graphs and raw documents.",
     tags: ["retrieval", "knowledge-graph"],
   },
   {
@@ -130,7 +130,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "legendary",
     mastery: 91,
-    lore: "Clockwork rituals. LLM-driven pipelines that carry work from raw input to finished act without a hand on the wheel.",
+    lore: "LLM-driven pipelines that carry work from raw input to a finished result without manual steps.",
     tags: ["automation", "llm"],
   },
   {
@@ -140,7 +140,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "epic",
     mastery: 87,
-    lore: "Load-bearing runes. Agent systems raised on bounded contexts, split reads from writes, and events that ripple through the citadel.",
+    lore: "Agent systems built on bounded contexts, separate reads and writes, and events.",
     tags: ["ddd", "cqrs", "eda"],
   },
   {
@@ -150,7 +150,7 @@ export const skills: SkillDetail[] = [
     category: "ai-arch",
     rarity: "rare",
     mastery: 85,
-    lore: "Scrolls of technique. Capabilities packaged as skill files an agent can learn on demand — literal skill acquisition.",
+    lore: "Capabilities packaged as skill files that an agent loads on demand.",
     tags: ["skills", "agents"],
   },
 
@@ -162,7 +162,7 @@ export const skills: SkillDetail[] = [
     category: "agent-stack",
     rarity: "legendary",
     mastery: 93,
-    lore: "Primary weapon. Forges LLM-driven workflows and stateful agent graphs — every serious raid starts here.",
+    lore: "The main framework for LLM-driven workflows and stateful agent graphs.",
     tags: ["agents", "workflows", "python"],
   },
   {
@@ -172,7 +172,7 @@ export const skills: SkillDetail[] = [
     category: "agent-stack",
     rarity: "epic",
     mastery: 88,
-    lore: "All-seeing eye. Traces every agent step, exposing the invisible paths a thought takes through the graph.",
+    lore: "Tracing and evaluation of every agent step.",
     tags: ["observability", "tracing"],
   },
   {
@@ -182,7 +182,7 @@ export const skills: SkillDetail[] = [
     category: "agent-stack",
     rarity: "legendary",
     mastery: 90,
-    lore: "Artifact of connection. Grounds agents in enterprise systems and rich contextual data across any boundary.",
+    lore: "Connects agents to enterprise systems and their data.",
     tags: ["context", "integration"],
   },
   {
@@ -192,7 +192,7 @@ export const skills: SkillDetail[] = [
     category: "agent-stack",
     rarity: "epic",
     mastery: 89,
-    lore: "Bridge between realms. Lets humans and agents share one interface — the same magic that will soon awaken this System.",
+    lore: "Lets people and agents share one interface. This site's agent runs on it.",
     tags: ["human-ai", "frontend"],
   },
   {
@@ -202,7 +202,7 @@ export const skills: SkillDetail[] = [
     category: "agent-stack",
     rarity: "epic",
     mastery: 86,
-    lore: "Eyes that read the archive. Turns document-heavy enterprise data into structure an agent can reason over.",
+    lore: "Turns document-heavy enterprise data into structure an agent can reason over.",
     tags: ["extraction", "ocr", "grounding"],
   },
 
@@ -214,7 +214,7 @@ export const skills: SkillDetail[] = [
     category: "languages",
     rarity: "legendary",
     mastery: 92,
-    lore: "Ancestral blade of the AI arts. Fluent, fast to draw, sharp at any scale.",
+    lore: "The main language for AI and backend work.",
     tags: ["backend", "ai"],
   },
   {
@@ -224,7 +224,7 @@ export const skills: SkillDetail[] = [
     category: "languages",
     rarity: "legendary",
     mastery: 90,
-    lore: "Enchanted armor for JavaScript. Types are wards — breaches are caught before the dungeon door opens.",
+    lore: "Typed JavaScript, on the frontend and the backend.",
     tags: ["frontend", "backend"],
   },
   {
@@ -234,7 +234,7 @@ export const skills: SkillDetail[] = [
     category: "languages",
     rarity: "epic",
     mastery: 88,
-    lore: "The common tongue of the web realm. Spoken everywhere, mastered by few.",
+    lore: "The language of the web.",
     tags: ["web"],
   },
   {
@@ -244,7 +244,7 @@ export const skills: SkillDetail[] = [
     category: "languages",
     rarity: "rare",
     mastery: 80,
-    lore: "Heavy greatsword. Slower to swing, but Spring Boot raids were cleared with it.",
+    lore: "Used for Spring Boot backends.",
     tags: ["backend", "spring"],
   },
 
@@ -256,7 +256,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "legendary",
     mastery: 90,
-    lore: "Twin daggers of the frontend. Server components, streaming, static sorcery — this very System is forged with them.",
+    lore: "Server components, streaming and static rendering. This site is built with them.",
     tags: ["react", "ssr"],
   },
   {
@@ -266,7 +266,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "epic",
     mastery: 87,
-    lore: "Swift courier of the backend. Async endpoints that serve agent minds at speed.",
+    lore: "Async Python APIs that serve agents.",
     tags: ["python", "api"],
   },
   {
@@ -276,7 +276,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "epic",
     mastery: 88,
-    lore: "Tailor's charm. Interfaces cut precisely to measure, no stylesheet left behind.",
+    lore: "Interfaces built with utility classes and a component library.",
     tags: ["ui", "design-system"],
   },
   {
@@ -286,7 +286,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "rare",
     mastery: 84,
-    lore: "Keeper of state. This OS window manager answers to it right now.",
+    lore: "Client state in React applications. This site uses Zustand.",
     tags: ["state"],
   },
   {
@@ -296,7 +296,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "rare",
     mastery: 83,
-    lore: "Contract seals. Schemas that promise a shape and keep it, from form to table.",
+    lore: "Schemas that validate data from the form to the table.",
     tags: ["validation", "orm"],
   },
   {
@@ -306,7 +306,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "rare",
     mastery: 80,
-    lore: "Whisper line. End-to-end typed calls between client and server — no contract drift.",
+    lore: "End-to-end typed calls between client and server.",
     tags: ["typescript", "api"],
   },
   {
@@ -316,7 +316,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "rare",
     mastery: 82,
-    lore: "Gatekeeper's seal. Decides who may pass and who is turned away.",
+    lore: "Sign-in and access control for web applications.",
     tags: ["auth", "security"],
   },
   {
@@ -326,7 +326,7 @@ export const skills: SkillDetail[] = [
     category: "web",
     rarity: "common",
     mastery: 80,
-    lore: "Field kit. End-to-end trials and tongues for every region.",
+    lore: "End-to-end tests and translated interfaces.",
     tags: ["testing", "i18n"],
   },
 
@@ -338,7 +338,7 @@ export const skills: SkillDetail[] = [
     category: "data",
     rarity: "epic",
     mastery: 86,
-    lore: "The deep vault. Relational bedrock that has never dropped a single coin.",
+    lore: "The relational database used most.",
     tags: ["sql"],
   },
   {
@@ -348,7 +348,7 @@ export const skills: SkillDetail[] = [
     category: "data",
     rarity: "epic",
     mastery: 84,
-    lore: "Web of fate. Knowledge graphs that let agents see how everything connects.",
+    lore: "Knowledge graphs that let agents see how things connect.",
     tags: ["graph", "knowledge-graph"],
   },
   {
@@ -358,7 +358,7 @@ export const skills: SkillDetail[] = [
     category: "data",
     rarity: "rare",
     mastery: 80,
-    lore: "Lightning satchel. Whatever it holds, it hands back before you finish asking.",
+    lore: "Caching and fast key-value storage.",
     tags: ["cache"],
   },
   {
@@ -368,7 +368,7 @@ export const skills: SkillDetail[] = [
     category: "data",
     rarity: "rare",
     mastery: 78,
-    lore: "Shapeshifter's chest. Documents of any form find a place inside.",
+    lore: "Document storage.",
     tags: ["nosql"],
   },
   {
@@ -378,7 +378,7 @@ export const skills: SkillDetail[] = [
     category: "data",
     rarity: "common",
     mastery: 78,
-    lore: "Trusty starter vault. Old, reliable, still in rotation.",
+    lore: "A relational database used on earlier projects.",
     tags: ["sql"],
   },
 
@@ -390,7 +390,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "epic",
     mastery: 85,
-    lore: "Dimensional crates. Any beast, sealed and shipped to any realm unchanged.",
+    lore: "Services packaged in containers and run with Compose.",
     tags: ["containers"],
   },
   {
@@ -400,7 +400,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "epic",
     mastery: 84,
-    lore: "Messenger ravens. The async backbone that carries tasks and events between agents without anyone waiting.",
+    lore: "The async backbone that carries tasks and events between agents.",
     tags: ["queues", "async"],
   },
   {
@@ -410,7 +410,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "rare",
     mastery: 80,
-    lore: "Gatehouse and seal. Routes every request to its hall and checks every face at the door.",
+    lore: "A reverse proxy and single sign-on in front of every service.",
     tags: ["proxy", "sso"],
   },
   {
@@ -420,7 +420,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "epic",
     mastery: 84,
-    lore: "Clockwork familiar. Builds, tests and deploys while the Player sleeps.",
+    lore: "Automated build, test and deploy.",
     tags: ["automation"],
   },
   {
@@ -430,7 +430,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "epic",
     mastery: 88,
-    lore: "Chronicle stone. Every timeline preserved; any mistake, rewound.",
+    lore: "Version control, code review and issue tracking.",
     tags: ["vcs"],
   },
   {
@@ -440,7 +440,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "rare",
     mastery: 78,
-    lore: "Scrying array. Metrics, traces and dashboards — nothing moves unseen.",
+    lore: "Metrics, traces and dashboards.",
     tags: ["monitoring"],
   },
   {
@@ -450,7 +450,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "epic",
     mastery: 86,
-    lore: "Homeland terrain. The Player fights best on native ground.",
+    lore: "The daily working environment.",
     tags: ["os", "shell"],
   },
   {
@@ -460,7 +460,7 @@ export const skills: SkillDetail[] = [
     category: "ops",
     rarity: "rare",
     mastery: 85,
-    lore: "Trade routes of the realm. Every message travels one of these roads.",
+    lore: "The protocols every service speaks.",
     tags: ["protocols"],
   },
 
@@ -472,7 +472,7 @@ export const skills: SkillDetail[] = [
     category: "tongues",
     rarity: "legendary",
     mastery: 100,
-    lore: "Mother tongue. Native fluency — the language the Player thinks in.",
+    lore: "Native.",
     tags: ["native"],
   },
   {
@@ -482,7 +482,7 @@ export const skills: SkillDetail[] = [
     category: "tongues",
     rarity: "epic",
     mastery: 88,
-    lore: "Trade tongue of the tech realm. Proficient — specs, papers and raids are run in it daily.",
+    lore: "Proficient. Specifications, papers and daily work are in English.",
     tags: ["proficient"],
   },
   {
@@ -492,7 +492,7 @@ export const skills: SkillDetail[] = [
     category: "tongues",
     rarity: "rare",
     mastery: 75,
-    lore: "Technical dialect. Reads documentation and holds a meeting without dropping the thread.",
+    lore: "Technical. Reads documentation and takes part in meetings.",
     tags: ["technical"],
   },
 
@@ -504,7 +504,7 @@ export const skills: SkillDetail[] = [
     category: "soft",
     rarity: "legendary",
     mastery: 90,
-    lore: "Foresight passive. Reads where software is heading — LLMs as operating systems, language as the interface — and builds there early.",
+    lore: "Follows where software is heading (LLMs as operating systems, language as the interface) and builds there early.",
     tags: ["strategy"],
   },
   {
@@ -514,7 +514,7 @@ export const skills: SkillDetail[] = [
     category: "soft",
     rarity: "legendary",
     mastery: 92,
-    lore: "Debuff immunity to hand-waving. Problems decomposed until each piece is small enough to defeat.",
+    lore: "Breaks a problem down until each piece is small enough to solve.",
     tags: ["reasoning"],
   },
   {
@@ -524,7 +524,7 @@ export const skills: SkillDetail[] = [
     category: "soft",
     rarity: "epic",
     mastery: 88,
-    lore: "Party synergy buff. Raids clear faster when the whole guild's stats are raised, not just one hunter's.",
+    lore: "Works so that the whole team gets better, not one person.",
     tags: ["teamwork"],
   },
   {
@@ -534,7 +534,7 @@ export const skills: SkillDetail[] = [
     category: "soft",
     rarity: "epic",
     mastery: 86,
-    lore: "Perception passive. Hears what the requirement meant, not only what it said.",
+    lore: "Hears what a requirement means, not only what it says.",
     tags: ["communication"],
   },
   {
@@ -544,7 +544,7 @@ export const skills: SkillDetail[] = [
     category: "soft",
     rarity: "epic",
     mastery: 89,
-    lore: "Terrain resistance. New stack, new domain, new patch notes — the Player re-specs without losing tempo.",
+    lore: "Picks up a new stack or a new domain without losing pace.",
     tags: ["flexibility"],
   },
 
@@ -556,7 +556,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "rare",
     mastery: 78,
-    lore: "Training dungeons. Capture-the-flag runs that keep the security instincts sharp.",
+    lore: "Capture-the-flag challenges that keep security instincts sharp.",
     tags: ["security", "hobby"],
   },
   {
@@ -566,7 +566,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "epic",
     mastery: 84,
-    lore: "Guild-hall contributions. Code given to the commons — the realm levels up together.",
+    lore: "Code shared with the community.",
     tags: ["community"],
   },
   {
@@ -576,7 +576,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "legendary",
     mastery: 95,
-    lore: "Origin story. Where the Player learned that characters grow by grinding — the philosophy this whole System runs on.",
+    lore: "Where the idea came from that systems, like characters, grow through practice.",
     tags: ["games", "inspiration"],
   },
   {
@@ -586,7 +586,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "rare",
     mastery: 80,
-    lore: "Passive XP stream. Long-form signal absorbed on the move.",
+    lore: "Long-form listening on the move.",
     tags: ["learning"],
   },
   {
@@ -596,7 +596,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "common",
     mastery: 78,
-    lore: "Scouting reports from other guilds — the frontier moves weekly.",
+    lore: "Talks from other teams on what is changing in the field.",
     tags: ["learning"],
   },
   {
@@ -606,7 +606,7 @@ export const skills: SkillDetail[] = [
     category: "pursuits",
     rarity: "legendary",
     mastery: 97,
-    lore: "The real main stat. Every other number on this sheet is downstream of this one.",
+    lore: "The skill every other one depends on.",
     tags: ["growth"],
   },
 ];

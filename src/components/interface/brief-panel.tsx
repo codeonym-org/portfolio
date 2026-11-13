@@ -81,7 +81,7 @@ export function BriefPanel() {
         <dl className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
           {[
             { k: "NOW", v: `${job.role} — ${job.organization}`, sub: job.period },
-            { k: "BASE", v: player.location, sub: player.languages.map((l) => `${l.name} (${l.grade})`).join(" · ") },
+            { k: "BASED IN", v: player.location, sub: player.languages.map((l) => `${l.name} (${l.grade})`).join(" · ") },
             { k: "DEGREE", v: degree.title, sub: `${degree.issuer} · ${degree.period}` },
             { k: "FOCUS", v: player.title, sub: player.stats[0].label },
           ].map((f) => (
@@ -113,7 +113,7 @@ export function BriefPanel() {
       </section>
 
       <section>
-        <Heading>Guilds</Heading>
+        <Heading>Organisations</Heading>
         <ul className="grid gap-2">
           {guilds.map((g) => {
             const count = quests.filter((q) => q.guild === g.id).length;
@@ -123,7 +123,7 @@ export function BriefPanel() {
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-white">{g.name}</span>
-                      <span className={cn("border px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase", g.role === "Guild Master" ? "border-rank-s/50 text-rank-s" : "border-system/50 text-system")}>{g.role}</span>
+                      <span className={cn("border px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase", g.role === "Founder" ? "border-rank-s/50 text-rank-s" : "border-system/50 text-system")}>{g.role}</span>
                     </span>
                     <span className="mt-1 block text-[13px] leading-snug text-foreground/70">{g.summary}</span>
                   </span>

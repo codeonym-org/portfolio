@@ -5,10 +5,10 @@ import { answerLocally, type BrainIndex } from "./local-brain.ts";
 const index: BrainIndex = {
   player: { name: "AYOUB", title: "AI Agent Engineer", job: "Software Engineer", guild: "OpenSNZ", location: "Oujda", creed: "…" },
   sectors: [
-    { id: "status", name: "The Player", section: "Status & Profile" },
-    { id: "experience", name: "Chronicle", section: "Experience & Education" },
+    { id: "status", name: "Profile", section: "Profile" },
+    { id: "experience", name: "Experience", section: "Experience & Education" },
     { id: "projects", name: "Shadows", section: "Projects" },
-    { id: "skills", name: "Arsenal", section: "Skills" },
+    { id: "skills", name: "Skills", section: "Skills" },
     { id: "inventory", name: "Vault", section: "Inventory & CV" },
     { id: "contact", name: "The Gate", section: "Contact" },
   ],
@@ -20,7 +20,7 @@ const index: BrainIndex = {
     { id: "langgraph", name: "LangGraph" },
     { id: "python", name: "Python" },
   ],
-  items: [{ id: "hunter-license", name: "Hunter's License" }],
+  items: [{ id: "hunter-license", name: "Curriculum vitae" }],
   defaultCase: { title: "Why him" },
 };
 
@@ -29,7 +29,7 @@ const actions = (q: string) => answerLocally(q, index).actions;
 test("sector words open their sector, in English and French", () => {
   assert.deepEqual(actions("show me his skills"), [{ name: "open_sector", args: { sector: "skills" } }]);
   assert.deepEqual(actions("What is his experience?"), [{ name: "open_sector", args: { sector: "experience" } }]);
-  assert.deepEqual(actions("Who is the Player?"), [{ name: "open_sector", args: { sector: "status" } }]);
+  assert.deepEqual(actions("Who is Ayoub?"), [{ name: "open_sector", args: { sector: "status" } }]);
   assert.deepEqual(actions("montre-moi ses compétences"), [{ name: "open_sector", args: { sector: "skills" } }]);
   assert.deepEqual(actions("ses projets"), [{ name: "open_sector", args: { sector: "projects" } }]);
 });

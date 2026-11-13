@@ -49,7 +49,7 @@ function PresentationTools() {
   useFrontendTool({
     name: "show_contact_card",
     description:
-      "Draw a contact card under your reply with clickable email / phone / LinkedIn / GitHub / CV buttons. Use when the visitor wants to reach, hire or follow the Player.",
+      "Draw a contact card under your reply with clickable email / phone / LinkedIn / GitHub / CV buttons. Use when the visitor wants to reach, hire or follow him.",
     parameters: linksSchema,
     handler: async ({ links }) =>
       `Contact card shown (${links?.join(", ") || "all channels"}). The visitor sees the buttons — do not list the links or address in text; reply with one short line.`,
@@ -57,9 +57,9 @@ function PresentationTools() {
   useFrontendTool({
     name: "show_map",
     description:
-      "Draw a world map under your reply with the Player's base marked, his current local time and the time difference with the visitor (computed in the visitor's browser). Use when the visitor asks where he is based, his location, his time zone, what time it is for him, or whether working hours overlap.",
+      "Draw a world map under your reply with his base marked, his current local time and the time difference with the visitor (computed in the visitor's browser). Use when the visitor asks where he is based, his location, his time zone, what time it is for him, or whether working hours overlap.",
     parameters: z.object({}),
-    handler: async () => "Map shown: the Player's base, his local time and the difference with the visitor's clock. You do not know the visitor's time zone — do not state the difference yourself; reply with one short line.",
+    handler: async () => "Map shown: his base, his local time and the difference with the visitor's clock. You do not know the visitor's time zone — do not state the difference yourself; reply with one short line.",
   });
   useFrontendTool({
     name: "present_skills",

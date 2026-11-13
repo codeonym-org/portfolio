@@ -19,7 +19,6 @@ import { player } from "@/config/player.config";
 import { findGuild, guilds } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skillSets, skills } from "@/config/skills.config";
-import { systemConfig } from "@/config/system.config";
 import type { Quest, QuestRank } from "@/config/types";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -71,7 +70,7 @@ function Chip({ children, tone = "arcane" }: { children: React.ReactNode; tone?:
   return <span className={cn("inline-flex items-center border px-2 py-0.5 font-mono text-[10px] tracking-wide", c)}>{children}</span>;
 }
 
-/* ── THE PLAYER · status ─────────────────────────────── */
+/* ── PROFILE ─────────────────────────────── */
 
 /** the six core stats as a hexagonal radar */
 function StatRadar() {
@@ -131,7 +130,7 @@ export function StatusPanel() {
     <Stack>
       <motion.div variants={rise} className="flex flex-wrap items-end gap-5">
         <div className="min-w-0 flex-1">
-          <p className="font-display text-[9px] tracking-[0.35em] text-muted-foreground">PLAYER · {player.handle.toUpperCase()}</p>
+          <p className="font-display text-[9px] tracking-[0.35em] text-muted-foreground">{player.handle.toUpperCase()}</p>
           <h3 className="mt-1 font-display text-2xl leading-tight text-white text-glow-arcane sm:text-3xl">
             {player.name}
           </h3>
@@ -139,27 +138,13 @@ export function StatusPanel() {
             {player.job.toUpperCase()} · {player.title.toUpperCase()}
           </p>
         </div>
-        <div className="flex gap-2">
-          {[
-            { k: "LEVEL", v: player.level, c: "text-white text-glow-arcane" },
-            { k: "RANK", v: player.rank, c: "text-rank-s text-glow-gold" },
-          ].map((t) => (
-            <div key={t.k} className="glass-edge notch relative grid w-20 place-items-center bg-arcane/10 py-2 [--n:8px]">
-              <span className="font-display text-[8px] tracking-[0.3em] text-muted-foreground">{t.k}</span>
-              <span className={cn("font-display text-3xl", t.c)}>{t.v}</span>
-            </div>
-          ))}
-        </div>
       </motion.div>
-      <motion.p variants={rise} className="-mt-3 font-mono text-[10px] tracking-widest text-rank-s">
-        ⚠ {player.rankNote}
-      </motion.p>
 
       <motion.div variants={rise} className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
         {[
-          { k: "GUILDS", v: guilds.map((g) => `${g.name} (${g.role})`).join(" · ") },
-          { k: "BASE", v: player.location },
-          { k: "TONGUES", v: player.languages.map((l) => l.name).join(" · ") },
+          { k: "ORGANISATIONS", v: guilds.map((g) => `${g.name} (${g.role})`).join(" · ") },
+          { k: "BASED IN", v: player.location },
+          { k: "LANGUAGES", v: player.languages.map((l) => l.name).join(" · ") },
         ].map((f) => (
           <div key={f.k} className="border-l-2 border-arcane/50 bg-arcane/5 px-3 py-2">
             <p className="font-display text-[8px] tracking-[0.3em] text-muted-foreground">{f.k}</p>
@@ -168,42 +153,22 @@ export function StatusPanel() {
         ))}
       </motion.div>
 
-      <Section title="Core Stats">
+      <Section title="Strengths">
         <StatRadar />
       </Section>
 
-      <Section title="Vitals">
-        <div className="space-y-3">
-          {systemConfig.vitals.map((v) => (
-            <div key={v.code}>
-              <div className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-2">
-                  <v.icon className={cn("size-3.5", v.tone === "ember" ? "text-ember" : "text-system")} />
-                  <span className="font-display text-[9px] tracking-[0.2em]">{v.code}</span>
-                  <span className="text-muted-foreground">{v.label}</span>
-                </span>
-                <span className="font-mono text-foreground/80">{v.reading}</span>
-              </div>
-              <div className="bar mt-1.5">
-                <span style={{ width: `${v.percent}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Titles Acquired">
+      <Section title="Known for">
         <div className="grid gap-2 sm:grid-cols-2">
           {player.titles.map((t) => (
             <div key={t.id} className="glass-edge notch relative bg-rank-s/5 px-3 py-2.5 [--n:8px]">
-              <p className="font-display text-[10px] tracking-[0.15em] text-rank-s text-glow-gold">[ {t.name.toUpperCase()} ]</p>
+              <p className="font-display text-[10px] tracking-[0.15em] text-rank-s text-glow-gold">{t.name.toUpperCase()}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t.description}</p>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="Profile">
+      <Section title="About">
         <div className="space-y-2.5 text-[15px] leading-relaxed text-foreground/85">
           {player.profile.map((p) => (
             <p key={p.slice(0, 24)}>{p}</p>
@@ -217,12 +182,12 @@ export function StatusPanel() {
   );
 }
 
-/* ── CHRONICLE · experience & education ──────────────────── */
+/* ── EXPERIENCE · experience & education ──────────────────── */
 
 export function ChroniclePanel() {
   return (
     <Stack>
-      <Section title="Contracts">
+      <Section title="Experience">
         <ol className="relative space-y-5 pl-6">
           <span className="absolute top-2 bottom-2 left-[7px] w-px bg-gradient-to-b from-rank-s via-arcane/60 to-transparent" />
           {chronicle.map((c, i) => (
@@ -243,7 +208,7 @@ export function ChroniclePanel() {
           ))}
         </ol>
       </Section>
-      <Section title="Hall of Honors">
+      <Section title="Education">
         <div className="grid gap-2">
           {achievements.map((a) => (
             <div key={a.id} className="glass-edge notch relative flex items-center gap-3 bg-rank-s/5 px-3 py-3 [--n:8px]">
@@ -263,7 +228,7 @@ export function ChroniclePanel() {
   );
 }
 
-/* ── SHADOWS · projects ──────────────────────────────── */
+/* ── PROJECTS ──────────────────────────────── */
 
 function QuestCard({ quest }: { quest: Quest }) {
   const risen = useWorldStore((s) => s.risen.includes(quest.id));
@@ -287,7 +252,7 @@ function QuestCard({ quest }: { quest: Quest }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-bold leading-tight text-white">{quest.name}</h4>
-            <Chip tone={quest.stage === "released" ? "system" : quest.status === "ongoing" ? "gold" : "system"}>{(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "cleared")).toUpperCase()}</Chip>
+            <Chip tone={quest.stage === "released" ? "system" : quest.status === "ongoing" ? "gold" : "system"}>{(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "delivered")).toUpperCase()}</Chip>
           </div>
           <p className="font-mono text-[11px] text-muted-foreground">{[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}</p>
         </div>
@@ -310,7 +275,7 @@ function QuestCard({ quest }: { quest: Quest }) {
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => setInspect({ kind: "quest", id: quest.id })} className="hud-chip px-3 py-1.5 text-xs">
-              Inspect
+              Details
             </button>
             {quest.link && (
               <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip px-3 py-1.5 text-xs">
@@ -370,7 +335,7 @@ export function ShadowsPanel() {
           </button>
         )}
       </motion.div>
-      <Section title="Main Quests">
+      <Section title="At OpenSNZ-Technology">
         <div className="space-y-3">
           {main.map((q) => (
             <QuestCard key={q.id} quest={q} />
@@ -395,7 +360,7 @@ export function ShadowsPanel() {
   );
 }
 
-/* ── ARSENAL · skills ──────────────────────────────────────── */
+/* ── SKILLS ──────────────────────────────────────── */
 
 export function ArsenalPanel() {
   const setInspect = useWorldStore((s) => s.setInspect);
@@ -467,14 +432,14 @@ export function VaultPanel() {
               <license.icon className="size-7 text-rank-s" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-display text-[9px] tracking-[0.3em] text-rank-s">LEGENDARY · ARTIFACT</p>
+              <p className="font-display text-[9px] tracking-[0.3em] text-rank-s">CURRICULUM VITAE</p>
               <h4 className="mt-0.5 text-lg font-bold text-white">{license.name}</h4>
               <p className="mt-1 text-sm leading-relaxed text-foreground/75">{license.lore}</p>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" data-active="true" onClick={() => { play("coins"); setCvOpen(true); }} className="hud-chip px-5 py-2.5 font-display text-[10px] tracking-[0.25em]">
-              <FileText className="size-4" /> USE — VIEW RECORD
+              <FileText className="size-4" /> VIEW THE CV
             </button>
             <a href="/cv.pdf" download="bouarour-ayoub-cv.pdf" className="hud-chip px-4 py-2.5 text-sm">
               <Download className="size-4" /> Download CV
@@ -514,7 +479,7 @@ export function VaultPanel() {
   );
 }
 
-/* ── THE GATE · contact ────────────────────────────────── */
+/* ── CONTACT ────────────────────────────────── */
 
 export function GatePanel() {
   const [copied, setCopied] = useState(false);
@@ -527,7 +492,7 @@ export function GatePanel() {
   return (
     <Stack>
       <motion.p variants={rise} className="text-[15px] leading-relaxed text-foreground/85">
-        The Gate is open. Step through any channel below to reach <span className="font-semibold text-white">{player.name}</span> — agentic systems, multi-agent architectures, or just a good conversation about AI.
+        Any channel below reaches <span className="font-semibold text-white">{player.name}</span>: agentic systems, multi-agent architectures, or just a good conversation about AI.
       </motion.p>
       <motion.div variants={rise} className="grid gap-2.5">
         {channels.map((c) => (

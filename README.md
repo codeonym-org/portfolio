@@ -35,7 +35,7 @@ pnpm dev                     # http://localhost:3000
 | `pnpm lint` | ESLint |
 | `pnpm test` | Node test runner (`src/**/*.test.ts`) |
 
-Content (player profile, skills, quests, inventory) lives in `src/config/*.config.ts`
+Content (profile, skills, projects, documents) lives in `src/config/*.config.ts`
 ([`src/config/README.md`](src/config/README.md)).
 
 ## Controls

@@ -1,9 +1,9 @@
 import type { Player } from "./types";
 
 /**
- * ── PLAYER RECORD ─────────────────────────────────────────────
- * Identity shown at the Awakening Circle, the title screen and the Gate.
- * Stat values are 0–100; stat icons/colors map by `code` in stat-bar.tsx.
+ * ── THE OWNER'S PROFILE ───────────────────────────────────────
+ * Who the record is about: shown in the Profile window, the brief and Contact.
+ * Strength values are 0–100, his own estimate.
  */
 export const player: Player = {
   name: "BOUAROUR AYOUB",
@@ -14,40 +14,36 @@ export const player: Player = {
   location: "Oujda, Morocco",
   base: { city: "Oujda", country: "Morocco", lat: 34.68, lon: -1.91, timeZone: "Africa/Casablanca", countryCentre: { lon: -8.6, lat: 29.2 } },
   guild: "OpenSNZ-Technology",
-  // months of XP since the journey began (2019)
-  level: 82,
-  rank: "A",
-  rankNote: "S-RANK ASSESSMENT PENDING",
   titles: [
     {
       id: "agent-summoner",
-      name: "Agent Summoner",
+      name: "Agents that improve",
       description:
-        "Raises AI agents as digital entities that level up, acquire skills and grow — never as static software.",
+        "Builds AI agents as systems that gain skills and get better with each iteration, never as static software.",
     },
     {
       id: "citadel-architect",
-      name: "Architect of the Citadel",
+      name: "Multi-agent architect",
       description:
-        "Designed the modular multi-agent architecture that cleared the S-rank pharmaceutical catalog raid.",
+        "Designed the modular multi-agent architecture behind the pharmaceutical catalog system.",
     },
     {
       id: "gate-opener",
-      name: "Gate Opener",
+      name: "Agents on enterprise data",
       description:
-        "Grounds agents in enterprise systems through MCP — opening gates between AI and legacy realms.",
+        "Connects agents to enterprise and legacy systems through MCP.",
     },
     {
       id: "guild-master",
-      name: "Guild Master",
+      name: "Founder of two organisations",
       description:
-        "Founded and runs two guilds: codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
+        "Founded and runs codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
     },
     {
       id: "voice-of-three-tongues",
-      name: "Voice of Three Tongues",
+      name: "Three languages",
       description:
-        "Speaks Arabic, English and French — no party goes unheard.",
+        "Speaks Arabic, English and French.",
     },
   ],
   profile: [
@@ -56,14 +52,14 @@ export const player: Player = {
     "Builds agents as systems meant to evolve — gaining capability, sharpening reasoning and getting measurably better with every iteration. That mindset shapes his context engineering, evaluation and observability work.",
   ],
   creed:
-    "I don't build AI agents as traditional software. I build them as systems meant to evolve — gaining capability, sharpening reasoning, and getting measurably better with every iteration. Closer to leveling up a character than shipping a fixed feature.",
+    "I don't build AI agents as traditional software. I build them as systems meant to evolve — gaining capability, sharpening reasoning, and getting measurably better with every iteration.",
   stats: [
-    { code: "INT", label: "Agentic AI & Multi-Agent Systems", value: 94 },
-    { code: "MP", label: "Prompt & Context Engineering", value: 92 },
-    { code: "STR", label: "Backend Engineering", value: 86 },
-    { code: "AGI", label: "Frontend Engineering", value: 84 },
-    { code: "VIT", label: "DevOps & Infrastructure", value: 78 },
-    { code: "PER", label: "Observability (LangSmith / OTel)", value: 80 },
+    { code: "AI", label: "Agentic AI & Multi-Agent Systems", value: 94 },
+    { code: "CTX", label: "Prompt & Context Engineering", value: 92 },
+    { code: "BE", label: "Backend Engineering", value: 86 },
+    { code: "FE", label: "Frontend Engineering", value: 84 },
+    { code: "OPS", label: "DevOps & Infrastructure", value: 78 },
+    { code: "OBS", label: "Observability (LangSmith / OTel)", value: 80 },
   ],
   links: {
     github: "https://github.com/codeonym",

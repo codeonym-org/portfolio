@@ -51,7 +51,7 @@ function buildEntries(): Entry[] {
       id: `sector:${s.id}`,
       label: s.name,
       sub: `${String(i + 1).padStart(2, "0")} · ${s.section}`,
-      group: "Sectors",
+      group: "Sections",
       color: toneColor[s.tone],
       search: `${s.name} ${s.section} ${s.id} ${s.description}`.toLowerCase(),
       run: () => runCommand("open_sector", { sector: s.id }),

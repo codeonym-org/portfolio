@@ -9,7 +9,7 @@ import { clockIn, difference, offsetMinutes } from "@/record/time";
 import { WORLD_LAND } from "@/record/world-map";
 
 /**
- * Where the Player is, and what time it is there. The land is one
+ * Where Ayoub is, and what time it is there. The land is one
  * SVG path (Natural Earth, public domain); the time comes from the
  * visitor's own clock. Nothing is requested, nobody is located.
  */

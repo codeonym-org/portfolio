@@ -3,8 +3,8 @@
 The Monolith at the centre of the page is two LangChain agents:
 
 - **the text System** (`system`): visitors type to it (the prompt at the
-  bottom, **/** or **T** to focus it). It answers from the Player's record and
-  answers *with the page*: it opens sectors, inspects entries, raises shadows,
+  bottom, **/** or **T** to focus it). It answers from Ayoub's record and
+  answers *with the page*: it opens sections, inspects entries, raises projects,
   pushes notifications, and assembles a **case file** — a set of evidence
   picked from the record by id, each with one line on why it matters.
 - **the voice System** (`system-voice`): visitors **hold V** (or the mic
