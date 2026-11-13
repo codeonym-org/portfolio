@@ -1,67 +1,20 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   viewBox="0 0 512 512"
-   width="512"
-   height="512"
-   version="1.1"
-   id="svg6"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <title
-     id="title1">codeonym</title>
-  <defs
-     id="defs3">
-    <linearGradient
-       id="f-edge"
-       x1="0"
-       y1="0"
-       x2="1"
-       y2="1">
-      <stop
-         offset="0"
-         stop-color="#bc8fff"
-         id="stop1" />
-      <stop
-         offset=".55"
-         stop-color="#945ff9"
-         id="stop2" />
-      <stop
-         offset="1"
-         stop-color="#30c0f8"
-         id="stop3" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><title>codeonym</title><defs>
+    <linearGradient id="i-arc" gradientUnits="userSpaceOnUse" x1="300" y1="96" x2="300" y2="416">
+      <stop offset="0" stop-color="#e3d4ff"/><stop offset=".42" stop-color="#9d70ff"/><stop offset=".78" stop-color="#5a7dff"/><stop offset="1" stop-color="#3fc8f6"/>
     </linearGradient>
+    <radialGradient id="i-aura" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#7a4dff" stop-opacity=".42"/><stop offset=".55" stop-color="#5a3de0" stop-opacity=".14"/><stop offset="1" stop-color="#5a3de0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="i-orb" cx=".38" cy=".34" r=".75">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cfe9ff"/><stop offset="1" stop-color="#6fb6ff"/>
+    </radialGradient>
+    <filter id="i-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="i-halo" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="14"/></filter>
   </defs>
-  <path
-     d="M256.00,42.00 L441.33,149.00 L441.33,363.00 L256.00,470.00 L70.67,363.00 L70.67,149.00 Z"
-     fill="#05040b"
-     stroke="url(#f-edge)"
-     stroke-width="44"
-     stroke-linejoin="round"
-     id="path3" />
-  <g
-     fill="none"
-     stroke="#f4f2fb"
-     stroke-width="44"
-     stroke-linecap="round"
-     stroke-linejoin="round"
-     id="g5">
-    <path
-       d="M170,168 L104,240 L170,312"
-       id="path4" />
-    <path
-       d="M342,168 L408,240 L342,312"
-       id="path5" />
-  </g>
-  <path
-     d="M256,166 C270.8,225.2 270.8,225.2 330,240 C270.8,254.8 270.8,254.8 256,314 C241.2,254.8 241.2,254.8 182,240 C241.2,225.2 241.2,225.2 256,166 Z"
-     fill="#30c0f8"
-     id="path6" />
-  <rect
-     x="176"
-     y="346"
-     width="160"
-     height="26"
-     rx="8"
-     fill="#f0b135"
-     id="rect6" />
+    <rect width="512" height="512" rx="116" fill="#08060f"/>
+    <circle cx="256" cy="256" r="250" fill="url(#i-aura)"/>
+    <path d="M364.75,171.04 A138,138 0 1 0 364.75,340.96" fill="none" stroke="url(#i-arc)" stroke-width="46" stroke-linecap="round" filter="url(#i-glow)" opacity=".6"/>
+    <path d="M364.75,171.04 A138,138 0 1 0 364.75,340.96" fill="none" stroke="url(#i-arc)" stroke-width="46" stroke-linecap="round"/>
+    <circle cx="394" cy="256" r="51" fill="#8fd0ff" filter="url(#i-halo)" opacity=".85"/>
+    <circle cx="394" cy="256" r="34" fill="url(#i-orb)"/>
 </svg>

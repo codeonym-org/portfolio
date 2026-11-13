@@ -1,19 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><title>codeonym</title><defs>
-    <linearGradient id="m-edge" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#bc8fff"/><stop offset=".55" stop-color="#945ff9"/><stop offset="1" stop-color="#30c0f8"/>
+    <linearGradient id="m-arc" gradientUnits="userSpaceOnUse" x1="300" y1="96" x2="300" y2="416">
+      <stop offset="0" stop-color="#e3d4ff"/><stop offset=".42" stop-color="#9d70ff"/><stop offset=".78" stop-color="#5a7dff"/><stop offset="1" stop-color="#3fc8f6"/>
     </linearGradient>
-    <linearGradient id="m-core" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#30c0f8"/><stop offset="1" stop-color="#bc8fff"/>
-    </linearGradient>
-    <radialGradient id="m-aura" cx=".5" cy=".46" r=".5">
-      <stop offset="0" stop-color="#945ff9" stop-opacity=".45"/><stop offset="1" stop-color="#945ff9" stop-opacity="0"/>
-    </radialGradient></defs><circle cx="256" cy="236" r="190" fill="url(#m-aura)"/>
-    <path d="M256.00,34.00 L448.26,145.00 L448.26,367.00 L256.00,478.00 L63.74,367.00 L63.74,145.00 Z" fill="none" stroke="url(#m-edge)" stroke-width="24" stroke-linejoin="round"/>
-    <path d="M256.00,70.00 L417.08,163.00 L417.08,349.00 L256.00,442.00 L94.92,349.00 L94.92,163.00 Z" fill="none" stroke="url(#m-edge)" stroke-width="4" stroke-linejoin="round" opacity="0.45"/>
-    <g fill="none" stroke="#f4f2fb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M178,178 L122,236 L178,294"/>
-      <path d="M334,178 L390,236 L334,294"/>
-    </g>
-    <path d="M256,178 C265.92,230.08 265.92,230.08 318,240 C265.92,249.92 265.92,249.92 256,302 C246.08,249.92 246.08,249.92 194,240 C246.08,230.08 246.08,230.08 256,178 Z" fill="url(#m-core)"/>
-    <path d="M297,170 C299.8,181.2 299.8,181.2 311,184 C299.8,186.8 299.8,186.8 297,198 C294.2,186.8 294.2,186.8 283,184 C294.2,181.2 294.2,181.2 297,170 Z" fill="url(#m-core)"/>
-    <rect x="176" y="338" width="26" height="14" rx="3" fill="#f0b135"/><rect x="210" y="338" width="26" height="14" rx="3" fill="#f0b135"/><rect x="244" y="338" width="26" height="14" rx="3" fill="#f0b135"/><rect x="278" y="338" width="26" height="14" rx="3" fill="#f0b135"/><rect x="313.5" y="339.5" width="23" height="11" rx="2.5" fill="none" stroke="#f0b135" stroke-width="3" opacity="0.55"/></svg>
+    <radialGradient id="m-aura" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#7a4dff" stop-opacity=".42"/><stop offset=".55" stop-color="#5a3de0" stop-opacity=".14"/><stop offset="1" stop-color="#5a3de0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="m-orb" cx=".38" cy=".34" r=".75">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cfe9ff"/><stop offset="1" stop-color="#6fb6ff"/>
+    </radialGradient>
+    <filter id="m-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="m-halo" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+    <circle cx="256" cy="256" r="250" fill="url(#m-aura)"/>
+    <path d="M374.2,163.65 A150,150 0 1 0 374.2,348.35" fill="none" stroke="url(#m-arc)" stroke-width="30" stroke-linecap="round" filter="url(#m-glow)" opacity=".6"/>
+    <circle cx="256" cy="256" r="90" fill="none" stroke="#f4f2fb" stroke-width="2" opacity=".2"/>
+    <circle cx="181.39" cy="306.33" r="6.5" fill="#bca4ff"/>
+    <path d="M374.2,163.65 A150,150 0 1 0 374.2,348.35" fill="none" stroke="url(#m-arc)" stroke-width="30" stroke-linecap="round"/>
+    <circle cx="406" cy="256" r="34.5" fill="#8fd0ff" filter="url(#m-halo)" opacity=".85"/>
+    <circle cx="406" cy="256" r="23" fill="url(#m-orb)"/>
+</svg>
