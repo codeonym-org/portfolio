@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import {
-  AnimationMixer,
   CanvasTexture,
   Bone,
   Box3,
@@ -27,9 +26,9 @@ import { mouthLive, useInterview } from "./interview-store";
  * ── THE INTERVIEW ROOM ────────────────────────────────────────
  * An office in the evening. He sits behind a desk (a laptop and his
  * papers on it) facing the stranger, who sits where the camera is,
- * like the panel in a real interview. The body is a Rodin model with
- * a Rodin rig and its seated loop; his head (the edited scan) rides
- * on its Head bone. On top of the loop, by hand: breathing, his gaze
+ * like the panel in a real interview. He is one Rodin model made from
+ * a photo of him seated, with a small rig (hips, spine, neck, head).
+ * All his movement is by hand: breathing, a slow sway, his gaze
  * following the stranger, glances at the laptop, leaning in to
  * listen, nods as he speaks, blinks, and the jaw with his voice.
  * The desk and chair are Rodin models too; the room is drawn here.
@@ -37,13 +36,14 @@ import { mouthLive, useInterview } from "./interview-store";
 
 const MODELS = { avatar: "/models/office/avatar.glb", desk: "/models/office/desk.glb", chair: "/models/office/chair.glb" };
 const DRACO = "/draco/";
-const SEATED = "human_000085";
 
 /** the room, in metres: the floor, the far wall, the side walls, the ceiling */
 const ROOM = { floor: -0.74, back: -1.5, side: 2.4, ceiling: 1.95 };
 
-/** how his head is fitted on the body: a lift (model units, before the avatar's own scale) and a scale */
-const HEAD_FIT = { lift: new Vector3(0, 0.035, 0.005), scale: 1.08 };
+/** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
+const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const, chin: 0.04 };
+/** his head around its bone, in model units: for the windows that keep clear of his face */
+const FACE = { centre: new Vector3(0, 0.2, 0.08), half: new Vector3(0.2, 0.27, 0.2) };
 
 const X = new Vector3(1, 0, 0);
 const Y = new Vector3(0, 1, 0);
@@ -80,32 +80,20 @@ function Avatar() {
   const pointer = useRef({ x: 0, y: 0 });
   /** a life: when he next blinks, where he looks when nobody moves */
   const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0 });
-  const mixer = useMemo(() => new AnimationMixer(gltf.scene), [gltf.scene]);
   const bones = useMemo(() => {
     const find = (name: string) => gltf.scene.getObjectByName(name) as Bone | undefined;
     return { head: find("Head"), neck: find("Neck"), chest: find("Spine2"), spine: find("Spine1") };
   }, [gltf.scene]);
-  /** where each of those bones rests: restored every frame, so a bone the loop does not move never drifts */
+  /** where each of those bones rests: every frame starts from there */
   const rest = useMemo(() => new Map(Object.values(bones).filter((b): b is Bone => !!b).map((b) => [b, b.quaternion.clone()])), [bones]);
   const motion = useRef({ yaw: 0, pitch: 0, roll: 0, lean: 0 });
 
   useEffect(() => {
     prepare(gltf.scene, true);
-    const head = gltf.scene.getObjectByName("head") as Mesh | undefined;
-    // his head sits a little low and small on the generated shoulders: lift it and scale it up, in world terms
-    if (head?.parent) {
-      gltf.scene.updateMatrixWorld(true);
-      const at = head.getWorldPosition(new Vector3()).add(HEAD_FIT.lift);
-      head.scale.multiplyScalar(HEAD_FIT.scale);
-      head.position.copy(head.parent.worldToLocal(at));
-    }
-    const material = head?.material as MeshStandardMaterial | undefined;
-    if (material) {
-      material.normalScale.setScalar(0.6);
-      rigHead(material);
-    }
-    const clip = gltf.animations.find((a) => a.name === SEATED) ?? gltf.animations[0];
-    if (clip) mixer.clipAction(clip).play();
+    const body = gltf.scene.getObjectByName("body") as Mesh | undefined;
+    const material = body?.material as MeshStandardMaterial | undefined;
+    if (body) body.frustumCulled = false;
+    if (material) rigHead(material);
     useInterview.getState().set({ present: true });
     useWorldStore.getState().setReady();
     const params = new URLSearchParams(window.location.search);
@@ -120,15 +108,13 @@ function Avatar() {
     window.addEventListener("pointermove", onMove);
     return () => {
       window.removeEventListener("pointermove", onMove);
-      mixer.stopAllAction();
     };
-  }, [gltf, mixer, life]);
+  }, [gltf, life]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     const L = life.current;
     rest.forEach((q, b) => b.quaternion.copy(q));
-    mixer.update(Math.min(dt, 0.1));
     gltf.scene.updateMatrixWorld(true);
 
     const phase = useVoiceStore.getState().phase;
@@ -182,14 +168,16 @@ function Avatar() {
     m.lean += (lean - m.lean) * Math.min(1, dt * 1.5);
 
     const breath = Math.sin(t * 1.25);
-    if (bones.spine) turn(bones.spine, euler(m.lean * 0.5 + breath * 0.008, m.yaw * 0.12, 0));
+    // nobody sits still: a slow sway of the whole trunk
+    const sway = Math.sin(t * 0.31) * 0.012 + Math.sin(t * 0.83) * 0.005;
+    if (bones.spine) turn(bones.spine, euler(m.lean * 0.5 + breath * 0.008, m.yaw * 0.12, sway));
     if (bones.chest) turn(bones.chest, euler(m.lean * 0.5 - breath * 0.012, m.yaw * 0.18, m.roll * 0.2));
     if (bones.neck) turn(bones.neck, euler(m.pitch * 0.4, m.yaw * 0.3, m.roll * 0.4));
-    if (bones.head) turn(bones.head, euler(m.pitch * 0.6, m.yaw * 0.45, m.roll * 0.6));
+    if (bones.head) turn(bones.head, euler(SEAT.chin + m.pitch * 0.6, m.yaw * 0.45, m.roll * 0.6 - sway * 0.6));
   });
 
   return (
-    <group ref={group} scale={0.92}>
+    <group ref={group} scale={SEAT.scale} position={SEAT.position}>
       <primitive object={gltf.scene} />
     </group>
   );
@@ -207,6 +195,11 @@ function Props() {
       {/* turned so the laptop and the papers face him; the stranger sees the back of the lid */}
       <primitive object={desk.scene} position={[0.3, -0.227, 0.68]} rotation={[0, Math.PI, 0]} scale={0.79} />
       <primitive object={chair.scene} position={[0, -0.265, -0.06]} scale={0.5} />
+      {/* the desk's front panel: the scan ends at his knees, and nobody needs to see that */}
+      <mesh position={[0.3, -0.37, 0.66]} castShadow receiveShadow>
+        <boxGeometry args={[1.5, 0.56, 0.025]} />
+        <meshStandardMaterial color="#a8926f" roughness={0.6} />
+      </mesh>
     </>
   );
 }
@@ -364,6 +357,7 @@ function Framing() {
   const scene = useThree((s) => s.scene);
   const box = useMemo(() => new Box3(), []);
   const corner = useMemo(() => new Vector3(), []);
+  const size3 = useMemo(() => new Vector3(), []);
   const head = useRef<Object3D | null>(null);
   const last = useRef("");
   const tick = useRef(0);
@@ -378,9 +372,10 @@ function Framing() {
 
   useFrame(() => {
     if (++tick.current % 6) return;
-    head.current ??= scene.getObjectByName("head") ?? null;
+    head.current ??= scene.getObjectByName("Head") ?? null;
     if (!head.current) return;
-    box.setFromObject(head.current, false);
+    head.current.getWorldPosition(corner).addScaledVector(FACE.centre, SEAT.scale);
+    box.setFromCenterAndSize(corner, size3.copy(FACE.half).multiplyScalar(SEAT.scale * 2));
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (let i = 0; i < 8; i++) {
       corner.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(camera);
