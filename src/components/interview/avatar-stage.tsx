@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sparkles, useGLTF } from "@react-three/drei";
-import { ACESFilmicToneMapping, Group, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3, type WebGLProgramParametersWithUniforms } from "three";
+import { Group, NeutralToneMapping, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3, type WebGLProgramParametersWithUniforms } from "three";
 import { useVoiceStore, voiceLive } from "@/components/agent/voice/voice-store";
 import { useWorldStore } from "@/store/world-store";
 import { mouthLive, useInterview } from "./interview-store";
@@ -23,7 +23,7 @@ const AVATAR_URL = "/models/avatar/avatar.glb";
 const DRACO = "/draco/";
 
 /** where the lips meet, the hinge of the jaw, and how far it opens (radians) */
-const JAW = { stomion: 0.026, hinge: [0, 0.15, 0] as const, angle: 0.085 };
+const JAW = { stomion: 0.026, hinge: [0, 0.15, 0] as const, angle: 0.055 };
 /** the head and beard, for the windows to keep clear of (scene units) */
 const HEAD = { x: 0.4, bottom: -0.36, top: 0.86 };
 
@@ -33,17 +33,23 @@ uniform float uReveal;
 varying float vJaw;
 varying float vMouth;
 varying float vRestY;
+varying float vLens;
+varying float vAx;
+varying float vZ;
 const vec3 JAW_HINGE = vec3(${JAW.hinge.map((v) => v.toFixed(3)).join(", ")});
 float jawWeight(vec3 p) {
   float ax = abs(p.x);
-  // a sharp seam at the lips, a softer one up the cheeks, so the skin there stretches instead of tearing
-  float halfWidth = mix(0.005, 0.05, smoothstep(0.07, 0.2, ax));
+  // a sharp seam between the lips, a softer one past the corners, so the cheeks stretch instead of tearing
+  float halfWidth = mix(0.008, 0.045, smoothstep(0.12, 0.24, ax));
   float below = 1.0 - smoothstep(${JAW.stomion.toFixed(3)} - halfWidth, ${JAW.stomion.toFixed(3)} + halfWidth, p.y);
+  // the lips part as a lens: fully in the middle, not at all at the corners; a few centimetres lower, the whole jaw turns
+  float lens = sqrt(max(0.0, 1.0 - pow(ax / 0.125, 2.0)));
+  float lip = mix(lens, 1.0, smoothstep(0.0, 0.06, ${JAW.stomion.toFixed(3)} - p.y));
   float front = smoothstep(0.26, 0.38, p.z);
   float side = 1.0 - smoothstep(0.26, 0.4, ax);
   // the beard hangs over the collar: what is in front still moves, the shirt behind it does not
   float clear = max(smoothstep(-0.44, -0.3, p.y), smoothstep(0.34, 0.42, p.z));
-  return below * front * side * clear;
+  return below * lip * front * side * clear;
 }
 vec3 jawTurn(vec3 v, float a) {
   float c = cos(a), s = sin(a);
@@ -57,6 +63,9 @@ uniform float uReveal;
 varying float vJaw;
 varying float vMouth;
 varying float vRestY;
+varying float vLens;
+varying float vAx;
+varying float vZ;
 `;
 
 /** one avatar on the page: its shader inputs live with the module, written every frame */
@@ -81,7 +90,10 @@ function rig(material: MeshStandardMaterial) {
         `#include <begin_vertex>
         transformed = JAW_HINGE + jawTurn(position - JAW_HINGE, uJaw * jw);
         vJaw = jw;
-        vMouth = (1.0 - smoothstep(0.06, 0.1, abs(position.x))) * smoothstep(0.45, 0.55, position.z);
+        vAx = abs(position.x);
+        vZ = position.z;
+        vLens = sqrt(max(0.0, 1.0 - pow(vAx / 0.125, 2.0)));
+        vMouth = (1.0 - smoothstep(0.1, 0.125, vAx)) * smoothstep(0.45, 0.55, position.z);
         vRestY = position.y;`,
       );
     shader.fragmentShader = FRAGMENT_HEAD + shader.fragmentShader
@@ -93,9 +105,25 @@ function rig(material: MeshStandardMaterial) {
       .replace(
         "#include <map_fragment>",
         `#include <map_fragment>
-        // the stretched band between the lips is the open mouth: dark, a little warm
-        float gap = clamp(4.0 * vJaw * (1.0 - vJaw) * 3.0, 0.0, 1.0) * vMouth * smoothstep(0.0, 0.3, uJaw / ${JAW.angle.toFixed(3)});
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.012, 0.016), gap * 0.94);`,
+        // the band stretched between the lips is the open mouth: 0 at the upper lip, 1 at the lower
+        float open = uJaw / ${JAW.angle.toFixed(3)};
+        float across = clamp(vJaw / max(vLens, 0.05), 0.0, 1.0);
+        float gap = smoothstep(0.02, 0.2, across) * (1.0 - smoothstep(0.8, 0.98, across)) * vMouth * smoothstep(0.0, 0.2, open) * smoothstep(0.05, 0.45, vLens);
+        // the upper teeth show under the lip when it opens wide enough, in shadow
+        float teeth = smoothstep(0.08, 0.16, across) * (1.0 - smoothstep(0.26, 0.36, across)) * (1.0 - smoothstep(0.05, 0.1, vAx)) * smoothstep(0.35, 0.75, open);
+        // closed, the texture paints a hard red line where the lips meet: a soft shadow instead, and calmer lips
+        float lips = (1.0 - smoothstep(0.09, 0.125, vAx)) * smoothstep(0.5, 0.56, vZ) * (1.0 - smoothstep(0.018, 0.034, abs(vRestY - ${JAW.stomion.toFixed(3)})));
+        float seam = (1.0 - smoothstep(0.004, 0.012, abs(vRestY - ${JAW.stomion.toFixed(3)} - 0.012))) * (1.0 - smoothstep(0.08, 0.125, vAx)) * smoothstep(0.5, 0.56, vZ);
+        float grey = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(grey), diffuseColor.rgb, 0.7) * vec3(1.0, 0.94, 0.92), lips * 0.6);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(grey) * vec3(0.62, 0.42, 0.38), seam * 0.85);
+        vec3 inside = mix(vec3(0.04, 0.012, 0.014), vec3(0.3, 0.27, 0.24), teeth * 0.75);
+        diffuseColor.rgb = mix(diffuseColor.rgb, inside, gap);`,
+      )
+      .replace(
+        "#include <opaque_fragment>",
+        `outgoingLight *= 1.0 - gap * (1.0 - teeth * 0.6) * 0.8;
+        #include <opaque_fragment>`,
       )
       .replace(
         "#include <emissivemap_fragment>",
@@ -121,7 +149,10 @@ function Avatar() {
       if (!mesh.isMesh) return;
       const material = mesh.material as MeshStandardMaterial;
       if (material.map) material.map.colorSpace = SRGBColorSpace;
-      material.envMapIntensity = 0.55;
+      // skin is not metal, and the fine detail of the normal map is softer on the lighter mesh
+      material.metalness = 0;
+      material.normalScale.setScalar(0.6);
+      material.envMapIntensity = 0.45;
       rig(material);
       mesh.frustumCulled = false;
     });
@@ -209,18 +240,20 @@ export default function AvatarStage() {
       className="!fixed inset-0"
       dpr={[1, 1.75]}
       camera={{ fov: 24, near: 0.1, far: 30, position: [0, 0.3, 5.2] }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping, toneMappingExposure: 1.0 }}
     >
-      <ambientLight intensity={0.12} />
-      {/* key, warm and high; fill, cool and low; two rims in the record's colours */}
-      <directionalLight position={[-1.6, 2.2, 2.6]} intensity={2.3} color="#fff1e2" />
-      <directionalLight position={[2.2, 0.5, 2]} intensity={0.55} color="#dfe6ff" />
-      <directionalLight position={[-2.4, 1.6, -2.2]} intensity={1.7} color="#8f6bff" />
-      <directionalLight position={[2.4, 1.2, -2.2]} intensity={1.5} color="#55c6ff" />
-      <Environment resolution={128} environmentIntensity={0.8}>
-        <Lightformer form="rect" intensity={2.2} position={[0, 2.5, 3]} scale={[4, 1.2, 1]} />
-        <Lightformer form="rect" intensity={1.2} color="#8f6bff" position={[-3, 0.5, -1]} scale={[1, 3, 1]} />
-        <Lightformer form="rect" intensity={1.2} color="#55c6ff" position={[3, 0.5, -1]} scale={[1, 3, 1]} />
+      {/* a warm studio on the face (a soft key, a warm fill, light bounced from below); the record's colours only from behind */}
+      <hemisphereLight args={["#fff3e8", "#3a2619", 0.7]} />
+      <directionalLight position={[-1.4, 1.8, 2.8]} intensity={2.4} color="#ffe6cf" />
+      <directionalLight position={[2.2, 0.4, 2.2]} intensity={1.0} color="#ffe9d8" />
+      <directionalLight position={[0, -1.6, 2]} intensity={0.35} color="#ffcfae" />
+      <directionalLight position={[-2.4, 1.6, -2.4]} intensity={1.3} color="#8f6bff" />
+      <directionalLight position={[2.4, 1.2, -2.4]} intensity={1.1} color="#55c6ff" />
+      <Environment resolution={128} environmentIntensity={0.7}>
+        <Lightformer form="rect" intensity={2} color="#fff0e2" position={[0, 2.5, 3]} scale={[4, 1.2, 1]} />
+        <Lightformer form="rect" intensity={0.8} color="#ffe2c8" position={[-3, 0.5, 2]} scale={[1, 3, 1]} />
+        <Lightformer form="rect" intensity={1} color="#8f6bff" position={[-3, 0.5, -3]} scale={[1, 3, 1]} />
+        <Lightformer form="rect" intensity={1} color="#55c6ff" position={[3, 0.5, -3]} scale={[1, 3, 1]} />
       </Environment>
       <Suspense fallback={null}>
         <Avatar />
