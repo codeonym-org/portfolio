@@ -90,6 +90,12 @@ interface WorldState {
   /** the one-minute brief, brought forward instead of a sector or a case */
   brief: boolean;
   inspect: InspectTarget | null;
+  /**
+   * the project on display in the sky (its id): set when one is opened,
+   * by a click or by the agent, and kept after its details close, until
+   * another is chosen or the stranger leaves the projects
+   */
+  chosen: string | null;
   cvOpen: boolean;
   /** the holographic map, over everything */
   mapOpen: boolean;
@@ -154,6 +160,7 @@ export const useWorldStore = create<WorldState>()(
       sector: null,
       caseFile: null,
       inspect: null,
+      chosen: null,
       brief: false,
       cvOpen: false,
       mapOpen: false,
@@ -177,22 +184,22 @@ export const useWorldStore = create<WorldState>()(
 
       openSector: (sector) => {
         if (get().sector === sector && !get().caseFile) return;
-        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false });
+        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
         pulse(`sector:${sector}`);
         if (!get().visited.includes(sector)) set({ visited: [...get().visited, sector] });
       },
       setCase: (caseFile) => {
-        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false } : { caseFile: null });
+        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
         caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
       openBrief: () => {
-        set({ brief: true, briefRead: true, sector: null, caseFile: null, inspect: null, paletteOpen: false });
+        set({ brief: true, briefRead: true, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
         pulse("sector:status");
       },
-      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null }),
+      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null, chosen: null }),
 
       setInspect: (inspect) => {
-        set({ inspect });
+        set(inspect?.kind === "quest" ? { inspect, chosen: inspect.id } : { inspect });
         if (inspect) {
           pulse(`${inspect.kind}:${inspect.id}`);
           const key = `${inspect.kind}:${inspect.id}`;

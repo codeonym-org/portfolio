@@ -504,6 +504,66 @@
     color: var(--hue);
   }
 
+  /* ── the project on display: a card projected above its shard ── */
+  .holo-card {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-50%);
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    max-width: 240px;
+    padding: 7px 12px 8px;
+    text-align: center;
+    pointer-events: none;
+    border: 1px solid color-mix(in oklch, var(--hue) 70%, transparent);
+    background:
+      repeating-linear-gradient(0deg, color-mix(in oklch, var(--hue) 10%, transparent) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, color-mix(in oklch, var(--hue) 20%, transparent), transparent),
+      oklch(0.07 0.03 280 / 92%);
+    box-shadow:
+      0 0 24px -6px var(--hue),
+      inset 0 0 18px -8px var(--hue);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    animation: holo-card-in 0.45s ease-out both;
+  }
+  .holo-card--below {
+    top: 0;
+    bottom: auto;
+  }
+  .holo-card[data-still] {
+    animation: none;
+  }
+  .holo-card__tag {
+    font-family: var(--font-geist-mono);
+    font-size: 8px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--hue);
+  }
+  .holo-card__name {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: white;
+    text-shadow: 0 0 10px var(--hue);
+  }
+  .holo-card__sub {
+    font-family: var(--font-geist-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in oklch, white 70%, var(--hue));
+  }
+  /* the same project's card in the Projects window — what marks it when there is no scene */
+  .on-display {
+    border-color: var(--color-gold);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-gold) 60%, transparent),
+      0 0 28px -8px var(--color-gold);
+  }
+
   /* ── gauges ── */
   .bar {
     position: relative;
@@ -798,6 +858,16 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes holo-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scaleY(0.2);
+  }
+  60% {
+    opacity: 1;
   }
 }
 
