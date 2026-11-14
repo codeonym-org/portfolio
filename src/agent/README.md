@@ -117,6 +117,7 @@ Pure modules have unit tests: `pnpm test`.
 | `server/system-agent.ts` | AG-UI agents (text + voice); route app context into CopilotKit state |
 | `server/middleware.ts` | history window + app-context note (shared by both agents) |
 | `server/rate-limit.ts` | per-IP sliding windows for the public routes |
+| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut, the disclosure on the first reply only |
 | `../components/agent/` | provider, frontend tools, the bridge to the session store |
 | `../store/session-store.ts` | turns, cards and the run trace the interface renders |
 
