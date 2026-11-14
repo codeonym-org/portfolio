@@ -1,5 +1,4 @@
 import { achievements, chronicle } from "@/config/chronicle.config";
-import { gates } from "@/config/gates.config";
 import { findGuild, guilds } from "@/config/guilds.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
 import { player } from "@/config/player.config";
@@ -124,8 +123,7 @@ export function plainMarkdown(site: string): string {
     ...h.links.map((l) => `- [${l.label}](${l.href.startsWith("/") ? site + l.href : l.href})`),
     `- [The living record (interactive, agent-driven)](${site}/)`,
     `- [The plain record (HTML)](${site}/record)`,
-    `- [Gates — every way into the record](${site}/gates)`,
-    ...gates.map((g) => `  - [${g.name}](${site}/gates/${g.id}) — rank ${g.rank}, ${g.state}. ${g.tagline}`),
+    `- [The interview (talk to his avatar, by text or voice)](${site}/interview)`,
     "",
   ];
   for (const section of plainSections) {

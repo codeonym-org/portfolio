@@ -153,13 +153,14 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
-    name: "open_gates",
+    name: "open_interview",
     description:
-      "Leave this gate for the Gate Realm (the page /gates): a star system where every gate into the record is a world — this one is First Light (rank C); Erebus (rank S) is sealed; five more are uncharted. Use only when the visitor asks for the gates, the realm, other worlds or tiers, or Erebus.",
+      "Take the visitor to the interview (the page /interview): my avatar, alone in an empty space, answering by text or voice. Use only when the visitor asks for the interview, the avatar, my face, or to talk face to face.",
     parameters: z.object({}),
     handler: () => {
-      window.setTimeout(() => window.location.assign("/gates"), 600);
-      return "Taking the visitor to the Gate Realm. Say one short line of farewell; this page is about to close.";
+      if (window.location.pathname === "/interview") return "The visitor is already in the interview.";
+      window.setTimeout(() => window.location.assign("/interview"), 600);
+      return "Taking the visitor to the interview. Say one short line; this page is about to close.";
     },
   }),
   define({

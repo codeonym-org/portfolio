@@ -1,6 +1,6 @@
-import { FirstLightGate } from "@/components/gates/first-light-gate";
+import { FirstLight } from "@/components/interface/first-light";
 
-/** `/` opens the default gate with no choice to make; the Gate Realm is at /gates */
+/** `/` is the record: the Monolith, the record in orbit and the System. The interview is at /interview */
 export default function Home() {
-  return <FirstLightGate />;
+  return <FirstLight />;
 }

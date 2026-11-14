@@ -966,3 +966,123 @@
     display: none;
   }
 }
+
+/* ── the interview (/interview): the avatar alone, the parts of a reply around him ── */
+@property --disco-spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@layer components {
+  .interview-room {
+    background:
+      radial-gradient(ellipse 46% 52% at 50% 36%, oklch(0.3 0.1 290 / 0.38), transparent 70%),
+      radial-gradient(ellipse 80% 60% at 50% 110%, oklch(0.22 0.08 250 / 0.35), transparent 70%),
+      var(--background);
+  }
+  .interview-float {
+    animation: interview-float 6.5s ease-in-out infinite;
+  }
+  .pane-float {
+    animation: interview-float var(--float-s, 7s) ease-in-out var(--float-d, 0s) infinite;
+  }
+
+  /* the disco button: a soft, raised disc with a mirror ball; held, it sinks in */
+  .disco {
+    --lvl: 0;
+  }
+  .disco__body {
+    background: linear-gradient(145deg, oklch(0.19 0.03 285), oklch(0.11 0.02 285));
+    box-shadow:
+      12px 14px 30px rgb(0 0 0 / 0.75),
+      -9px -9px 24px oklch(0.55 0.15 290 / 0.12),
+      inset 1px 1px 0 rgb(255 255 255 / 0.07);
+    transition:
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+  }
+  .disco[data-listening="true"] .disco__body {
+    transform: scale(0.95);
+    box-shadow:
+      inset 9px 10px 20px rgb(0 0 0 / 0.8),
+      inset -7px -7px 16px oklch(0.55 0.15 290 / 0.16),
+      0 0 calc(18px + var(--lvl) * 40px) oklch(0.62 0.22 295 / 0.45);
+  }
+  .disco__ball {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 9999px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 34% 28%, rgb(255 255 255 / 0.95) 0 3%, rgb(255 255 255 / 0.35) 7%, transparent 22%),
+      radial-gradient(circle at 50% 50%, transparent 46%, rgb(0 0 0 / 0.55) 100%),
+      repeating-linear-gradient(0deg, rgb(0 0 0 / 0.42) 0 1px, transparent 1px 8px),
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 0.42) 0 1px, transparent 1px 8px),
+      conic-gradient(from var(--disco-spin), #7c6cff, #45c9ff, #c3a8ff, #ff8bd8, #6ff2ff, #8f6bff, #7c6cff);
+    box-shadow:
+      inset -10px -12px 18px rgb(0 0 0 / 0.55),
+      inset 4px 5px 10px rgb(255 255 255 / 0.12),
+      0 4px 14px rgb(0 0 0 / 0.6);
+    animation: disco-spin 9s linear infinite;
+    transition: filter 0.3s ease;
+    filter: saturate(0.75) brightness(0.85);
+  }
+  .disco[data-live="true"] .disco__ball {
+    animation-duration: 2.2s;
+    filter: saturate(1.2) brightness(1.05);
+  }
+  .disco__specks {
+    animation: disco-turn 14s linear infinite;
+  }
+  .disco[data-live="true"] .disco__specks {
+    animation-duration: 3.5s;
+  }
+  .disco__specks > span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px;
+    border-radius: 9999px;
+    background: oklch(0.85 0.14 var(--h));
+    box-shadow: 0 0 10px oklch(0.8 0.16 var(--h));
+    opacity: 0.22;
+    transform: rotate(var(--a)) translateX(calc(62px + var(--lvl) * 46px));
+    transition: opacity 0.3s ease;
+  }
+  .disco[data-live="true"] .disco__specks > span {
+    opacity: calc(0.45 + var(--lvl) * 0.55);
+  }
+}
+
+@keyframes interview-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes disco-spin {
+  to {
+    --disco-spin: 360deg;
+  }
+}
+@keyframes disco-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interview-float,
+  .pane-float,
+  .disco__ball,
+  .disco__specks {
+    animation: none;
+  }
+}

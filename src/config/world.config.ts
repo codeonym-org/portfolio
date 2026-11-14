@@ -110,7 +110,7 @@ export const world = {
     traceIdle: "idle — nothing running",
     paletteHint: "Search the record or run a command…",
     plain: "plain record",
-    gates: "gates",
+    interview: "interview",
   },
 
   /** what the System asks in its dialog */
@@ -170,6 +170,19 @@ export const world = {
       muted: "Sound is off — the System answers in captions.",
       tasks: "DELEGATED TASKS",
     },
+  },
+
+  /** the interview (`/interview`): the avatar alone, and every part of a reply in its own window */
+  interview: {
+    title: "The interview",
+    loading: "Coming into the room",
+    modes: { text: "TEXT", audio: "AUDIO" },
+    switchLabel: "Answer by text or by voice",
+    placeholder: "Ask me anything…",
+    hold: "Hold to talk",
+    phases: { idle: "hold to talk", listening: "listening", decoding: "hearing you", thinking: "thinking", speaking: "speaking" },
+    panes: { words: "Ayoub", you: "You", heard: "You said", tool: "Working", task: "Task", card: "Shown", record: "Opened", question: "A question", notice: "Note" },
+    noVoice: "This browser cannot record your voice. Switch to TEXT at the top.",
   },
 
   /** the holographic map (`interface/holo-map.tsx`) */
