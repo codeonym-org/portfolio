@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { CopilotKit } from "@copilotkit/react-core/v2";
 import { SYSTEM_AGENT_ID } from "@/agent/constants";
 import { world } from "@/config/world.config";
@@ -17,7 +18,7 @@ import { VoiceLink } from "./voice/voice-link";
  * console, the trace and the windows read the session store. Loaded
  * lazily once the scene is up, so the chat stack never delays it.
  */
-export default function SystemLink() {
+export default function SystemLink({ children }: { children?: ReactNode }) {
   return (
     <CopilotKit
       runtimeUrl="/api/copilotkit"
@@ -33,6 +34,7 @@ export default function SystemLink() {
       <SystemTools />
       <AgentBridge />
       <VoiceLink />
+      {children}
     </CopilotKit>
   );
 }

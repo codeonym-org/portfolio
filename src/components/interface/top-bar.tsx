@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DoorOpen, FileText, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
+import { FileText, Maximize, Minimize, Volume2, UserRound, VolumeX } from "lucide-react";
 import { player } from "@/config/player.config";
 import { systemConfig } from "@/config/system.config";
 import { world } from "@/config/world.config";
@@ -30,9 +30,9 @@ export function TopBar() {
         </span>
       </button>
       <div className="pointer-events-auto flex items-center gap-1.5">
-        <Link href="/gates" aria-label="Gates — every way into the record" title="Gates — every way into the record" className="hud-chip h-9 px-2.5">
-          <DoorOpen className="size-4" />
-          <span className="hidden font-mono text-[11px] md:inline">{world.hud.gates}</span>
+        <Link href="/interview" aria-label="The interview — talk to my avatar" title="The interview — talk to my avatar" className="hud-chip h-9 px-2.5">
+          <UserRound className="size-4" />
+          <span className="hidden font-mono text-[11px] md:inline">{world.hud.interview}</span>
         </Link>
         <Link href="/record" aria-label="The plain record — the same content as one page of text" title="The plain record (text only)" className="hud-chip h-9 px-2.5">
           <FileText className="size-4" />

@@ -22,8 +22,8 @@ export default function PlainRecord() {
           ← the living record
         </Link>
         <span className="flex gap-4">
-          <Link href="/gates" className="plain-link">
-            gates
+          <Link href="/interview" className="plain-link">
+            interview
           </Link>
           <a href="/llms.txt" className="plain-link">
             llms.txt

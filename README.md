@@ -8,6 +8,9 @@ agent answers by rearranging the place: it brings the right shards forward, open
 assemble a **case file**, a set of evidence picked for your question that you can share as a link. Its tool calls
 are shown live as a run trace.
 
+[`/interview`](https://portfolio.codeonym.work/interview) is the same agent face to face: his avatar alone in an
+empty room, answering by text or voice (the jaw follows the voice), every part of a reply in its own floating window.
+
 Without the agent (no key, offline, rate-limited) a local index takes over, **⌘K** runs every command by hand, and
 [`/record`](https://portfolio.codeonym.work/record) and `/llms.txt` serve the same record as plain text.
 

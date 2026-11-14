@@ -9,7 +9,6 @@ agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 | `world.config.ts`     | The six sectors (names, sections, tones), boot and HUD copy, the System's greeting and suggestions, credits |
 | `player.config.ts`    | Identity, what he is known for, strengths, links, languages, profile     |
 | `quests.config.ts`    | Projects — each one is a lit shard near the Monolith; each names its organisation |
-| `gates.config.ts`     | The gates: named, ranked ways into the record, open or sealed (`/gates`) |
 | `guilds.config.ts`    | The organisations he works in and the role held in each                 |
 | `skills.config.ts`    | Skill sets, categories (sections of the Skills window), skills          |
 | `inventory.config.ts` | Documents, degrees and interests; `unlocks` = `"cv"` or a sector id      |

@@ -19,7 +19,7 @@ import { Cards } from "./cards";
 const copy = world.agent;
 
 /** reveals text at reading speed; follows along when the text is still streaming in */
-function useReveal(text: string, id: string) {
+export function useReveal(text: string, id: string) {
   const [state, setState] = useState({ id, shown: 0 });
   const shown = state.id === id ? state.shown : 0;
   useEffect(() => {

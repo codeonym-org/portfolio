@@ -40,7 +40,7 @@ const ACTIONS: { label: string; sub: string; search: string; name: string; args?
   { label: "Cast: shockwave", sub: 'cast_effect(effect: "shockwave")', search: "effect shockwave pulse", name: "cast_effect", args: { effect: "shockwave" } },
   { label: "The one-minute brief", sub: "open_brief()", search: "brief summary overview short quick recruiter hiring tldr", name: "open_brief" },
   { label: "The holographic map", sub: "open_map()", search: "map globe hologram where location based city oujda morocco time zone", name: "open_map" },
-  { label: "Gates — every way into the record", sub: "open_gates()", search: "gates realm worlds planets tiers first light erebus", name: "open_gates" },
+  { label: "The interview — talk to my avatar", sub: "open_interview()", search: "interview avatar face talk voice hr", name: "open_interview" },
   { label: "Back to orbit", sub: "close_windows()", search: "close home orbit reset view", name: "close_windows" },
 ];
 
