@@ -54,7 +54,7 @@ const SECTOR_WORDS: Record<string, string[]> = {
   status: ["who", "about", "profile", "status", "ayoub", "codeonym", "creed", "title", "qui", "profil", "bio", "introduce", "himself", "yourself"],
 };
 
-const GENERIC = new Set(["skills", "project", "projects", "system", "systems", "agents", "record", "portfolio"]);
+const GENERIC = new Set(["skills", "project", "projects", "system", "systems", "agents", "record", "portfolio", "platform"]);
 
 function mention<T extends { id: string; name: string }>(text: string, list: T[]): T | undefined {
   // the longest name first, so "LangGraph" wins over "Lang"
@@ -64,7 +64,10 @@ function mention<T extends { id: string; name: string }>(text: string, list: T[]
       const name = fold(e.name);
       if (name.length < 3) return false;
       if (text.includes(name) || text.includes(e.id)) return true;
-      // "the pharma project" → "Multi-Agent Pharmaceutical Catalog System"
+      // a short name before a colon is enough on its own: "AiCA" → "AiCA: Pharmaceutical Catalog Platform"
+      const short = e.name.includes(":") ? fold(e.name.split(":")[0]) : "";
+      if (short.length >= 3 && new RegExp(`(^|[^a-z0-9])${short}($|[^a-z0-9])`).test(text)) return true;
+      // "the pharma project" → "AiCA: Pharmaceutical Catalog Platform"
       // …but not on a word that names a whole sector: "his skills" is not the project "design-skills"
       const words = name.split(/[\s·/-]+/).filter((w) => w.length >= 6 && !GENERIC.has(w));
       return words.some((w) => text.includes(w.slice(0, 6)));

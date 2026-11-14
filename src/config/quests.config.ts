@@ -43,15 +43,17 @@ export const quests: Quest[] = [
   },
   {
     id: "pharma-mas",
-    name: "Multi-Agent Pharmaceutical Catalog System",
+    name: "AiCA: Pharmaceutical Catalog Platform",
     rank: "S",
     type: "main",
     guild: "opensnz",
-    status: "cleared",
-    period: "2025/02 – 2025/08",
+    status: "ongoing",
+    stage: "released",
+    period: "Since 2025/02",
     summary:
-      "A Multi-Agent System for intelligent pharmaceutical catalog analysis — automating data extraction from raw files and coordinating specialized AI agents for querying, cost aggregation, reporting, and decision support.",
+      "AiCA, a multi-agent platform for intelligent pharmaceutical catalog analysis — automating data extraction from raw files and coordinating specialized AI agents for querying, cost aggregation, reporting, and decision support. Started during his internship, now in production.",
     details: [
+      "Started it as an intern in early 2025, when AI agents were still mostly theory; still building it today.",
       "Designed a modular, scalable, and maintainable agent-based architecture.",
       "Coordinated specialized agents for extraction, querying, cost aggregation, reporting, and decision support.",
       "Grounded agents with a knowledge graph and RAG over raw catalog data.",

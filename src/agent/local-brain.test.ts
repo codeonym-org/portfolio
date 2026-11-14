@@ -13,7 +13,7 @@ const index: BrainIndex = {
     { id: "contact", name: "The Gate", section: "Contact" },
   ],
   quests: [
-    { id: "pharma-mas", name: "Multi-Agent Pharmaceutical Catalog System", summary: "A multi-agent system.", stack: ["LangGraph"] },
+    { id: "pharma-mas", name: "AiCA: Pharmaceutical Catalog Platform", summary: "A multi-agent platform.", stack: ["LangGraph"] },
     { id: "mediary", name: "Mediary", summary: "A mediator library.", stack: ["Python"] },
   ],
   skills: [
@@ -53,6 +53,7 @@ test("contact opens the gate and shows the channels", () => {
 test("a named project or skill is inspected, not just its sector", () => {
   assert.deepEqual(actions("tell me about mediary"), [{ name: "inspect_entity", args: { kind: "quest", id: "mediary" } }]);
   assert.deepEqual(actions("the pharmaceutical project"), [{ name: "inspect_entity", args: { kind: "quest", id: "pharma-mas" } }]);
+  assert.deepEqual(actions("tell me about AiCA"), [{ name: "inspect_entity", args: { kind: "quest", id: "pharma-mas" } }]);
   assert.deepEqual(actions("does he know LangGraph?"), [{ name: "inspect_entity", args: { kind: "skill", id: "langgraph" } }]);
 });
 

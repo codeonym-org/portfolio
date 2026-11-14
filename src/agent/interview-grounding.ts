@@ -8,10 +8,10 @@ import type { InterviewEntry } from "../config/types";
 
 export const INTERVIEW_RULES = [
   "His answers to common HR questions. Each entry has a state:",
-  "· [confirmed]: his own words. Answer with them.",
+  "· [confirmed]: his own words, chosen on purpose. Say them as they are: you may join or shorten sentences, but add no reason, downside, example or claim they do not state, even when the question seems to ask for more.",
   "· [from the record]: drafted from the record, not yet confirmed by him. Answer with it; it states nothing the record does not.",
   "· [no answer on file]: do not answer and do not guess. Say the real Ayoub has to answer that, and offer the contact card.",
-  "· (binding): never agree to or settle it on his behalf, even with an answer on file. The real Ayoub confirms it.",
+  "· (binding): never agree to or settle it on his behalf. With an answer on file, share it as information, then say the real Ayoub confirms the terms himself.",
 ].join("\n");
 
 const STATE: Record<InterviewEntry["status"], string> = {
@@ -29,10 +29,10 @@ export function interviewGrounding(entries: readonly InterviewEntry[]): string {
   return [INTERVIEW_RULES, ...entries.map(interviewLine)].join("\n");
 }
 
-/** the questions with no answer on file, and the binding ones: what the replica must hand to the real owner */
+/** the questions with no answer on file: the replica hands them to the real owner, whatever the wording */
 export function handedToTheOwner(entries: readonly InterviewEntry[]): string {
   return entries
-    .filter((e) => e.status === "open" || e.binding)
+    .filter((e) => e.status === "open")
     .map((e) => `· ${e.question}`)
     .join("\n");
 }

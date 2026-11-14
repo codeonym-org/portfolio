@@ -1,8 +1,8 @@
 ---
-status: open
+status: resolved
 from: agent
 found-while: ticket GH-86 (the interview file), built without the owner (story decision 008)
-resolved-by:
+resolved-by: decision 002, 2026-11-14 (branch 86-interview-session)
 ---
 
 # Run the first interview session with the owner
