@@ -124,7 +124,7 @@ export const world = {
     offerHeading: "THE SYSTEM PROPOSES",
     greeting: {
       heading: "A STRANGER HAS ENTERED",
-      body: "This is the record of Ayoub Bouarour. The System can brief you on him in one minute. Accept the briefing?",
+      body: "This is the record of Ayoub Bouarour. I am his AI replica: I answer as he would. Shall I brief you on myself in one minute?",
     },
   },
 
@@ -132,28 +132,30 @@ export const world = {
     sectorOpened: "SECTION OPENED",
   },
 
-  /** THE SYSTEM — the agent that lives in the Monolith */
+  /** The replica: an AI that answers as the owner, inside the System */
   agent: {
     name: "THE SYSTEM",
     /** how the System addresses whoever is visiting */
     visitor: "Stranger",
     /** the project the System leads a new visitor to first (a project id) */
     flagship: "pharma-mas",
-    epithet: "the agent that holds his record",
+    epithet: "Ayoub's AI replica",
     greeting:
-      "I hold the whole record of Ayoub. Ask me anything, or tell me what to show you. I answer by rearranging this place.",
-    placeholder: "Ask the System…",
+      "I am Ayoub's AI replica: I answer as he would, from his record. Ask me what you would ask him in an interview, or tell me what to show you.",
+    placeholder: "Ask me anything…",
     thinking: "The System is processing…",
     brief: "One-minute brief",
     suggestions: [
-      "Who is Ayoub?",
-      "What has he built with agents?",
-      "Build the case for hiring him",
-      "Show me his projects",
-      "How do I reach him?",
+      "Tell me about yourself",
+      "What have you built with agents?",
+      "Why should I hire you?",
+      "Show me your projects",
+      "Walk me through your experience",
+      "How do I reach you?",
     ],
-    offline: "The link to the System is down. I am answering from the local index — it can open anything, but it cannot reason.",
-    footer: "AI · LangChain agent over AG-UI — answers can be wrong; the CV is the source of truth.",
+    offline: "My replica is unreachable. The local index answers instead: it can open anything in the record, but it does not speak for Ayoub.",
+    /** the permanent label: always visible under the console */
+    footer: "AI replica of Ayoub · answers as he would, and can be wrong. The real Ayoub confirms anything binding.",
     /** hold-to-talk: the System's voice (a second agent that delegates to this one) */
     voice: {
       key: "V",

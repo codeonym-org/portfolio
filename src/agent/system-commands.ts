@@ -283,7 +283,7 @@ export const systemCommands: SystemCommand[] = [
     description:
       "Propose ONE action to the visitor in a System window they can accept, refuse or ignore. Accepting runs the action for them. OPTIONAL: call it only when a specific action clearly follows from what the visitor just asked and would show them something they have not seen (see THE VISITOR in your instructions); most replies need none. It returns at once — the visitor answers in their own time, and the App Context (guide.proposedThisVisit) shows how they answered. At most one per reply, after your other tools. Never propose what is already open, already seen, or already proposed during this visit.",
     parameters: z.object({
-      message: z.string().min(8).max(170).describe("What the System proposes, one or two short sentences ending with a question, in the visitor's language. Only facts from the record."),
+      message: z.string().min(8).max(170).describe("What you propose, in the first person, one or two short sentences ending with a question, in the stranger's language. Only facts from the record."),
       action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map"]).describe("What accepting does."),
       sector: SECTOR.optional().describe("For open_sector."),
       kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),

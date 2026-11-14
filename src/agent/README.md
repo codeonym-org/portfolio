@@ -1,10 +1,23 @@
 # THE SYSTEM — the portfolio's agent
 
-The Monolith at the centre of the page is two LangChain agents:
+The Monolith at the centre of the page is two LangChain agents. Both are
+**Ayoub's replica**: an AI that answers in his place, in the first person, as
+he would in an interview. Its rules:
+
+- The first reply says once that it is his AI replica; a label under the
+  console says so at all times.
+- It answers only from the record and the interview file
+  (`src/config/interview.config.ts`). A question with no answer on file gets
+  "I'd rather answer that myself" and the contact card, never a guess.
+- It never settles anything binding (salary, start date, offer, contract): the
+  real Ayoub confirms it.
+- The local index, used when the model is unreachable, does not speak as him.
+
+The two agents:
 
 - **the text System** (`system`): visitors type to it (the prompt at the
   bottom, **/** or **T** to focus it). It answers from Ayoub's record and
-  answers *with the page*: it opens sections, inspects entries, raises projects,
+  answers *with the page*: it opens sections, inspects entries,
   pushes notifications, and assembles a **case file** — a set of evidence
   picked from the record by id, each with one line on why it matters.
 - **the voice System** (`system-voice`): visitors **hold V** (or the mic

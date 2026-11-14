@@ -46,12 +46,12 @@ const has = (text: string, ...words: string[]) => words.some((w) => new RegExp(`
 
 /** sector keywords, English and French */
 const SECTOR_WORDS: Record<string, string[]> = {
-  contact: ["contact", "reach", "email", "e-mail", "mail", "linkedin", "github", "hire him", "get in touch", "joindre", "contacter", "message"],
+  contact: ["contact", "reach", "email", "e-mail", "mail", "linkedin", "github", "hire him", "hire you", "get in touch", "joindre", "contacter", "message"],
   experience: ["experience", "career", "job", "work history", "worked", "company", "employer", "education", "degree", "study", "studied", "university", "master", "opensnz", "parcours", "etudes", "formation", "diplome"],
-  projects: ["project", "built", "build", "shipped", "quest", "shadow", "case stud", "projet", "realisation", "portfolio"],
-  skills: ["skill", "stack", "tech", "tool", "framework", "arsenal", "competence", "language", "langage", "know"],
-  inventory: ["inventory", "vault", "credential", "certificate", "item", "relic", "license", "inventaire", "document", "degree", "diploma", "diplome"],
-  status: ["who", "about", "profile", "status", "player", "ayoub", "codeonym", "level", "rank", "creed", "title", "qui", "profil", "bio", "introduce", "himself"],
+  projects: ["project", "built", "build", "shipped", "case stud", "projet", "realisation", "portfolio"],
+  skills: ["skill", "stack", "tech", "tool", "framework", "competence", "language", "langage", "know"],
+  inventory: ["inventory", "credential", "certificate", "item", "license", "inventaire", "document", "degree", "diploma", "diplome"],
+  status: ["who", "about", "profile", "status", "ayoub", "codeonym", "creed", "title", "qui", "profil", "bio", "introduce", "himself", "yourself"],
 };
 
 const GENERIC = new Set(["skills", "project", "projects", "system", "systems", "agents", "record", "portfolio"]);
@@ -76,9 +76,9 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   const p = index.player;
   const open = (sector: string): BrainAction => ({ name: "open_sector", args: { sector } });
 
-  if (!text) return { text: "The System heard nothing.", actions: [] };
+  if (!text) return { text: "The local index heard nothing.", actions: [] };
 
-  if (has(text, "cv", "resume", "curriculum", "hunter card")) {
+  if (has(text, "cv", "resume", "curriculum")) {
     if (has(text, "download", "save", "telecharg")) return { text: "The CV is downloading.", actions: [{ name: "download_cv", args: {} }] };
     return { text: "The full CV, as a document.", actions: [{ name: "open_cv", args: {} }] };
   }
@@ -87,14 +87,14 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: "The record in one minute. Every line opens its full entry.", actions: [{ name: "open_brief", args: {} }] };
   }
 
-  if (has(text, "hire", "fit", "why him", "why should", "convince", "recruit", "embauch", "strongest", "case")) {
+  if (has(text, "hire", "fit", "why him", "why you", "why should", "convince", "recruit", "embauch", "strongest", "case")) {
     return {
-      text: "I cannot argue from the local index — but the evidence does not need me to. This is the case the record makes on its own.",
+      text: "The local index cannot argue. This is the case the record makes on its own.",
       actions: [{ name: "assemble_case", args: index.defaultCase }],
     };
   }
 
-  if (has(text, "where is he", "where does he", "based", "location", "located", "time zone", "timezone", "what time", "ou est-il", "fuseau")) {
+  if (has(text, "where is he", "where does he", "where are you", "where do you", "based", "location", "located", "time zone", "timezone", "what time", "ou est-il", "fuseau")) {
     return { text: `${p.name} is based in ${p.location}. The map shows his local time against yours.`, actions: [], map: true };
   }
 
