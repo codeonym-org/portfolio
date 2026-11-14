@@ -75,7 +75,7 @@ function build(): RecordNode[] {
     add({ kind: "education", id: a.id, sector: "experience", label: a.title, sub: a.period, shape: "experience", size: 0.36, hue: "bone", orbit: chapterOrbit(chronicle.length + i), search: a.issuer }),
   );
 
-  // ── the shadows (projects): the widest blades in the sky ──
+  // ── the projects: the widest blades in the sky ──
   const questOrbit = ring(quests.length, { radius: 4.85, y: 0, incline: 0.17, roll: -0.13, speed: 0.06 });
   quests.forEach((q, i) =>
     add({
@@ -152,7 +152,7 @@ export function inspectTargetOf(node: RecordNode): InspectTarget | null {
   return node.kind === "quest" || node.kind === "skill" || node.kind === "item" ? { kind: node.kind, id: node.id } : null;
 }
 
-/** risen shadows leave the outer ring and bind to the Monolith on a tight, steep orbit */
+/** projects leave the outer ring and bind to the Monolith on a tight, steep orbit */
 export function boundOrbit(index: number): Orbit {
   return { radius: 2.05 + (index % 2) * 0.22, y: 0, incline: 0.85 + index * 0.5, roll: index * 0.7, speed: 0.34 - (index % 3) * 0.05, phase: index * 1.9 };
 }

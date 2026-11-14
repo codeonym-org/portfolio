@@ -65,11 +65,6 @@ test("a hiring question assembles the default case", () => {
   assert.deepEqual(actions("Build the case for hiring him"), [{ name: "assemble_case", args: { title: "Why him" } }]);
 });
 
-test("arise raises one, or all of them", () => {
-  assert.deepEqual(actions("Raise a shadow for me"), [{ name: "arise", args: {} }]);
-  assert.deepEqual(actions("ARISE — all of them"), [{ name: "arise_all", args: {} }]);
-});
-
 test("what it cannot answer, it says so and does nothing", () => {
   const reply = answerLocally("what is the meaning of life", index);
   assert.deepEqual(reply.actions, []);

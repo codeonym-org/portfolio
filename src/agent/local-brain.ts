@@ -94,12 +94,6 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     };
   }
 
-  if (has(text, "arise", "raise", "wake", "awaken", "extract", "leve")) {
-    return has(text, "all", "every", "tous", "legion")
-      ? { text: "[ ARISE. ] Every fallen quest answers.", actions: [{ name: "arise_all", args: {} }] }
-      : { text: "[ ARISE. ]", actions: [{ name: "arise", args: {} }] };
-  }
-
   if (has(text, "where is he", "where does he", "based", "location", "located", "time zone", "timezone", "what time", "ou est-il", "fuseau")) {
     return { text: `${p.name} is based in ${p.location}. The map shows his local time against yours.`, actions: [], map: true };
   }
@@ -127,7 +121,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
       id === "status"
         ? `${p.name} — ${p.job}, ${p.title}, at ${p.guild} (${p.location}).`
         : id === "projects"
-          ? `${index.quests.length} quests on record. The dormant ones answer to ARISE.`
+          ? `${index.quests.length} projects on record. Pick one to read its details.`
           : `${sector.name}: ${sector.section.toLowerCase()}.`;
     return { text: line, actions: [open(id)] };
   }

@@ -10,7 +10,7 @@ import { TaskQueue, type TaskRecord } from "@/agent/voice/task-queue";
 import { world } from "@/config/world.config";
 import { holdMusicDuck, play } from "@/lib/audio";
 import { useSession } from "@/store/session-store";
-import { focusLabel, levelFor, live, useWorldStore } from "@/store/world-store";
+import { focusLabel, live, useWorldStore } from "@/store/world-store";
 import { HoldRecorder, canRecord, MAX_MS } from "./recorder";
 import { SpeechPlayer } from "./speaker";
 import { useVoiceStore, voiceControl, voiceLive, type VoicePhase } from "./voice-store";
@@ -70,7 +70,7 @@ function voiceContext(tasks: readonly TaskRecord[]) {
   const s = useWorldStore.getState();
   return JSON.stringify({
     broughtForward: focusLabel(s),
-    visitor: { level: levelFor(s.xp), shadowsRisen: s.risen.length, sectorsOpened: s.visited.length },
+    visitor: { sectionsOpened: s.visited },
     tasks: tasks.map((t) => ({ n: t.n, task: t.task, status: t.status })),
   });
 }
@@ -225,7 +225,6 @@ export function VoiceLink() {
       speaker.unlock();
       store({ notice: null, heard: "", reply: "" });
       useSession.getState().set({ mode: "voice" });
-      useWorldStore.getState().completeQuest("awaken");
       setPhase("listening");
       play("open", { volume: 0.35 });
       try {

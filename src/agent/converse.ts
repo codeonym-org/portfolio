@@ -107,7 +107,6 @@ const LINK_WAIT_MS = 5000;
 export async function converse(input: string) {
   const text = input.trim().slice(0, 1200);
   if (!text || useSession.getState().running) return;
-  useWorldStore.getState().completeQuest("awaken");
   // moving on without answering a proposal is ignoring it
   dropPendingProposal();
   if (useWorldStore.getState().prompt?.id === "offer") useWorldStore.getState().ignore();

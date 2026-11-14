@@ -1,14 +1,13 @@
 "use client";
 
 import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import {
   Copy,
   Download,
   ExternalLink,
   FileText,
-  Lock,
   Mail,
   MapPin,
   Phone,
@@ -231,9 +230,6 @@ export function ChroniclePanel() {
 /* ── PROJECTS ──────────────────────────────── */
 
 function QuestCard({ quest }: { quest: Quest }) {
-  const risen = useWorldStore((s) => s.risen.includes(quest.id));
-  const rising = useWorldStore((s) => s.rising === quest.id);
-  const arise = useWorldStore((s) => s.arise);
   const setInspect = useWorldStore((s) => s.setInspect);
   const setHovered = useWorldStore((s) => s.setHovered);
   return (
@@ -242,10 +238,7 @@ function QuestCard({ quest }: { quest: Quest }) {
       layout
       onPointerEnter={() => setHovered(`quest:${quest.id}`)}
       onPointerLeave={() => setHovered(null)}
-      className={cn(
-        "glass-edge notch relative overflow-hidden px-4 py-4 transition-colors [--n:10px]",
-        risen ? "bg-arcane/10" : "bg-white/[0.02]",
-      )}
+      className="glass-edge notch relative overflow-hidden bg-arcane/10 px-4 py-4 transition-colors [--n:10px]"
     >
       <div className="flex items-start gap-3">
         <span className={cn("grid size-9 shrink-0 place-items-center border font-display text-sm", rankRing[quest.rank])}>{quest.rank}</span>
@@ -258,83 +251,40 @@ function QuestCard({ quest }: { quest: Quest }) {
         </div>
       </div>
       <p className="mt-3 text-[15px] leading-relaxed text-foreground/80">{quest.summary}</p>
-      {risen ? (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 space-y-3">
-          <ul className="space-y-1 text-sm text-foreground/80">
-            {quest.details.map((d) => (
-              <li key={d} className="flex gap-2">
-                <span className="mt-2 size-1 shrink-0 rotate-45 bg-arcane-hot" />
-                {d}
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-wrap gap-1.5">
-            {quest.rewards.map((r) => (
-              <Chip key={r} tone="system">{r}</Chip>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setInspect({ kind: "quest", id: quest.id })} className="hud-chip px-3 py-1.5 text-xs">
-              Details
-            </button>
-            {quest.link && (
-              <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip px-3 py-1.5 text-xs">
-                <ExternalLink className="size-3.5" /> Source
-              </a>
-            )}
-          </div>
-        </motion.div>
-      ) : (
-        <button
-          type="button"
-          disabled={rising}
-          onClick={() => arise(quest.id)}
-          onPointerEnter={() => play("hover")}
-          className="group mt-3 flex w-full items-center justify-between border border-dashed border-arcane/40 bg-arcane/5 px-3 py-2 text-left transition-colors hover:border-arcane-hot hover:bg-arcane/15"
-        >
-          <span className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Lock className="size-3.5" /> Objectives & rewards sealed
-          </span>
-          <span className="font-display text-[11px] tracking-[0.35em] text-arcane-hot text-glow-arcane">
-            {rising ? "RISING…" : world.hud.arise}
-          </span>
-        </button>
-      )}
+      <div className="mt-3 space-y-3">
+        <ul className="space-y-1 text-sm text-foreground/80">
+          {quest.details.map((d) => (
+            <li key={d} className="flex gap-2">
+              <span className="mt-2 size-1 shrink-0 rotate-45 bg-arcane-hot" />
+              {d}
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-wrap gap-1.5">
+          {quest.rewards.map((r) => (
+            <Chip key={r} tone="system">{r}</Chip>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setInspect({ kind: "quest", id: quest.id })} className="hud-chip px-3 py-1.5 text-xs">
+            Details
+          </button>
+          {quest.link && (
+            <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip px-3 py-1.5 text-xs">
+              <ExternalLink className="size-3.5" /> Source
+            </a>
+          )}
+        </div>
+      </div>
     </motion.article>
   );
 }
 
 export function ShadowsPanel() {
-  const risen = useWorldStore((s) => s.risen);
-  const rising = useWorldStore((s) => s.rising);
-  const arise = useWorldStore((s) => s.arise);
-  const [all, setAll] = useState(false);
-  const fallen = quests.filter((q) => !risen.includes(q.id));
-
-  // ARISE — ALL: raise the fallen one after another
-  useEffect(() => {
-    if (!all || rising) return;
-    const next = quests.find((q) => !risen.includes(q.id));
-    if (!next) return;
-    const id = window.setTimeout(() => arise(next.id), 150);
-    return () => window.clearTimeout(id);
-  }, [all, rising, risen, arise]);
-
   const main = quests.filter((q) => q.type === "main");
   const side = quests.filter((q) => q.type === "side");
   return (
     <Stack>
-      <motion.div variants={rise} className="flex flex-wrap items-center justify-between gap-3 border border-arcane/25 bg-arcane/5 px-4 py-3">
-        <p className="text-sm text-foreground/80">
-          <span className="font-display text-lg text-white">{risen.length}</span>
-          <span className="text-muted-foreground"> / {quests.length} shadows risen</span>
-        </p>
-        {fallen.length > 0 && (
-          <button type="button" data-active="true" onClick={() => setAll(true)} disabled={all} className="hud-chip px-4 py-2 font-display text-[10px] tracking-[0.3em]">
-            {world.hud.ariseAll}
-          </button>
-        )}
-      </motion.div>
       <Section title="At OpenSNZ-Technology">
         <div className="space-y-3">
           {main.map((q) => (

@@ -23,7 +23,7 @@ function useGreeting() {
     const timer = window.setTimeout(() => {
       const s = useWorldStore.getState();
       // not for a returning visitor, a shared case link, or someone already reading
-      if (s.greeted || s.visited.length || s.completed.length || window.location.hash || s.sector || s.caseFile || s.brief || s.prompt) return;
+      if (s.greeted || s.visited.length || s.briefRead || s.cvRead || window.location.hash || s.sector || s.caseFile || s.brief || s.prompt) return;
       s.setGreeted();
       s.ask({ id: "greeting", heading: copy.greeting.heading, body: copy.greeting.body, accept: copy.accept, decline: copy.decline, tone: "system", command: { name: "open_brief" } });
     }, GREETING_DELAY_MS);

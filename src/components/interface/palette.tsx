@@ -33,12 +33,11 @@ function runCommand(name: string, args: Record<string, unknown> = {}) {
 }
 
 const ACTIONS: { label: string; sub: string; search: string; name: string; args?: Record<string, unknown> }[] = [
-  { label: "ARISE — raise every shadow", sub: "arise_all()", search: "arise all raise shadows projects", name: "arise_all" },
   { label: "Open the CV", sub: "open_cv()", search: "cv resume license pdf", name: "open_cv" },
   { label: "Download the CV", sub: "download_cv()", search: "cv resume download pdf", name: "download_cv" },
   { label: "Copy the email address", sub: 'copy_contact(channel: "email")', search: "email copy contact", name: "copy_contact", args: { channel: "email" } },
   { label: "Save a picture of the Monolith", sub: "capture_snapshot()", search: "snapshot screenshot picture photo", name: "capture_snapshot" },
-  { label: "Cast: awaken", sub: 'cast_effect(effect: "awaken")', search: "effect awaken shockwave", name: "cast_effect", args: { effect: "awaken" } },
+  { label: "Cast: shockwave", sub: 'cast_effect(effect: "shockwave")', search: "effect shockwave pulse", name: "cast_effect", args: { effect: "shockwave" } },
   { label: "The one-minute brief", sub: "open_brief()", search: "brief summary overview short quick recruiter hiring tldr", name: "open_brief" },
   { label: "The holographic map", sub: "open_map()", search: "map globe hologram where location based city oujda morocco time zone", name: "open_map" },
   { label: "Gates — every way into the record", sub: "open_gates()", search: "gates realm worlds planets tiers first light erebus", name: "open_gates" },
