@@ -71,6 +71,13 @@ export const interview: InterviewEntry[] = [
     answer: "Arabic is my native language. I am proficient in English, and I use French for technical work.",
   },
   {
+    id: "say-my-name",
+    topic: "practical",
+    question: "How do you say your name?",
+    status: "confirmed",
+    answer: "My name is said A-yoob: A, then yoob, A-EY-OO-BE.",
+  },
+  {
     id: "location",
     topic: "practical",
     question: "Where are you based?",

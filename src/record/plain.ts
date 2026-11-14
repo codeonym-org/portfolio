@@ -36,6 +36,8 @@ const grade = (m: number) => (m >= 90 ? "S" : m >= 85 ? "A" : m >= 78 ? "B" : "C
 
 export const plainHeader = {
   name: player.name,
+  /** how the first name is said */
+  pronounced: `${player.firstName} is said “${player.pronounced}”`,
   handle: player.handle,
   title: player.title,
   line: `${player.job} at ${player.guild} · ${player.location}`,
