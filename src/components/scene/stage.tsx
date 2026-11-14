@@ -8,6 +8,7 @@ import { ACESFilmicToneMapping } from "three";
 import { live, useWorldStore, type Quality } from "@/store/world-store";
 import { Beams } from "./beams";
 import { Constellation } from "./constellation";
+import { Hologram } from "./hologram";
 import { Monolith } from "./monolith";
 import { Rig } from "./rig";
 import { aberration, COLORS } from "./view";
@@ -104,6 +105,7 @@ export function Stage() {
           <Environment files="/env/studio.hdr" environmentIntensity={0.75} />
           <Monolith />
           <Constellation />
+          <Hologram />
           <Ready />
         </Suspense>
         <Effects quality={quality} />

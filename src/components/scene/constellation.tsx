@@ -18,6 +18,8 @@ export const SHARDS_URL = "/models/record/shards.glb";
 
 /** where every shard is right now ([x, y, z] per node) — the beams aim at these */
 export const nodePositions = new Float32Array(recordNodes.length * 3);
+/** how large every shard is drawn right now — the Hologram sizes its aura by it */
+export const nodeScale = new Float32Array(recordNodes.length);
 /** a shard a beam just reached flares, then cools */
 export const nodeFlash = new Float32Array(recordNodes.length);
 
@@ -118,6 +120,7 @@ export function Constellation() {
   const sector = useWorldStore((s) => s.sector);
   const caseFile = useWorldStore((s) => s.caseFile);
   const hovered = useWorldStore((s) => s.hovered);
+  const chosen = useWorldStore((s) => s.chosen);
   const setHovered = useWorldStore((s) => s.setHovered);
 
   const groups = useRef<(Group | null)[]>([]);
@@ -177,15 +180,19 @@ export function Constellation() {
       // glow: every shard is lit; what is brought forward burns
       let glow = 0.8;
       if (focused) glow = place ? 1.6 : glow * 0.3;
+      // the project on display burns hottest of all (its aura is drawn by the Hologram)
+      const onDisplay = isQuest && state.chosen === node.id;
+      if (onDisplay) glow = Math.max(glow, 2.4);
       if (state.hovered === node.key) glow = Math.max(glow * 1.6, 2.2);
       nodeFlash[i] *= Math.exp(-dt * 2.2);
       glow += nodeFlash[i] * 3.5;
       const mat = materials[i];
       mat.emissiveIntensity = damp(mat.emissiveIntensity, glow, 7, dt);
 
-      const big = (place ? (node.kind === "skill" ? 1.7 : 1.3) : 1) * (state.hovered === node.key ? 1.4 : 1);
+      const big = (place ? (node.kind === "skill" ? 1.7 : 1.3) : 1) * (onDisplay ? (place ? 1.2 : 1.45) : state.hovered === node.key ? 1.4 : 1);
       const scale = damp(group.scale.x, node.size * big, 6, dt);
       group.scale.setScalar(scale);
+      nodeScale[i] = scale;
 
       const mesh = group.children[0];
       mesh.rotation.y += dt * (0.25 + seeded(i, 10) * 0.5);
@@ -221,7 +228,9 @@ export function Constellation() {
       {recordNodes.map((node, i) => {
         const place = formation.get(node.key);
         const beacon = !formation.size ? leaders.get(node.key) : undefined;
-        const labeled = hovered === node.key || (showFormationLabels && !!place);
+        // the project on display is named by its hologram's card, not a label
+        const onDisplay = node.kind === "quest" && chosen === node.id;
+        const labeled = !onDisplay && (hovered === node.key || (showFormationLabels && !!place));
         return (
           <group
             key={node.key}

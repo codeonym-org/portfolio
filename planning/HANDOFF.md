@@ -1,4 +1,4 @@
-# HANDOFF — the portfolio "Gates" epic (last updated 2026-11-13, by the agent)
+# HANDOFF — the portfolio "Gates" epic (last updated 2026-11-14, by the agent)
 
 Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, drafts, `impl.md` per ticket,
 `history/CHANGES.md` per level).
@@ -31,7 +31,8 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
 | #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68, #72, #74) | done, merged into `40-gates` (#64–#67, #69–#71) |
-| #44 | Story 5: The Deep (rank S gate, now named Erebus) | drafted only; build after #57 |
+| #44 | Story 5: The Deep (Erebus) | dropped by the owner on 2026-11-13; the work is kept on the remote branch `backup/erebus-world` (never delete it). Closing #44 is the owner's call |
+| #83 | Story 6: the System speaks as the owner, no Solo Leveling persona (#84–#88) | #84, #85, #87, #88 done, merged into `40-gates` (#89–#93); #86 open until the owner's interview session |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
 What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight personal, by guild); new CV and
@@ -58,6 +59,8 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 5. Not checked by the agent anywhere: voice with a real microphone (hold V), real phones, pinch gestures,
    Safari, Firefox.
 6. The hologram draws Morocco with the Sahara as one outline (`scripts/assets/holo-map.mjs`).
+7. Story GH-83: the first interview session, to fill the open answers in `src/config/interview.config.ts` (#86
+   stays open until then); the stock voice for the replica (GH-87 follow-up); whether to close #44.
 
 ## Done: story GH-57. Next: GH-44
 
@@ -86,39 +89,23 @@ Open for the owner from this story (nothing blocks): the names "First Light" and
 `src/config/gates.config.ts`); the word "Stranger" for the visitor (`world.agent.visitor`);
 whether to use a stronger `MODEL_ID` (the model sometimes ignores the proposal rules, see GH-72 `impl.md`).
 
-## Then: story GH-44, The Deep / Erebus (nothing built, nothing decided yet)
+## Last: story GH-83, the System speaks as the owner
 
-Stories 1–4 are done and merged into `40-gates`. GH-44 is the only story left; its folder
-(`stories/GH-44-deep-s-tier-gate/`) holds only the short draft. No branch exists for it and no code was written.
+Asked for by the owner on 2026-11-13, after dropping The Deep. Its design is in
+`stories/GH-83-system-speaks-as-the-owner/decisions/` (001–008); each ticket records its own pass in
+`decisions/`.
 
-The owner's brief: "fully functional gameplay with extended 3d elems and gamified experience with reward
-models". It must build on the shared progress (epic decision 006), share the record and the agent (004), and
-not slow The Surface.
+| Ticket | What | State |
+|---|---|---|
+| #84 | Plain names for the record, the organisations and the stranger | done (#89) |
+| #85 | Projects lit on load; no arise, XP, levels or quests | done (#90) |
+| #86 | The interview file: his answers to common HR questions (`interview.config.ts`) | merged (#91); open until the owner's first interview session |
+| #87 | The agent answers as his AI replica, in the first person, and hands open or binding questions to him | done (#92) |
+| #88 | The chosen project on display: an aura and a projected card in the sky, marked in the Projects window | done (#93) |
 
-**A design the last agent was about to record (a proposal, not a decision — write it as story decision 001 if
-you keep it, or replace it):**
+Rules from this story: the agent speaks as Ayoub in the first person and its first reply discloses it is his AI
+replica; it never settles anything binding (salary, start date, contract) and answers open questions with "I'd
+rather answer that myself." plus the contact card. The theme (gates, ranks, the System, the dark sky) stays.
 
-- **A dive.** Side view of the iceberg's underwater mass. The visitor steers a light downward (WASD / arrows, or
-  hold the pointer or a finger where to go). The camera follows.
-- **Relics.** The record's entries float in the dark: the top job skills as small motes, the eight personal
-  projects as crystals grouped by guild, the two OpenSNZ rank S entries at the bottom. Coming close collects one:
-  a toast, XP, and its entry in a codex panel (text from `src/config`, link to the repository).
-- **Three layers with gates between them:** the Shallows (skills), the Guild Reefs (codeonym-oss, codeonym-org),
-  the Abyss (OpenSNZ work and "the Heart"). A gate opens after enough relics of the layer above.
-- **A light meter** that drains with depth and refills on each relic; empty sends the visitor back to the last
-  gate (no hard failure).
-- **Rewards:** a visitor rank E → S from the relic count, shown in the HUD with a rank-up toast; reaching the
-  Heart gives a title and a downloadable "hunter card" image, then the contact card.
-- **Build notes:** its own route chunk (`/gates/the-deep`), its own R3F canvas; reuse `public/models/record/
-  shards.glb` geometries (`useGLTF`, see `constellation.tsx`), `Toasts`, `play()` sounds, `levelFor`. Add the
-  found relics to the persisted part of `world-store.ts` (storage key `codeonym-record-v9`; check `partialize`
-  and `resetProgress`). Then set `state: "open"` for `the-deep` in `gates.config.ts` and return the new
-  component from `src/app/gates/[gate]/page.tsx` (today every open gate renders `SurfaceGate`).
-- **Known gap to plan as a ticket:** the agent inside The Deep (the chat stack is only mounted by the Surface's
-  `Shell`).
-
-Suggested tickets: (1) the dive scene, controls and relic collection; (2) layers, gates and the light meter;
-(3) rewards: rank, codex, hunter card, the Heart; (4) the System in The Deep; then open the gate.
-
-After GH-44: the epic is complete. Tell the owner; the owner merges `40-gates` into `main` (decision 008).
-Pull request #39 can then be closed as superseded.
+Next: nothing is planned. When the owner is done with the open points, the epic is complete; the owner merges
+`40-gates` into `main` (decision 008) and closes pull request #39 as superseded.

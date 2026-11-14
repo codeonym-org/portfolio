@@ -232,13 +232,15 @@ export function ChroniclePanel() {
 function QuestCard({ quest }: { quest: Quest }) {
   const setInspect = useWorldStore((s) => s.setInspect);
   const setHovered = useWorldStore((s) => s.setHovered);
+  const onDisplay = useWorldStore((s) => s.chosen === quest.id);
   return (
     <motion.article
       variants={rise}
       layout
       onPointerEnter={() => setHovered(`quest:${quest.id}`)}
       onPointerLeave={() => setHovered(null)}
-      className="glass-edge notch relative overflow-hidden bg-arcane/10 px-4 py-4 transition-colors [--n:10px]"
+      aria-current={onDisplay || undefined}
+      className={cn("glass-edge notch relative overflow-hidden bg-arcane/10 px-4 py-4 transition-colors [--n:10px]", onDisplay && "on-display")}
     >
       <div className="flex items-start gap-3">
         <span className={cn("grid size-9 shrink-0 place-items-center border font-display text-sm", rankRing[quest.rank])}>{quest.rank}</span>
@@ -246,6 +248,7 @@ function QuestCard({ quest }: { quest: Quest }) {
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-bold leading-tight text-white">{quest.name}</h4>
             <Chip tone={quest.stage === "released" ? "system" : quest.status === "ongoing" ? "gold" : "system"}>{(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "delivered")).toUpperCase()}</Chip>
+            {onDisplay && <Chip tone="gold">ON DISPLAY</Chip>}
           </div>
           <p className="font-mono text-[11px] text-muted-foreground">{[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}</p>
         </div>
