@@ -14,7 +14,7 @@ import { ModeDrop } from "./mode-drop";
 import { ReplySpace } from "./reply-space";
 import { TextDock } from "./text-dock";
 
-const AvatarStage = dynamic(() => import("./avatar-stage"), { ssr: false });
+const OfficeStage = dynamic(() => import("./office-stage"), { ssr: false });
 const SystemLink = dynamic(() => import("@/components/agent/system-link"), { ssr: false });
 const HoloMap = dynamic(() => import("@/components/interface/holo-map"), { ssr: false });
 
@@ -26,7 +26,7 @@ function RoomContext() {
   useAgentContext({
     description: "Where the stranger is",
     value: {
-      page: "the interview (/interview): your avatar, alone in an empty room, face to face with the stranger. There is no Monolith and no shards here; everything you open or show appears as a floating window beside your face.",
+      page: "the interview (/interview): your avatar sits behind a desk in an office (a laptop and your papers on it), facing the stranger as in a real job interview. There is no Monolith and no shards here; everything you open or show appears as a floating window beside your face.",
       answering: mode === "audio" ? "by voice" : "by text",
     },
   });
@@ -53,7 +53,7 @@ function Arrival() {
 
 /**
  * ── THE INTERVIEW ─────────────────────────────────────────────
- * The owner's avatar alone in an empty room. No menu: the TEXT /
+ * The owner's avatar at a desk in an office, facing the stranger. No menu: the TEXT /
  * AUDIO switch drips down from the top when the pointer comes near,
  * the input (a floating field, or the disco button to hold) waits at
  * the bottom, and every part of a reply floats in its own window
@@ -81,7 +81,7 @@ export function Interview() {
 
   return (
     <main className="interview-room relative h-dvh w-full overflow-hidden" aria-label={copy.title}>
-      <AvatarStage />
+      <OfficeStage />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(0_0_0/0.55)_100%)]" aria-hidden />
       <Arrival />
       <ReplySpace />
