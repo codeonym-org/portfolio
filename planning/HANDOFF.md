@@ -31,9 +31,11 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #42 | Story 2: first gate + catalog (#49, #50) | done, merged into `40-gates` (#51, #52) |
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
 | #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68, #72, #74) | done, merged into `40-gates` (#64–#67, #69–#71) |
-| #44 | Story 5: The Deep (Erebus) | dropped by the owner on 2026-11-13; the work is kept on the remote branch `backup/erebus-world` (never delete it). Closing #44 is the owner's call |
+| #44 | Story 5: The Deep (Erebus) | dropped by the owner on 2026-11-13, closed as not planned; the work is kept on the remote branch `backup/erebus-world` (never delete it) |
 | #83 | Story 6: the System speaks as the owner, no Solo Leveling persona (#84–#88) | done, merged into `40-gates` (#89–#94) |
-| #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
+| #95 | Bug: replies cleaned in the console, the disclosure on the first reply only | done, merged into `40-gates` (#96) |
+| #97 | PR: `40-gates` → `main`, the whole epic | open; **the owner merges it** (it deploys the live site) |
+| #39 | PR: the living record → `main` | superseded by #97; close it once #97 is merged |
 
 What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight personal, by guild); new CV and
 the phone number as a contact channel; the gate registry (`src/config/gates.config.ts`), the catalog `/gates`,
@@ -59,8 +61,9 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 5. Not checked by the agent anywhere: voice with a real microphone (hold V), real phones, pinch gestures,
    Safari, Firefox.
 6. The hologram draws Morocco with the Sahara as one outline (`scripts/assets/holo-map.mjs`).
-7. Story GH-83: the stock voice for the replica (GH-87 follow-up); whether to close #44; a new export of
-   `public/cv.pdf` if it still names the project "Multi-Agent Pharmaceutical Catalog System" (now AiCA).
+7. Story GH-83: the stock voice for the replica (GH-87 follow-up; eight samples were rendered for the owner,
+   set his pick as `TTS_VOICE` on Vercel); a new export of `public/cv.pdf` from FlowCV, which still names the
+   project "Multi-Agent Pharmaceutical Catalog System" (now AiCA).
 
 ## Done: story GH-57. Next: GH-44
 
@@ -107,5 +110,10 @@ Rules from this story: the agent speaks as Ayoub in the first person and its fir
 replica; it gives binding answers on file (start date, contract) as information but never settles them; salary
 has no answer and, like any question with no answer, gets "I'd rather answer that myself." plus the contact card. The theme (gates, ranks, the System, the dark sky) stays.
 
-Next: nothing is planned. When the owner is done with the open points, the epic is complete; the owner merges
-`40-gates` into `main` (decision 008) and closes pull request #39 as superseded.
+The model (`openai/gpt-oss-120b` by default) sometimes writes tool calls as text, drops or repeats the
+disclosure, and answers a French question in English. `src/agent/reply-hygiene.ts` cleans what the console
+shows (#95). A server note telling the model "this is your first reply" was tried and dropped: it made French
+questions come back in English. Any new prompt rule needs live runs in English and French.
+
+Next: the epic is complete. Pull request #97 (`40-gates` → `main`) is open for the owner to merge (decision 008);
+then close #39 as superseded.
