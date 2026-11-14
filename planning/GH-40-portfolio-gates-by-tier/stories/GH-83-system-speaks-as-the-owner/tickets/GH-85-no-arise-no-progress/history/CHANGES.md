@@ -1,0 +1,3 @@
+- 2026-11-13: drafted by the story's global pass.
+- 2026-11-13: issue #85 created (https://github.com/codeonym-org/portfolio/issues/85), status tracked.
+- 2026-11-14: ticket pass by the agent (decision 001), implemented on 85-no-arise-no-progress.

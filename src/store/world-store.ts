@@ -1,25 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { quests } from "@/config/quests.config";
-import type { InspectTarget, Tone, ZoneId } from "@/config/types";
-import { clampToHall } from "@/components/world/layout";
-import {
-  visitorQuests,
-  world,
-  xpPerLevel,
-  zoneById,
-  zoneIds,
-} from "@/config/world.config";
+import type { InspectTarget, SectorId, Tone } from "@/config/types";
+import { sectorById } from "@/config/world.config";
+import type { CaseFile } from "@/record/case-file";
 
 /**
  * ── WORLD STATE ───────────────────────────────────────────────
- * Everything the HUD and the scene share. Per-frame data (the
- * Hunter's live position, joystick input) deliberately lives in
- * the mutable `live` object below instead — writing it into React
- * state 60×/s would re-render the whole HUD.
+ * What the scene and the interface share: which sector or case is
+ * brought forward, what is being inspected, and what the stranger
+ * has already seen. Per-frame data (how far the Monolith is open, beams in
+ * flight) lives in the mutable `live` object instead — writing it
+ * into React state 60×/s would re-render the whole interface.
  */
 
-export type Phase = "loading" | "title" | "world";
 export type Quality = "high" | "medium" | "low";
 
 export interface Toast {
@@ -29,233 +22,259 @@ export interface Toast {
   tone: Tone;
 }
 
-/** per-frame channel between scene, input and HUD — never rendered directly */
+/** something the System asks: a message and up to two answers. Accepting may run one command. */
+export interface SystemPrompt {
+  /** prompts with the same id replace each other */
+  id: string;
+  heading: string;
+  body: string;
+  accept: string;
+  decline: string;
+  tone: Tone;
+  /** a command from the System's command list, run when the visitor accepts */
+  command?: { name: string; args?: Record<string, unknown> };
+  /** told to whoever raised it */
+  onAnswer?: (accepted: boolean) => void;
+  /** the visitor closed it without answering, or moved on; without this it counts as a "no" */
+  onIgnore?: () => void;
+}
+
+/** one thing the System proposed during this visit, and what the visitor did with it */
+export interface Proposal {
+  /** the action and its arguments, as one string: the same key is never proposed twice */
+  key: string;
+  outcome: "waiting" | "accepted" | "refused" | "ignored";
+}
+
+/** a beam the Monolith fires at a shard (or a whole sector) when the System touches it */
+export interface Pulse {
+  /** node key, or `sector:<id>` for every shard of a sector */
+  target: string;
+  at: number;
+}
+
+/** per-frame channel between the scene, the agent and the voice link — never rendered directly */
 export const live = {
-  /** Hunter world position [x, z] and facing (radians) */
-  hunter: { x: world.spawn[0], z: world.spawn[1], heading: Math.PI },
-  /** is the Hunter currently moving */
-  moving: false,
-  /** analog input, -1..1 (keyboard + touch joystick merge here) */
-  input: { x: 0, z: 0, run: false },
-  /** camera yaw (radians) — movement input is relative to it */
-  cameraYaw: 0,
-  /** THE SYSTEM is generating — its wraith reads this every frame */
+  /** THE SYSTEM is generating — the Monolith opens while it thinks */
   agentBusy: false,
-  /** the voice link's pull on the wraith (1 = rest): it leans in while listening, pulses as it speaks */
+  /** the voice link's pull on the Monolith (1 = rest): it leans open while listening, pulses as it speaks */
   voiceSurge: 1,
+  /** the voice's heartbeat, 0 at rest … 1 on the spike; written by the pulse monitor while the voice is live */
+  heart: 0,
+  pulses: [] as Pulse[],
+  /** one-shot kicks, decayed by the scene: a shockwave across the floor, a lens split, a camera shake */
+  shock: 0,
+  aberration: 0,
+  shake: 0,
+  /** set once by the stage: draw one frame and hand back the canvas as a PNG */
+  capture: null as null | (() => Promise<Blob | null>),
 };
 
+export function pulse(target: string) {
+  live.pulses.push({ target, at: performance.now() });
+  if (live.pulses.length > 24) live.pulses.shift();
+}
+
 interface WorldState {
-  phase: Phase;
+  /** models and light are loaded; the Monolith has assembled */
+  ready: boolean;
   quality: Quality;
   muted: boolean;
   /** true on coarse-pointer / small screens — set once on mount */
   touch: boolean;
 
-  /** click-to-move destination, [x, z] */
-  target: [number, number] | null;
-  /** zone whose panel opens as soon as the Hunter arrives */
-  pending: ZoneId | null;
-  /** zone whose trigger radius the Hunter is standing in */
-  nearZone: ZoneId | null;
-  /** zone whose panel is open (the camera frames its landmark) */
-  panel: ZoneId | null;
-  cvOpen: boolean;
-  mapOpen: boolean;
-  /** the dialogue window with THE SYSTEM (the agent) */
-  dialogueOpen: boolean;
+  /** the sector brought forward (its window is open) */
+  sector: SectorId | null;
+  /** the case the System assembled, brought forward instead of a sector */
+  caseFile: CaseFile | null;
+  /** the one-minute brief, brought forward instead of a sector or a case */
+  brief: boolean;
   inspect: InspectTarget | null;
-  /** quest id currently mid-ARISE (animation playing) */
-  rising: string | null;
-  /** bumps whenever the Hunter should teleport (fast travel) */
-  warp: { to: [number, number]; n: number };
+  /**
+   * the project on display in the sky (its id): set when one is opened,
+   * by a click or by the agent, and kept after its details close, until
+   * another is chosen or the stranger leaves the projects
+   */
+  chosen: string | null;
+  cvOpen: boolean;
+  /** the holographic map, over everything */
+  mapOpen: boolean;
+  paletteOpen: boolean;
+  /** node key under the pointer (or hovered in a window) */
+  hovered: string | null;
 
-  // ── persisted visitor progress ──
-  visited: ZoneId[];
-  risen: string[];
-  completed: string[];
-  xp: number;
+  // ── persisted: what the stranger has seen, so the System can suggest the rest ──
+  visited: SectorId[];
+  briefRead: boolean;
+  cvRead: boolean;
 
   toasts: Toast[];
-  /** level number when a LEVEL UP overlay should play, else null */
-  levelUp: number | null;
+  /** the question the System is asking right now; one at a time */
+  prompt: SystemPrompt | null;
+  /** entity keys (`quest:<id>`) inspected during this visit */
+  inspected: string[];
+  /** what the System proposed during this visit and how the visitor answered */
+  offers: { declinedInARow: number; lastAt: number; log: Proposal[] };
+  /** persisted: the first-visit offer has been made */
+  greeted: boolean;
 
-  setPhase: (phase: Phase) => void;
+  setReady: () => void;
   setQuality: (q: Quality) => void;
   toggleMuted: () => void;
   setTouch: (touch: boolean) => void;
-  moveTo: (x: number, z: number) => void;
-  /** walk to a zone and open its panel on arrival */
-  goTo: (zone: ZoneId) => void;
-  clearTarget: () => void;
-  setNearZone: (zone: ZoneId | null) => void;
-  openPanel: (zone: ZoneId) => void;
-  closePanel: () => void;
-  travelTo: (zone: ZoneId) => void;
-  setMapOpen: (open: boolean) => void;
-  setCvOpen: (open: boolean) => void;
-  setDialogueOpen: (open: boolean) => void;
+  openSector: (sector: SectorId) => void;
+  setCase: (file: CaseFile | null) => void;
+  openBrief: () => void;
+  /** close the sector window and the case, back to the open sky */
+  closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
-  arise: (questId: string) => void;
-  finishRising: () => void;
-  completeQuest: (id: string) => void;
+  setCvOpen: (open: boolean) => void;
+  setMapOpen: (open: boolean) => void;
+  setPaletteOpen: (open: boolean) => void;
+  setHovered: (key: string | null) => void;
   pushToast: (toast: Omit<Toast, "id">) => void;
   dismissToast: (id: number) => void;
-  clearLevelUp: () => void;
-  resetProgress: () => void;
+  ask: (prompt: SystemPrompt) => void;
+  /** closes the prompt; running its command is the dialog's job */
+  answer: (accepted: boolean) => void;
+  /** closes the prompt without an answer */
+  ignore: () => void;
+  setGreeted: () => void;
+  /** the System proposed something */
+  raiseOffer: (key: string) => void;
+  /** the visitor accepted, refused or ignored the proposal that was waiting */
+  settleOffer: (outcome: Exclude<Proposal["outcome"], "waiting">) => void;
+  /** the visitor asked what to see next: the System may offer again */
+  invite: () => void;
 }
 
 let toastSeq = 0;
-
-export function levelFor(xp: number) {
-  return Math.floor(xp / xpPerLevel) + 1;
-}
-
-/** where the Hunter stands to use a zone */
-export function approachPoint(zone: ZoneId): [number, number] {
-  return zoneById[zone].approach;
-}
-
 export const useWorldStore = create<WorldState>()(
   persist(
     (set, get) => ({
-      phase: "loading",
+      ready: false,
       quality: "high",
       muted: false,
       touch: false,
 
-      target: null,
-      pending: null,
-      nearZone: null,
-      panel: null,
+      sector: null,
+      caseFile: null,
+      inspect: null,
+      chosen: null,
+      brief: false,
       cvOpen: false,
       mapOpen: false,
-      dialogueOpen: false,
-      inspect: null,
-      rising: null,
-      warp: { to: world.spawn, n: 0 },
+      paletteOpen: false,
+      hovered: null,
 
       visited: [],
-      risen: [],
-      completed: [],
-      xp: 0,
+      briefRead: false,
+      cvRead: false,
 
       toasts: [],
-      levelUp: null,
+      prompt: null,
+      inspected: [],
+      offers: { declinedInARow: 0, lastAt: 0, log: [] },
+      greeted: false,
 
-      setPhase: (phase) => set({ phase }),
+      setReady: () => set({ ready: true }),
       setQuality: (quality) => set({ quality }),
       toggleMuted: () => set((s) => ({ muted: !s.muted })),
       setTouch: (touch) => set({ touch }),
 
-      moveTo: (x, z) => set({ target: clampToHall(x, z, 0.7), pending: null }),
-      goTo: (zone) => {
-        if (get().nearZone === zone) return get().openPanel(zone);
-        set({ target: approachPoint(zone), pending: zone, panel: null, inspect: null });
+      openSector: (sector) => {
+        if (get().sector === sector && !get().caseFile) return;
+        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
+        pulse(`sector:${sector}`);
+        if (!get().visited.includes(sector)) set({ visited: [...get().visited, sector] });
       },
-      clearTarget: () => set({ target: null }),
-
-      setNearZone: (nearZone) => {
-        if (get().nearZone === nearZone) return;
-        set({ nearZone });
-        if (nearZone && get().pending === nearZone) get().openPanel(nearZone);
-        if (!nearZone || get().visited.includes(nearZone)) return;
-        const visited = [...get().visited, nearZone];
-        set({ visited });
-        get().pushToast({
-          heading: world.toasts.zoneDiscovered,
-          body: `${zoneById[nearZone].name} — ${zoneById[nearZone].epithet}`,
-          tone: zoneById[nearZone].tone,
-        });
-        if (nearZone === "gate") get().completeQuest("party");
-        if (zoneIds.every((id) => visited.includes(id))) get().completeQuest("explore");
+      setCase: (caseFile) => {
+        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
+        caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
-
-      openPanel: (zone) =>
-        set({ panel: zone, target: null, pending: null, mapOpen: false, inspect: null }),
-      closePanel: () => set({ panel: null, inspect: null }),
-
-      travelTo: (zone) => {
-        const to = approachPoint(zone);
-        set((s) => ({
-          warp: { to, n: s.warp.n + 1 },
-          target: null,
-          pending: null,
-          mapOpen: false,
-          panel: null,
-          inspect: null,
-        }));
+      openBrief: () => {
+        set({ brief: true, briefRead: true, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
+        pulse("sector:status");
       },
+      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null, chosen: null }),
 
-      setMapOpen: (mapOpen) => set({ mapOpen }),
-      setCvOpen: (cvOpen) => {
-        set({ cvOpen });
-        if (cvOpen) get().completeQuest("license");
-      },
-      setDialogueOpen: (dialogueOpen) => set(dialogueOpen ? { dialogueOpen, mapOpen: false } : { dialogueOpen }),
       setInspect: (inspect) => {
-        set({ inspect });
-        if (inspect?.kind === "item" && inspect.id === "hunter-license") {
-          get().completeQuest("license");
+        set(inspect?.kind === "quest" ? { inspect, chosen: inspect.id } : { inspect });
+        if (inspect) {
+          pulse(`${inspect.kind}:${inspect.id}`);
+          const key = `${inspect.kind}:${inspect.id}`;
+          if (!get().inspected.includes(key)) set({ inspected: [...get().inspected, key] });
         }
+        if (inspect?.kind === "item" && inspect.id === "hunter-license") set({ cvRead: true });
       },
-
-      arise: (questId) => {
-        const { risen, rising } = get();
-        if (rising || risen.includes(questId)) return;
-        set({ rising: questId });
+      setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, paletteOpen: false } : { mapOpen }),
+      setCvOpen: (cvOpen) => {
+        set(cvOpen ? { cvOpen, cvRead: true } : { cvOpen });
       },
-      finishRising: () => {
-        const { rising, risen } = get();
-        if (!rising) return;
-        const next = [...risen, rising];
-        set({ rising: null, risen: next });
-        const quest = quests.find((q) => q.id === rising);
-        get().pushToast({
-          heading: world.toasts.arise,
-          body: `[ ${quest?.name ?? rising} ] ${world.toasts.ariseBody}`,
-          tone: "arcane",
-        });
-        if (quests.every((q) => next.includes(q.id))) get().completeQuest("arise");
-      },
-
-      completeQuest: (id) => {
-        const { completed, xp } = get();
-        const quest = visitorQuests.find((q) => q.id === id);
-        if (!quest || completed.includes(id)) return;
-        const nextXp = xp + quest.xp;
-        const before = levelFor(xp);
-        const after = levelFor(nextXp);
-        const done = [...completed, id];
-        set({ completed: done, xp: nextXp, levelUp: after > before ? after : get().levelUp });
-        get().pushToast({
-          heading: world.toasts.questComplete,
-          body: `${quest.name} — +${quest.xp} XP`,
-          tone: "gold",
-        });
-        if (done.length === visitorQuests.length) {
-          get().pushToast({ heading: "SYSTEM", body: world.toasts.allComplete, tone: "system" });
-        }
+      setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+      setHovered: (hovered) => {
+        if (get().hovered !== hovered) set({ hovered });
       },
 
       pushToast: (toast) =>
         set((s) => ({ toasts: [...s.toasts.slice(-3), { ...toast, id: ++toastSeq }] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
-      clearLevelUp: () => set({ levelUp: null }),
-      resetProgress: () => set({ visited: [], risen: [], completed: [], xp: 0 }),
+      ask: (prompt) => {
+        // a new question replaces an unanswered one: the old one was ignored
+        const waiting = get().prompt;
+        if (waiting) (waiting.onIgnore ?? (() => waiting.onAnswer?.(false)))();
+        set({ prompt });
+      },
+      answer: (accepted) => {
+        const prompt = get().prompt;
+        if (!prompt) return;
+        set({ prompt: null });
+        prompt.onAnswer?.(accepted);
+      },
+      ignore: () => {
+        const prompt = get().prompt;
+        if (!prompt) return;
+        set({ prompt: null });
+        (prompt.onIgnore ?? (() => prompt.onAnswer?.(false)))();
+      },
+      setGreeted: () => set({ greeted: true }),
+      raiseOffer: (key) => set((s) => ({ offers: { ...s.offers, lastAt: Date.now(), log: [...s.offers.log.slice(-11), { key, outcome: "waiting" }] } })),
+      settleOffer: (outcome) =>
+        set((s) => ({
+          offers: {
+            ...s.offers,
+            // only a clear "no" counts against further proposals; ignoring one does not
+            declinedInARow: outcome === "accepted" ? 0 : outcome === "refused" ? s.offers.declinedInARow + 1 : s.offers.declinedInARow,
+            log: s.offers.log.map((p) => (p.outcome === "waiting" ? { ...p, outcome } : p)),
+          },
+        })),
+      invite: () => set((s) => ({ offers: { ...s.offers, declinedInARow: 0, lastAt: 0 } })),
     }),
     {
-      name: "codeonym-world-v5",
-      // rehydrated after mount (WorldHud) so SSR and first client render match
+      name: "codeonym-record-v9",
+      // rehydrated after mount (Shell) so SSR and first client render match
       skipHydration: true,
+      version: 2,
+      // before version 2 the visitor had quests, XP and risen projects: keep only what was seen
+      migrate: (old) => {
+        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality; greeted?: boolean };
+        const done = o.completed ?? [];
+        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high", greeted: !!o.greeted };
+      },
       partialize: (s) => ({
         visited: s.visited,
-        risen: s.risen,
-        completed: s.completed,
-        xp: s.xp,
+        briefRead: s.briefRead,
+        cvRead: s.cvRead,
         muted: s.muted,
         quality: s.quality,
+        greeted: s.greeted,
       }),
     },
   ),
 );
+
+/** what the focus is called, for labels and the agent's context */
+export function focusLabel(s: Pick<WorldState, "sector" | "caseFile">): string | null {
+  if (s.caseFile) return `case file "${s.caseFile.title}"`;
+  return s.sector ? `${s.sector} (${sectorById[s.sector].section})` : null;
+}

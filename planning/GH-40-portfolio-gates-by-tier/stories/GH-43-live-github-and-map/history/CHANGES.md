@@ -1,0 +1,4 @@
+- 2026-11-12: drafted by its parent.
+- 2026-11-12: tracker issue created, GH-43.
+- 2026-11-12: story pass by the agent (decision 001); two tickets drafted.
+- 2026-11-12: both tickets merged into 40-gates (GH-53, GH-54); story done.

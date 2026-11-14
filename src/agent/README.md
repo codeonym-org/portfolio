@@ -1,29 +1,60 @@
 # THE SYSTEM — the portfolio's agent
 
-The giant Shadow Wraith behind the throne is two LangChain agents:
+The Monolith at the centre of the page is two LangChain agents. Both are
+**Ayoub's replica**: an AI that answers in his place, in the first person, as
+he would in an interview. Its rules:
 
-- **the text System** (`system`): visitors type to it (walk up and press **T**,
-  or use the **SYSTEM** button). It answers from the Player's record and drives
-  the world: it opens windows, inspects entities, raises shadows, pushes
-  notifications and casts effects.
-- **the voice System** (`system-voice`): visitors **hold V** (or the mic chip)
-  and talk. It answers out loud, and its only tool hands work to the text
-  System in the background.
+- The first reply says once that it is his AI replica; a label under the
+  console says so at all times.
+- It answers only from the record and the interview file
+  (`src/config/interview.config.ts`). A question with no answer on file gets
+  "I'd rather answer that myself" and the contact card, never a guess.
+- It never settles anything binding (salary, start date, offer, contract): the
+  real Ayoub confirms it.
+- The local index, used when the model is unreachable, does not speak as him.
+
+The two agents:
+
+- **the text System** (`system`): visitors type to it (the prompt at the
+  bottom, **/** or **T** to focus it). It answers from Ayoub's record and
+  answers *with the page*: it opens sections, inspects entries,
+  pushes notifications, and assembles a **case file** — a set of evidence
+  picked from the record by id, each with one line on why it matters.
+- **the voice System** (`system-voice`): visitors **hold V** (or the mic
+  button) and talk. It answers out loud, and its only tool hands work to the
+  text System in the background.
 
 ```
 browser                                   server (one Next.js route)
 ───────                                   ─────────────────────────
 CopilotKit v2 provider ── /api/copilotkit ─► CopilotRuntime (v2, single endpoint)
-  useFrontendTool × world commands            └─ LangGraphAgent (@ag-ui/langgraph)
-  useAgentContext (live world state)              └─ in-process client
-  SystemDialogue (headless useAgent)                  └─ createAgent (langchain)
-                                                         state: CopilotKitStateSchema
-                                                         middleware: copilotkit →
-                                                           history window → call
-                                                           limit → retry
-                                                         tools: consult_archive
-                                                         model: OpenRouter
+  useFrontendTool × record commands           └─ LangGraphAgent (@ag-ui/langgraph)
+  useAgentContext (live page state)               └─ in-process client
+  AgentBridge (headless useAgent)                     └─ createAgent (langchain)
+    └─► session store ─► console, run trace               state: CopilotKitStateSchema
+                                                           middleware: copilotkit →
+                                                             history window → call
+                                                             limit → retry
+                                                           tools: consult_archive
+                                                           model: OpenRouter
 ```
+
+## What the visitor sees of a run
+
+- **Run trace** (top left): every tool call by its real name, with its
+  arguments and duration, as it happens. Nothing is staged — the rows are the
+  agent's AG-UI messages (`agent-bridge.tsx`).
+- **Beams**: a tool call that touches an entry sends a pulse from the Monolith
+  to that entry's shard.
+- **Case files** (`assemble_case`): validated against `record/case-file.ts`,
+  entries that do not exist are dropped, and the result is written to the URL
+  as `#case=<base64url>`, so a case can be shared and opens without the agent.
+- **No link, no problem**: if the route is down, a run fails, ends without a
+  reply or stalls for 25 s, the same message is answered by the local index
+  (`local-brain.ts`, a keyword router over the same command registry). It can
+  open anything; it cannot reason, and says so.
+- **⌘K** runs the same commands by hand, and `window.system` exposes them to
+  scripts (`system.snapshot()`, `system.run(name, args)`).
 
 ## Voice pipeline
 
@@ -36,15 +67,15 @@ hold V ─► MediaRecorder ─► runtime `transcribe` (OpenRouter STT, STT_MOD
             text deltas ─► sentence chunker ─► /api/voice/speech │         │
                               (OpenRouter TTS, TTS_MODEL_ID) ─► speaker    ▼
                                                                text agent run
-                                                               (world tools, "[VOICE TASK #n]")
+                                                               (record tools, "[VOICE TASK #n]")
                                                                            │
   voice agent run ◄── "[TASK REPORT] #n · DONE · result…" ◄────────────────┘
      └─► spoken outcome
 ```
 
 - The voice agent's single tool never waits. Tasks queue in the browser
-  because the text agent's world tools are frontend tools, so they run where
-  the world is.
+  because the text agent's record commands are frontend tools, so they run where
+  the page is.
 - A finished task comes back as a `[TASK REPORT]` message once the voice is
   free (not while the visitor is holding the key). Reports that pile up are
   sent as one message.
@@ -64,7 +95,7 @@ hold V ─► MediaRecorder ─► runtime `transcribe` (OpenRouter STT, STT_MOD
 | `server/voice-agent.ts` | the voice `createAgent` + `delegate_task` |
 | `server/audio.ts` | OpenRouter STT (`TranscriptionService`) + TTS |
 | `../app/api/voice/speech` | TTS route (mp3 stream) |
-| `../components/agent/voice/` | recorder, speaker, orchestrator, overlay, HUD chip |
+| `../components/agent/voice/` | recorder, speaker, orchestrator |
 
 Pure modules have unit tests: `pnpm test`.
 
@@ -72,9 +103,13 @@ Pure modules have unit tests: `pnpm test`.
 
 | File | Role |
 | --- | --- |
-| `system-commands.ts` | world commands (zod) — frontend tools + `window.system.run` |
+| `system-commands.ts` | the command registry (zod) — frontend tools, ⌘K, `window.system.run` |
+| `converse.ts` | the one way in: live agent when the link is up, local index when not |
+| `local-brain.ts` | the local index: keyword router (EN/FR) over the command registry |
+| `../record/case-file.ts` | case file schema, URL encoding, resolution against the record |
 | `server/agent.ts` | the `createAgent` graph, system prompt, middleware |
 | `server/dossier.ts` | grounding rendered from `src/config/*` (digest + archive) |
+| `interview-grounding.ts` | the interview file (`src/config/interview.config.ts`) as grounding: each HR question, its answer and its state |
 | `server/tools.ts` | backend tools (`consult_archive`) |
 | `server/model.ts` | OpenRouter model + per-request model id |
 | `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads |
@@ -82,7 +117,9 @@ Pure modules have unit tests: `pnpm test`.
 | `server/system-agent.ts` | AG-UI agents (text + voice); route app context into CopilotKit state |
 | `server/middleware.ts` | history window + app-context note (shared by both agents) |
 | `server/rate-limit.ts` | per-IP sliding windows for the public routes |
-| `../components/agent/` | provider, frontend tools, dialogue UI |
+| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut, the disclosure on the first reply only |
+| `../components/agent/` | provider, frontend tools, the bridge to the session store |
+| `../store/session-store.ts` | turns, cards and the run trace the interface renders |
 
 ## Environment
 

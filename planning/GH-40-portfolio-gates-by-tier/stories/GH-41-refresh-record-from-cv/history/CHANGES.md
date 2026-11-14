@@ -1,0 +1,3 @@
+- 2026-11-12: grilling finished (decisions 001–010); draft written, with two tickets.
+- 2026-11-12: tracker issue created, GH-41.
+- 2026-11-12: both tickets merged into 40-gates (GH-45 by #47, GH-46); story done.

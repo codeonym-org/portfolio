@@ -1,9 +1,9 @@
 import type { Achievement, ChronicleEntry } from "./types";
 
 /**
- * ── CHRONICLE ─────────────────────────────────────────────────
+ * ── EXPERIENCE ─────────────────────────────────────────────────
  * `chronicle` = professional experience (newest first).
- * `achievements` = education / titles, rendered as gold medal tiles.
+ * `achievements` = education, rendered as gold tiles.
  */
 export const chronicle: ChronicleEntry[] = [
   {
@@ -12,7 +12,7 @@ export const chronicle: ChronicleEntry[] = [
     organization: "OpenSNZ-Technology · Oujda, Morocco",
     period: "2025/09 – Present",
     summary:
-      "Designs, builds and maintains production agentic AI systems end-to-end — from rapid prototyping to deployment — covering complex multi-agent architectures, LLM-driven workflows and agent-to-enterprise integrations. Mentors and supervises interns on the agent engineering stack.",
+      "Leads AiCA, the multi-agent pharmaceutical catalog platform he started as an intern, now in production. More broadly, designs, builds and maintains production agentic AI systems end-to-end — from rapid prototyping to deployment — covering complex multi-agent architectures, LLM-driven workflows and agent-to-enterprise integrations. Mentors and supervises interns on the agent engineering stack.",
     highlights: [
       "Multi-agent architectures in production",
       "DDD · CQRS · Event-Driven Architecture",
@@ -31,7 +31,7 @@ export const chronicle: ChronicleEntry[] = [
     organization: "OpenSNZ-Technology · Oujda, Morocco",
     period: "2025/02 – 2025/08",
     summary:
-      "Built a multi-agent system for intelligent pharmaceutical catalog analysis — automating extraction of structured data from unstructured raw files at scale, and coordinating specialized agents for querying, cost aggregation, reporting and decision support, backed by a knowledge graph.",
+      "Started AiCA, a multi-agent system for intelligent pharmaceutical catalog analysis — automating extraction of structured data from unstructured raw files at scale, and coordinating specialized agents for querying, cost aggregation, reporting and decision support, backed by a knowledge graph.",
     highlights: [
       "Multi-Agent Systems",
       "LLM-driven workflows",

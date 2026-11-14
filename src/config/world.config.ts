@@ -6,237 +6,156 @@ import {
   Skull,
   Swords,
 } from "lucide-react";
-import type { VisitorQuest, ZoneDef, ZoneId } from "./types";
+import type { SectorDef, SectorId } from "./types";
 
 /**
- * ── THE WORLD ─────────────────────────────────────────────────
- * The Double Dungeon: one temple hall the Hunter walks, from the Shadow
- * Gate at the south door up the nave to THE SYSTEM's throne. Each zone
- * is a station in the hall that opens one section of the portfolio.
- * Positions are world units ([x, z]): the hall spans `world.hall`, the
- * Hunter is ~2.2 units tall, and -z is "north" (toward the throne).
+ * ── THE RECORD ────────────────────────────────────────────────
+ * There are no pages. THE SYSTEM's body, the Monolith, floats in the
+ * void and the whole record orbits it as shards. Each sector below is
+ * one ring of shards and one window. A visitor reaches them by asking
+ * the System, by the index, by the palette, or by touching a shard.
  *
- * Moving a zone moves its station, marker, minimap pin and trigger.
+ * The order here is the order of the index (keys 1–6).
  */
-export const zones: ZoneDef[] = [
+export const sectors: SectorDef[] = [
   {
-    id: "awakening",
-    name: "Awakening Circle",
-    section: "Status & Profile",
-    epithet: "where the Player first heard the System",
+    id: "status",
+    name: "Profile",
+    section: "Profile",
+    epithet: "who he is and what he is known for",
     icon: Gauge,
-    tone: "system",
-    position: [0, -8.8],
-    approach: [0, -4.4],
-    radius: 4.6,
-    verb: "Read",
-    description:
-      "The throne at the head of the hall. Player identity: name, job, rank, level, titles, core stats, profile, creed and languages.",
-  },
-  {
-    id: "guild",
-    name: "Guild Hall",
-    section: "Experience & Education",
-    epithet: "every contract the Player has signed",
-    icon: Landmark,
     tone: "gold",
-    position: [6.4, 24.4],
-    approach: [4.4, 23.2],
-    radius: 2.6,
-    verb: "Enter",
     description:
-      "Work experience timeline (OpenSNZ-Technology engagements) and education/achievements.",
+      "Who he is: name, role, what he is known for, strengths, profile, how he works and languages.",
   },
   {
-    id: "crypt",
-    name: "Shadow Crypt",
+    id: "experience",
+    name: "Experience",
+    section: "Experience & Education",
+    epithet: "where he has worked and studied",
+    icon: Landmark,
+    tone: "system",
+    description:
+      "Work experience timeline (OpenSNZ-Technology engagements) and education.",
+  },
+  {
+    id: "projects",
+    name: "Projects",
     section: "Projects",
-    epithet: "fallen quests, waiting for a command",
+    epithet: "what he has built, at work and on his own",
     icon: Skull,
     tone: "arcane",
-    position: [0, 11.5],
-    approach: [0, 11.5],
-    radius: 6,
-    verb: "Descend into",
     description:
-      "Projects, framed as fallen soldiers. Each fallen knight is one quest (project); commanding ARISE extracts it as a shadow and reveals the project details.",
+      "His projects: engagements at OpenSNZ, open source (codeonym-oss) and own products (codeonym-org), each with its details and stack.",
   },
   {
-    id: "armory",
-    name: "Armory",
+    id: "skills",
+    name: "Skills",
     section: "Skills",
-    epithet: "the arsenal of a job-class awakened",
+    epithet: "what he works with",
     icon: Swords,
     tone: "ember",
-    position: [-6.3, -2.6],
-    approach: [-4.3, -1.8],
-    radius: 2.6,
-    verb: "Enter",
     description:
-      "The skill tree: job skills (AI, agent stack, languages, web, databases, ops) and secondary skills (languages spoken, soft skills, pursuits), each with a mastery grade.",
+      "His skills: technical (AI, agent stack, languages, web, databases, ops) and beyond the job (languages spoken, soft skills, interests), each with a grade.",
   },
   {
-    id: "treasury",
-    name: "Treasury",
-    section: "Inventory & CV",
-    epithet: "relics, credentials, and the Hunter's License",
+    id: "inventory",
+    name: "Documents",
+    section: "Documents & CV",
+    epithet: "the CV, degrees and links",
     icon: Backpack,
     tone: "gold",
-    position: [-6.2, 24.4],
-    approach: [-4.3, 23.2],
-    radius: 2.6,
-    verb: "Open",
     description:
-      "Possessions: artifacts (the Hunter's License holds the full CV), credentials (degrees) and curios.",
+      "Documents: the full CV, links, degrees and interests.",
   },
   {
-    id: "gate",
-    name: "Shadow Gate",
+    id: "contact",
+    name: "Contact",
     section: "Contact",
-    epithet: "step through to reach the Player",
+    epithet: "how to reach him",
     icon: DoorOpen,
     tone: "arcane",
-    position: [0, 28.4],
-    approach: [0, 25.6],
-    radius: 3,
-    verb: "Approach",
     description:
-      "Contact channels — GitHub, LinkedIn and email. How to reach the Player and form a party.",
+      "Contact channels: email, phone, LinkedIn and GitHub.",
   },
 ];
 
-export const zoneById = Object.fromEntries(zones.map((z) => [z.id, z])) as Record<
-  ZoneId,
-  ZoneDef
+export const sectorById = Object.fromEntries(sectors.map((s) => [s.id, s])) as Record<
+  SectorId,
+  SectorDef
 >;
 
-export const zoneIds = zones.map((z) => z.id);
+export const sectorIds = sectors.map((s) => s.id);
 
-export function isZoneId(value: string): value is ZoneId {
-  return value in zoneById;
+export function isSectorId(value: string): value is SectorId {
+  return value in sectorById;
 }
 
-/** visitor objectives, tracked in the HUD and persisted per browser */
-export const visitorQuests: VisitorQuest[] = [
-  {
-    id: "awaken",
-    name: "Awakening",
-    objective: "Enter the System",
-    xp: 100,
-  },
-  {
-    id: "explore",
-    name: "Cartographer",
-    objective: "Discover every station in the temple",
-    xp: 300,
-  },
-  {
-    id: "arise",
-    name: "Shadow Extraction",
-    objective: "Command every fallen quest to ARISE",
-    xp: 400,
-  },
-  {
-    id: "license",
-    name: "Credentials Check",
-    objective: "Inspect the Hunter's License",
-    xp: 150,
-  },
-  {
-    id: "party",
-    name: "Form a Party",
-    objective: "Reach the Shadow Gate",
-    xp: 150,
-  },
-];
-
-/** XP needed to go from level n to n+1 */
-export const xpPerLevel = 250;
-
 export const world = {
-  /** the walkable floor of the hall (world units): |x| ≤ halfWidth, north ≤ z ≤ south */
-  hall: { halfWidth: 8.1, north: -19.4, south: 27.2 },
-  /** where the Hunter steps out of the Gate, [x, z] */
-  spawn: [0, 21.6] as [number, number],
-  /** walking / running speeds in units per second */
-  walkSpeed: 2.4,
-  runSpeed: 6,
-
-  loading: {
-    heading: "SYSTEM",
-    lines: [
-      "Scanning for a compatible vessel…",
-      "Tearing open a Gate…",
-      "Unsealing the Double Dungeon…",
-      "Kneeling the fallen knights…",
-      "Lighting the torches…",
-      "Syncing the Player record…",
-    ],
-    tips: [
-      "Click anywhere on the ground to walk there. Hold SHIFT to run.",
-      "WASD or the arrow keys move the Hunter. Drag to turn the camera.",
-      "Every kneeling knight in the nave is a project. Command it to ARISE.",
-      "Risen shadows follow the Hunter everywhere.",
-      "Press M to open the temple map and fast-travel to any station.",
-      "The giant wraith above the throne is THE SYSTEM. Press T and ask it anything — it can open any window for you.",
-    ],
-  },
-
-  title: {
-    eyebrow: "[ A NEW PLAYER HAS BEEN DETECTED ]",
+  boot: {
+    eyebrow: "THE LIVING RECORD",
     name: "CODEONYM",
     role: "Software Engineer · AI Agent Engineer",
-    notice:
-      "You have acquired the qualifications to enter the domain of the Player. Will you accept?",
-    enter: "ARISE",
-    enterHint: "sound on · press ENTER",
-    lite: "enter without sound",
+    lines: [
+      "Locating the Monolith…",
+      "Hanging the record in orbit…",
+      "Linking the sections…",
+      "Starting the System…",
+    ],
   },
 
   hud: {
-    visitorLabel: "VISITOR",
-    syncLabel: "SYNC",
-    questsLabel: "SYSTEM QUESTS",
-    mapLabel: "TEMPLE MAP",
-    mapHint: "select a station to fast-travel",
-    promptKey: "E",
-    tapPrompt: "TAP",
-    arise: "ARISE",
-    ariseAll: "ARISE — ALL",
-    controlsDesktop: "CLICK · WASD move — SHIFT run — DRAG look — M map — E interact — T speak — hold V talk — F fullscreen",
-    controlsTouch: "TAP to move — STICK to steer — TAP a marker to interact",
+    indexLabel: "INDEX",
+    traceLabel: "RUN TRACE",
+    traceIdle: "idle — nothing running",
+    paletteHint: "Search the record or run a command…",
+    plain: "plain record",
+    gates: "gates",
+  },
+
+  /** what the System asks in its dialog */
+  prompts: {
+    heading: "SYSTEM",
+    accept: "Accept",
+    decline: "Later",
+    refuse: "Not now",
+    keys: "Y to accept · N or Esc for later",
+    offerKeys: "Y to accept · N to refuse · Esc to ignore",
+    offerHeading: "THE SYSTEM PROPOSES",
+    greeting: {
+      heading: "A STRANGER HAS ENTERED",
+      body: "This is the record of Ayoub Bouarour. I am his AI replica: I answer as he would. Shall I brief you on myself in one minute?",
+    },
   },
 
   toasts: {
-    zoneDiscovered: "ZONE DISCOVERED",
-    questComplete: "QUEST COMPLETE",
-    levelUp: "LEVEL UP",
-    arise: "ARISE",
-    ariseBody: "has joined the Shadow Legion.",
-    allComplete:
-      "Every record unlocked. The Player would be glad to hear from you — the Shadow Gate is open.",
+    sectorOpened: "SECTION OPENED",
   },
 
-  /** THE SYSTEM — the agent embodied by the wraith above the Awakening Circle */
+  /** The replica: an AI that answers as the owner, inside the System */
   agent: {
     name: "THE SYSTEM",
-    epithet: "the entity that chose the Player",
-    /** the HUD prompt shown when the Hunter stands at the Awakening Circle */
-    promptVerb: "Speak with",
-    promptKey: "T",
+    /** how the System addresses whoever is visiting */
+    visitor: "Stranger",
+    /** the project the System leads a new visitor to first (a project id) */
+    flagship: "pharma-mas",
+    epithet: "Ayoub's AI replica",
     greeting:
-      "[ You have been noticed, Hunter. ] Ask me anything about the Player — or tell me what to show you. I can open any System window, raise the fallen, and bend this temple to your request.",
-    placeholder: "Speak to the System…",
+      "I am Ayoub's AI replica: I answer as he would, from his record. Ask me what you would ask him in an interview, or tell me what to show you.",
+    placeholder: "Ask me anything…",
     thinking: "The System is processing…",
+    brief: "One-minute brief",
     suggestions: [
-      "Show me the status window",
-      "Who is the Player?",
-      "What has he built with agents?",
-      "Raise a shadow for me",
-      "How do I contact him?",
+      "Tell me about yourself",
+      "What have you built with agents?",
+      "Why should I hire you?",
+      "Show me your projects",
+      "Walk me through your experience",
+      "How do I reach you?",
     ],
-    offline: "The System is unreachable. The link to the Gate will return shortly.",
-    footer: "AI · LangChain agent via CopilotKit — answers can be wrong; the CV is the source of truth.",
+    offline: "My replica is unreachable. The local index answers instead: it can open anything in the record, but it does not speak for Ayoub.",
+    /** the permanent label: always visible under the console */
+    footer: "AI replica of Ayoub · answers as he would, and can be wrong. The real Ayoub confirms anything binding.",
     /** hold-to-talk: the System's voice (a second agent that delegates to this one) */
     voice: {
       key: "V",
@@ -253,6 +172,19 @@ export const world = {
     },
   },
 
+  /** the holographic map (`interface/holo-map.tsx`) */
+  map: {
+    title: "The System · where he is based",
+    open: "Open the hologram",
+    level: "Level",
+    time: "His local time",
+    hint: "Drag to turn · wheel or pinch to zoom · ← → to change level · Esc to close",
+    rings: "Rings at 2, 5 and 10 km. Main roads of the city.",
+    noRoads: "Rings at 2, 5 and 10 km.",
+    loading: "Projecting…",
+    failed: "The map data could not be loaded. The position is still shown.",
+    credits: "Land and borders: Natural Earth (public domain) · Roads: © OpenStreetMap contributors",
+  },
   credits:
-    "Temple: Throne Room by Uğur Yakışık · Sung Jin-Woo by bgang0892 (Sketchfab Standard) · Igris's sword & plume by missafe · Shadow Wraith by patromes · Lectern by ambrosia04 · Chest by Theo Kain · Coins by SebastianSosnowski · Sword of the Defeated by Bunny-HungTD (Sketchfab, CC BY 4.0) · Knights & motion capture: Mixamo · Sounds: Kenney (CC0)",
+    "The Monolith and every shard: generated in Blender for this site (scripts/assets/monolith.py) · Studio light: Studio Kontrast 04, Poly Haven (CC0) · Sounds: Kenney (CC0) · Maps: Natural Earth (public domain), roads © OpenStreetMap contributors",
 };

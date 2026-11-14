@@ -1,15 +1,21 @@
-# codeonym — the Gate World portfolio
+# codeonym — the living record
 
 **Live:** [portfolio.codeonym.work](https://portfolio.codeonym.work)
 
-A Solo Leveling–themed portfolio you enter instead of scroll: a dark 3D dungeon where each part of the CV is a
-place, and **THE SYSTEM**, an AI agent, drives the world. Ask it anything in the chat (**T**) or hold **V** to talk;
-it walks you to the right record, opens it, and raises the shadow of each project (ARISE).
+A portfolio with no pages. **THE SYSTEM**, an AI agent, lives in a fractured obsidian Monolith; every entry of the
+CV — each project, skill, job, degree — is a shard in orbit around it. You ask (type, or hold **V** to talk) and the
+agent answers by rearranging the place: it brings the right shards forward, opens the record beside them, and can
+assemble a **case file**, a set of evidence picked for your question that you can share as a link. Its tool calls
+are shown live as a run trace.
+
+Without the agent (no key, offline, rate-limited) a local index takes over, **⌘K** runs every command by hand, and
+[`/record`](https://portfolio.codeonym.work/record) and `/llms.txt` serve the same record as plain text.
 
 ## Stack
 
 - **Next.js 16** (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui
-- **3D:** three.js via React Three Fiber + drei + postprocessing; Draco-compressed glTF models in `public/models`
+- **3D:** three.js via React Three Fiber + drei + postprocessing; the models are generated in Blender
+  ([`scripts/assets`](scripts/assets/README.md))
 - **Agent:** LangChain `createAgent` served in-process through CopilotKit v2 (`/api/copilotkit`), models via
   OpenRouter, optional LangSmith tracing — see [`src/agent/README.md`](src/agent/README.md)
 - Deployed on Vercel from `main`
@@ -29,19 +35,20 @@ pnpm dev                     # http://localhost:3000
 | `pnpm lint` | ESLint |
 | `pnpm test` | Node test runner (`src/**/*.test.ts`) |
 
-Content (player profile, skills, quests, inventory) lives in `src/config/*.config.ts`.
+Content (profile, skills, projects, documents) lives in `src/config/*.config.ts`
+([`src/config/README.md`](src/config/README.md)).
 
 ## Controls
 
 | Key | Action |
 |---|---|
-| WASD / arrows, or click the floor | Move |
-| Drag / wheel | Orbit / zoom the camera |
-| 1–6 | Teleport to a zone |
-| E | Interact |
-| T | Chat with THE SYSTEM |
+| / or T | Ask THE SYSTEM |
 | hold V | Talk to THE SYSTEM |
-| M | Map |
+| ⌘K / Ctrl K | Command palette |
+| 1–6 | Open a sector |
+| Drag | Spin the sky |
+| Esc | Close what is open |
+| M | Sound |
 | F | Fullscreen |
 
 ## Contributing

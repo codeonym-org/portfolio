@@ -3,21 +3,21 @@
 import { CopilotKit } from "@copilotkit/react-core/v2";
 import { SYSTEM_AGENT_ID } from "@/agent/constants";
 import { world } from "@/config/world.config";
-import { useLinkStatus } from "./link-status";
-import { SystemDialogue } from "./system-dialogue";
+import { useSession } from "@/store/session-store";
+import { AgentBridge } from "./agent-bridge";
 import { SystemTools } from "./system-tools";
 import { VoiceLink } from "./voice/voice-link";
-import { VoiceOverlay } from "./voice/voice-overlay";
 
 /**
- * The link between the world and THE SYSTEM: a CopilotKit v2 provider
+ * The link between the record and THE SYSTEM: a CopilotKit v2 provider
  * on the single-endpoint runtime (`/api/copilotkit`), the frontend
- * tools, the dialogue window (text agent) and the hold-to-talk voice
- * link (voice agent, which delegates to the text agent). Loaded lazily once the visitor has
- * entered the world, so the chat stack never delays the temple.
+ * tools, the bridge that turns the text agent into the session the
+ * interface shows, and the hold-to-talk voice link (the voice agent,
+ * which delegates to the text agent). It renders nothing — the
+ * console, the trace and the windows read the session store. Loaded
+ * lazily once the scene is up, so the chat stack never delays it.
  */
 export default function SystemLink() {
-  const setError = useLinkStatus((s) => s.setError);
   return (
     <CopilotKit
       runtimeUrl="/api/copilotkit"
@@ -27,13 +27,12 @@ export default function SystemLink() {
       enableInspector={false}
       onError={(event) => {
         console.error("[system] link error", event);
-        setError(world.agent.offline);
+        useSession.getState().set({ online: false, notice: world.agent.offline });
       }}
     >
       <SystemTools />
-      <SystemDialogue />
+      <AgentBridge />
       <VoiceLink />
-      <VoiceOverlay />
     </CopilotKit>
   );
 }

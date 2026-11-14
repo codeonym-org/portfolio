@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Build, launch and drive the Solo Leveling portfolio headlessly to verify changes end-to-end.
+description: Build, launch and drive the portfolio (the living record) headlessly to verify changes end-to-end.
 ---
 
 # Verifying the portfolio
@@ -8,8 +8,9 @@ description: Build, launch and drive the Solo Leveling portfolio headlessly to v
 ## Build & launch
 
 ```bash
-pnpm build
-pnpm start &   # serves the prod build on http://localhost:3000
+pnpm lint && pnpm test
+NEXT_DIST_DIR=.next-verify pnpm build   # own folder: never build into .next while `next dev` runs
+NEXT_DIST_DIR=.next-verify pnpm start &   # serves the prod build on http://localhost:3000
 ```
 
 ## Drive it headlessly
@@ -20,52 +21,55 @@ with `grep -rl playwright ~/.npm/_npx/*/package.json`):
 
 ```js
 const { chromium } = require("/home/codeonym/.npm/_npx/<hash>/node_modules/playwright");
+const browser = await chromium.launch({
+  headless: true,
+  // renders on the real GPU (≈45 fps at high quality) instead of SwiftShader
+  args: ["--use-angle=vulkan", "--enable-features=Vulkan", "--ignore-gpu-blocklist", "--enable-gpu", "--use-gl=angle"],
+});
 ```
 
-Any viewport works (v5 supports mobile: test `390x844` with `isMobile`/`hasTouch`).
+Test desktop (`1440x900`) and phone (`390x844` with `isMobile`/`hasTouch`,
+`deviceScaleFactor: 2`): the layouts differ (window beside the scene vs.
+sheet under it).
 
 ## Flows & gotchas
 
-- **Flow**: loading screen (real asset progress) → title → click the
-  `ARISE` button (`getByRole("button", { name: "ARISE", exact: true })`)
-  → world. Title can take 20–40 s headless while assets stream.
-- **Pin quality to low + mute** before load, or SwiftShader crawls:
+- **There is one page.** Boot line → the Monolith with the record in orbit.
+  No title screen, no button to press. Wait for
+  `window.system && window.system.snapshot`.
+- **Pin quality and mute before load** (storage key `codeonym-record-v9`):
   ```js
-  await page.addInitScript(() => localStorage.setItem("codeonym-world-v5",
-    JSON.stringify({ state: { quality: "low", visited: [], risen: [], completed: [], xp: 0, muted: true }, version: 0 })));
+  await page.addInitScript(() => localStorage.setItem("codeonym-record-v9",
+    JSON.stringify({ state: { quality: "high", visited: [], risen: [], completed: [], xp: 0, muted: true, greeted: true }, version: 0 })));
   ```
-  Headless still runs ~1–3 fps (GPU fill in software; JS is ~90% idle) —
-  that is the environment, not the app. Give `page.screenshot` a 150 s
-  timeout and judge real perf in a real browser.
-- **Animations are frame-capped**: mixers clamp delta to 0.05 s, so at
-  headless fps a 4 s ARISE takes ~75 s wall time. Poll
-  `system.snapshot().visitor.shadowsRisen` instead of sleeping.
-- **Chrome extension tab may be hidden** (`document.visibilityState ===
-  "hidden"`): rAF pauses, so fps probes hang — ask the user to focus it.
-- **Agent bridge**: `window.system` exposes the whole control
-  surface — `system.snapshot()` (serializable state),
-  `system.run(name, args)` (command dispatcher), `system.commands`
-  (`open_zone`, `walk_to_zone`, `arise`, `inspect_entity`, `open_cv`…).
-  Driving store-level behavior through it beats synthesizing clicks.
+- **Headless stops producing frames while it idles**, so
+  `page.waitForTimeout` freezes every animation mid-way and screenshots
+  look "stuck". Wait by pumping frames in the page instead:
+  ```js
+  const pump = (ms) => page.evaluate((ms) => new Promise((r) => {
+    const t0 = performance.now();
+    const f = () => (performance.now() - t0 < ms ? requestAnimationFrame(f) : r());
+    requestAnimationFrame(f);
+  }), ms);
+  ```
+- **Control surface**: `window.system.snapshot()` (serializable state),
+  `system.run(name, args)`, `system.commands` (`open_sector`,
+  `inspect_entity`, `assemble_case`, `open_cv`, `close_windows`…). Prefer
+  it to synthesized clicks. `snapshot().visitor` holds what the stranger
+  has seen (`sectionsOpened`, `briefRead`, `cvRead`).
+- **Talking to the agent**: fill the `textarea` and press Enter. A live run
+  takes 5–15 s (needs `OPEN_ROUTER_API_KEY`). Read the reply from `.oracle`
+  and the tool calls from `.trace-row`. A case file also sets
+  `location.hash` to `#case=…`; loading that URL reopens the case with no
+  agent involved.
+- **Offline path**: `await page.route("**/api/copilotkit**", (r) => r.abort())`
+  before `goto` — the same message must be answered by the local index
+  (trace source reads `LOCAL INDEX`, console shows the retry link). The
+  CopilotKit console errors in that run are expected.
+- **Plain routes**: `/record` (server-rendered, no JS needed) and
+  `/llms.txt` (Markdown) — check with `curl`.
 - **PDF windows render white in headless** (no PDF viewer plugin in
   chromium headless shell); confirm the file with
   `curl -sI localhost:3000/cv.pdf` instead.
 - **`public/cv.pdf` is committed** (user-approved exception; only the
   repo-root `cv.pdf` source stays gitignored) — no copy step needed.
-- **Screenshots capture stale compositor tiles over the WebGL canvas**
-  (whole scene looks black, or a moving vertical boundary of visible
-  content). Not a product bug — force a clean repaint before every
-  screenshot by flashing a full-viewport overlay:
-
-  ```js
-  await page.evaluate(async () => {
-    const d = document.createElement("div");
-    d.style.cssText = "position:fixed;inset:0;background:#fff;z-index:99999";
-    document.body.appendChild(d);
-    await new Promise((r) => setTimeout(r, 150));
-    d.remove();
-  });
-  await page.waitForTimeout(1000);
-  ```
-
-

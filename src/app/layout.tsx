@@ -1,19 +1,33 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Rajdhani } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Rajdhani } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-const rajdhani = Rajdhani({
-  variable: "--font-rajdhani",
-  weight: ["400", "500", "600", "700"],
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
-// Eurostile-style display face for HUD headings (self-hosted)
+// the System's voice: everything it says is set in this serif
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
+  weight: "400",
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+});
+
+// Eurostile-style display face for the wordmark and ranks (self-hosted)
 const michroma = localFont({
   src: "../fonts/michroma-latin.woff2",
   variable: "--font-michroma",
   display: "swap",
+});
+
+// the System's announcements: notices, prompts and their buttons (SIL Open Font Licence, hosted with the site)
+const rajdhani = Rajdhani({
+  variable: "--font-rajdhani",
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
@@ -25,7 +39,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "https://portfolio.codeonym.work"),
   title: "CODEONYM — AI Agent Engineer",
   description:
-    "Bouarour Ayoub (codeonym) — AI Agent Engineer shipping production-grade multi-agent systems, grounded via MCP and delivered through CopilotKit/AG-UI. Enter the Gate: an explorable Solo Leveling world where every project is a shadow waiting to ARISE.",
+    "Bouarour Ayoub (codeonym) — AI Agent Engineer shipping production-grade multi-agent systems, grounded via MCP and delivered through CopilotKit/AG-UI. A portfolio with no pages: ask THE SYSTEM, and it rearranges the whole record around your question.",
 };
 
 export const viewport: Viewport = {
@@ -43,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${rajdhani.variable} ${michroma.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geist.variable} ${instrument.variable} ${michroma.variable} ${rajdhani.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>

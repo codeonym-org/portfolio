@@ -7,9 +7,10 @@ import { SYSTEM_AGENT_ID, VOICE_AGENT_ID } from "@/agent/constants";
 import { createSpeechChunker } from "@/agent/voice/speech-chunker";
 import { formatTaskReports, formatVoiceTask, parseTaskEvent, TASK_EVENT, type TaskReport } from "@/agent/voice/protocol";
 import { TaskQueue, type TaskRecord } from "@/agent/voice/task-queue";
-import { world, zoneById } from "@/config/world.config";
+import { world } from "@/config/world.config";
 import { holdMusicDuck, play } from "@/lib/audio";
-import { live, levelFor, useWorldStore } from "@/store/world-store";
+import { useSession } from "@/store/session-store";
+import { focusLabel, live, useWorldStore } from "@/store/world-store";
 import { HoldRecorder, canRecord, MAX_MS } from "./recorder";
 import { SpeechPlayer } from "./speaker";
 import { useVoiceStore, voiceControl, voiceLive, type VoicePhase } from "./voice-store";
@@ -21,7 +22,7 @@ import { useVoiceStore, voiceControl, voiceLive, type VoicePhase } from "./voice
  *        ─► voice agent run (AG-UI stream)
  *             text deltas ─► sentence chunker ─► /api/voice/speech ─► speaker
  *             CUSTOM "voice_task" ─► task queue
- *  task queue ─► text agent run (world tools, one task at a time)
+ *  task queue ─► text agent run (record tools, one task at a time)
  *             ─► "[TASK REPORT]" ─► voice agent run ─► spoken outcome
  *
  * The voice agent is run directly on its AG-UI agent (it has no
@@ -68,10 +69,8 @@ async function transcribe(blob: Blob): Promise<string> {
 function voiceContext(tasks: readonly TaskRecord[]) {
   const s = useWorldStore.getState();
   return JSON.stringify({
-    openWindow: s.panel ? zoneById[s.panel].section : null,
-    hunterStandingAt: s.nearZone,
-    dialogueWindowOpen: s.dialogueOpen,
-    visitor: { level: levelFor(s.xp), shadowsRisen: s.risen.length, zonesDiscovered: s.visited.length },
+    broughtForward: focusLabel(s),
+    visitor: { sectionsOpened: s.visited },
     tasks: tasks.map((t) => ({ n: t.n, task: t.task, status: t.status })),
   });
 }
@@ -194,6 +193,7 @@ export function VoiceLink() {
         if (myTurn === turn) {
           console.error("[voice] run failed", err);
           store({ notice: world.agent.offline });
+          useSession.getState().set({ online: false });
         }
       } finally {
         say(chunker.flush());
@@ -224,6 +224,7 @@ export function VoiceLink() {
       if (voiceRunning) refs.current.voice.abortRun();
       speaker.unlock();
       store({ notice: null, heard: "", reply: "" });
+      useSession.getState().set({ mode: "voice" });
       setPhase("listening");
       play("open", { volume: 0.35 });
       try {
@@ -284,7 +285,7 @@ export function VoiceLink() {
     const typing = (e: KeyboardEvent) => !!(e.target as HTMLElement | null)?.closest("input, textarea, [contenteditable=true]");
     const onDown = (e: KeyboardEvent) => {
       if (e.code !== "KeyV" || e.repeat || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (useWorldStore.getState().phase !== "world") return;
+      if (!useWorldStore.getState().ready) return;
       e.preventDefault();
       void press();
     };
@@ -296,7 +297,7 @@ export function VoiceLink() {
     window.addEventListener("keyup", onUp);
     window.addEventListener("blur", onBlur);
 
-    /* ── loudness for the overlay and the wraith ── */
+    /* ── loudness for the console and the Monolith ── */
     let raf = 0;
     const meter = () => {
       const phase = useVoiceStore.getState().phase;

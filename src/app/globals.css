@@ -7,10 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-rajdhani);
+  --font-sans: var(--font-geist);
+  --font-serif: var(--font-instrument);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-michroma);
   --font-display: var(--font-michroma);
+  --font-system: var(--font-rajdhani);
   --color-void: var(--void);
   --color-system: var(--system);
   --color-system-dim: var(--system-dim);
@@ -48,7 +50,7 @@
 /* The System is dark by nature — a single dark theme. */
 :root {
   --void: #05040b;
-  --system: oklch(0.76 0.14 230);
+  --system: oklch(0.78 0.13 232);
   --system-dim: oklch(0.76 0.14 230 / 40%);
   --arcane: oklch(0.62 0.22 295);
   --arcane-hot: oklch(0.74 0.17 300);
@@ -58,7 +60,9 @@
   --rank-b: oklch(0.76 0.14 230);
 
   --background: #05040b;
-  --foreground: oklch(0.94 0.012 280);
+  --foreground: oklch(0.93 0.014 285);
+  --bone: oklch(0.9 0.02 300);
+  --hair: oklch(1 0 0 / 9%);
   --card: oklch(0.14 0.03 290);
   --card-foreground: oklch(0.94 0.012 280);
   --popover: oklch(0.13 0.03 290);
@@ -75,11 +79,11 @@
   --border: oklch(0.62 0.22 295 / 26%);
   --input: oklch(0.62 0.22 295 / 20%);
   --ring: var(--arcane);
-  --radius: 0.2rem;
+  --radius: 0.125rem;
 
   /* panel glass */
-  --glass: linear-gradient(160deg, oklch(0.15 0.04 295 / 88%), oklch(0.09 0.03 285 / 94%));
-  --edge: linear-gradient(135deg, var(--arcane-hot), oklch(0.62 0.22 295 / 20%) 35%, oklch(0.76 0.14 230 / 18%) 70%, var(--system));
+  --glass: linear-gradient(165deg, oklch(0.13 0.03 292 / 82%), oklch(0.07 0.02 285 / 92%));
+  --edge: linear-gradient(160deg, oklch(1 0 0 / 22%), oklch(1 0 0 / 5%) 30%, oklch(0.62 0.22 295 / 12%) 70%, oklch(0.74 0.17 300 / 55%));
 }
 
 .dark {
@@ -111,36 +115,29 @@
 }
 
 @layer components {
-  /* ── film grain + scan over everything (cheap, pure CSS) ── */
+  /* ── film grain over everything (cheap, pure CSS) ── */
   .grain::after {
     content: "";
     position: fixed;
     inset: -50%;
     z-index: 80;
     pointer-events: none;
-    opacity: 0.06;
+    opacity: 0.05;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation: grain 0.9s steps(4) infinite;
   }
 
-  /* ── notched obsidian glass: the signature surface ── */
+  /* ── obsidian glass: the one surface. One corner is cut, like a broken piece. ── */
   .notch {
     --n: 14px;
-    clip-path: polygon(
-      var(--n) 0,
-      100% 0,
-      100% calc(100% - var(--n)),
-      calc(100% - var(--n)) 100%,
-      0 100%,
-      0 var(--n)
-    );
+    clip-path: polygon(0 0, calc(100% - var(--n)) 0, 100% var(--n), 100% 100%, 0 100%);
   }
   .glass {
     position: relative;
     background: var(--glass);
-    backdrop-filter: blur(14px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.25);
   }
-  /* 1px gradient edge drawn with a mask so it follows the notch */
+  /* 1px gradient edge drawn with a mask so it follows the cut */
   .glass-edge::before {
     content: "";
     position: absolute;
@@ -158,174 +155,421 @@
 
   .sys-panel {
     box-shadow:
-      0 30px 80px -20px oklch(0 0 0 / 80%),
-      0 0 60px -10px oklch(0.62 0.22 295 / 30%);
+      0 40px 90px -30px oklch(0 0 0 / 85%),
+      0 0 80px -20px oklch(0.62 0.22 295 / 22%);
   }
-  /* a scan line that sweeps the panel once as it materializes */
+  /* a line of light that sweeps the window once as it materializes */
   .sys-panel__scan {
     position: absolute;
     left: 0;
     right: 0;
     height: 120px;
     top: -120px;
-    background: linear-gradient(to bottom, transparent, oklch(0.74 0.17 300 / 16%), transparent);
+    background: linear-gradient(to bottom, transparent, oklch(0.74 0.17 300 / 12%), transparent);
     animation: panel-scan 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s 1 forwards;
     pointer-events: none;
   }
 
-  /* section heading: ◆ LABEL ────────── */
+  /* section heading: LABEL ────────── */
   .sys-heading {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-family: var(--font-michroma);
+    gap: 0.75rem;
+    font-family: var(--font-geist-mono);
     font-size: 10px;
-    letter-spacing: 0.28em;
-    color: var(--arcane-hot);
+    letter-spacing: 0.26em;
+    color: var(--muted-foreground);
     text-transform: uppercase;
   }
   .sys-heading::before {
     content: "";
-    width: 7px;
-    height: 7px;
+    width: 5px;
+    height: 5px;
     transform: rotate(45deg);
-    background: currentColor;
-    box-shadow: 0 0 10px currentColor;
+    background: var(--arcane-hot);
+    box-shadow: 0 0 10px var(--arcane-hot);
   }
   .sys-heading::after {
     content: "";
     flex: 1;
     height: 1px;
-    background: linear-gradient(to right, oklch(0.62 0.22 295 / 45%), transparent);
+    background: linear-gradient(to right, var(--hair), transparent);
   }
 
-  /* ── HUD chip: angular parallelogram buttons ── */
+  /* ── controls: hairline rectangles, mono, quiet until touched ── */
+  @keyframes gate-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
   .hud-chip {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    color: var(--foreground);
-    background: oklch(0.12 0.035 290 / 78%);
-    backdrop-filter: blur(10px);
-    border: 1px solid oklch(0.62 0.22 295 / 35%);
-    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    gap: 0.45rem;
+    color: oklch(0.86 0.02 290);
+    background: oklch(1 0 0 / 3%);
+    border: 1px solid var(--hair);
+    border-radius: 2px;
     transition:
       background 0.2s,
       border-color 0.2s,
       color 0.2s,
-      transform 0.2s;
+      transform 0.15s;
   }
   .hud-chip:hover {
-    background: oklch(0.2 0.07 295 / 85%);
-    border-color: var(--arcane-hot);
+    background: oklch(0.62 0.22 295 / 14%);
+    border-color: oklch(0.74 0.17 300 / 70%);
     color: white;
   }
   .hud-chip:active {
     transform: scale(0.97);
   }
+  .hud-chip:disabled {
+    pointer-events: none;
+  }
   .hud-chip[data-active="true"] {
-    background: oklch(0.62 0.22 295 / 30%);
+    background: oklch(0.62 0.22 295 / 22%);
     border-color: var(--arcane-hot);
-    box-shadow: inset 0 0 18px oklch(0.62 0.22 295 / 35%);
+    color: white;
+    box-shadow: 0 0 24px -6px oklch(0.62 0.22 295 / 70%);
   }
 
   .kbd {
     display: inline-grid;
     place-items: center;
-    min-width: 1.35rem;
-    height: 1.35rem;
+    min-width: 1.3rem;
+    height: 1.25rem;
     padding: 0 0.3rem;
-    font-family: var(--font-michroma);
-    font-size: 9px;
-    color: var(--system);
-    border: 1px solid oklch(0.76 0.14 230 / 50%);
-    background: oklch(0.76 0.14 230 / 10%);
-    box-shadow: 0 2px 0 oklch(0.76 0.14 230 / 30%);
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    background: oklch(1 0 0 / 4%);
   }
 
-  /* ── in-world labels (drei <Html>) ── */
-  .zone-tag {
-    color: var(--tone);
-    background: oklch(0.08 0.03 290 / 80%);
-    border: 1px solid color-mix(in oklch, var(--tone) 55%, transparent);
-    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-    backdrop-filter: blur(6px);
-    text-shadow: 0 0 10px var(--tone);
-    box-shadow: inset 0 0 16px color-mix(in oklch, var(--tone) 18%, transparent);
+  .eyebrow {
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* ── the System's voice: large, in the System font, never a chat bubble ── */
+  .oracle {
+    font-family: var(--font-rajdhani), var(--font-geist), sans-serif;
+    font-weight: 500;
+    font-size: clamp(1.3rem, 0.95rem + 1.05vw, 1.95rem);
+    line-height: 1.24;
+    letter-spacing: 0.012em;
+    color: var(--bone);
+    text-shadow: 0 0 34px oklch(0.05 0.02 290 / 95%), 0 2px 14px oklch(0.05 0.02 290 / 90%);
+    text-wrap: pretty;
+  }
+  .oracle--aside {
+    font-size: clamp(1.15rem, 0.9rem + 0.7vw, 1.5rem);
+  }
+  .oracle strong {
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 22px oklch(0.74 0.17 300 / 70%);
+  }
+  .oracle em {
+    color: var(--arcane-hot);
+  }
+  .oracle code {
+    font-family: var(--font-geist-mono);
+    font-size: 0.62em;
+    color: var(--system);
+    background: oklch(0.78 0.13 232 / 10%);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+  }
+  .oracle a {
+    color: var(--system);
+    text-decoration: underline;
+    text-decoration-color: oklch(0.78 0.13 232 / 45%);
+    text-underline-offset: 0.16em;
+  }
+  .oracle ul,
+  .oracle ol {
+    font-family: var(--font-geist);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: oklch(0.86 0.02 290);
+    text-shadow: 0 1px 10px oklch(0.05 0.02 290);
+  }
+  .oracle .caret {
+    display: inline-block;
+    width: 0.45em;
+    height: 0.08em;
+    margin-left: 0.12em;
+    background: var(--arcane-hot);
+    box-shadow: 0 0 12px var(--arcane-hot);
+    animation: blink 0.9s step-end infinite;
+  }
+
+  /* ── the prompt: the only fixed control on screen ── */
+  .prompt {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+    background: linear-gradient(180deg, oklch(0.13 0.03 292 / 78%), oklch(0.08 0.02 288 / 90%));
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 24px 60px -24px oklch(0 0 0 / 90%);
+    transition:
+      border-color 0.25s,
+      box-shadow 0.25s;
+  }
+  .prompt:focus-within {
+    border-color: oklch(0.74 0.17 300 / 65%);
+    box-shadow:
+      0 24px 60px -24px oklch(0 0 0 / 90%),
+      0 0 0 1px oklch(0.74 0.17 300 / 20%),
+      0 0 46px -12px oklch(0.62 0.22 295 / 75%);
+  }
+  .prompt[data-running="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--arcane-hot), var(--system), transparent);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+    animation: sweep 1.3s linear infinite;
+  }
+  .prompt__mark {
+    align-self: center;
+    width: 8px;
+    height: 8px;
+    flex: none;
+    transform: rotate(45deg);
+    background: var(--arcane-hot);
+    box-shadow: 0 0 14px var(--arcane-hot);
+  }
+  .prompt[data-running="true"] .prompt__mark {
+    animation: aura-pulse 0.7s ease-in-out infinite;
+  }
+
+  /* ── the run trace: what the agent is actually doing, by its real names ── */
+  .trace-row {
+    display: grid;
+    grid-template-columns: 0.9rem 1fr auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-geist-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .trace-row__name {
+    color: var(--system);
+  }
+  .trace-row__args {
+    color: oklch(0.7 0.03 285 / 75%);
+  }
+  .trace-row[data-status="running"] .trace-row__name {
+    color: var(--arcane-hot);
+    text-shadow: 0 0 12px var(--arcane);
+  }
+  .trace-row[data-status="failed"] .trace-row__name {
+    color: var(--ember);
+  }
+  .spinner {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--arcane-hot);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* ── labels that live in the sky (drei <Html>) ── */
+  .beacon {
+    position: absolute;
+    left: 14px;
+    top: 0;
+    transform: translateY(-50%);
+    display: grid;
+    gap: 2px;
+    padding: 3px 10px 4px 12px;
+    text-align: left;
+    white-space: nowrap;
+    pointer-events: auto;
+    cursor: pointer;
+    border-left: 1px solid color-mix(in oklch, var(--hue) 70%, transparent);
     transition:
       transform 0.25s,
       background 0.25s;
   }
-  .zone-tag:hover,
-  .zone-tag--near {
-    transform: scale(1.08);
-    background: color-mix(in oklch, var(--tone) 22%, oklch(0.08 0.03 290 / 85%));
-    color: white;
+  .beacon__tick {
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    width: 14px;
+    height: 1px;
+    background: color-mix(in oklch, var(--hue) 70%, transparent);
   }
-  .zone-tag__new {
-    font-family: var(--font-michroma);
-    font-size: 8px;
-    letter-spacing: 0.1em;
-    padding: 1px 4px;
-    color: var(--void);
-    background: var(--tone);
-    animation: blink 1.2s step-end infinite;
+  .beacon__name {
+    font-family: var(--font-instrument), Georgia, serif;
+    font-size: 18px;
+    line-height: 1;
+    color: white;
+    text-shadow: 0 0 18px oklch(0.05 0.02 290), 0 0 6px oklch(0.05 0.02 290);
+  }
+  .beacon__meta {
+    font-family: var(--font-geist-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--hue);
+    text-shadow: 0 0 10px oklch(0.05 0.02 290);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height 0.25s,
+      opacity 0.25s;
+  }
+  .beacon:hover .beacon__meta,
+  .beacon:focus-visible .beacon__meta {
+    max-height: 1.2rem;
+    opacity: 1;
+  }
+  .beacon:hover {
+    transform: translateY(-50%) translateX(4px);
+    background: linear-gradient(90deg, color-mix(in oklch, var(--hue) 16%, transparent), transparent);
   }
 
-  .arise-tag {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    white-space: nowrap;
-    padding: 0.3rem 0.55rem 0.3rem 0.3rem;
-    color: #e9ddff;
-    background: oklch(0.07 0.03 290 / 85%);
-    border: 1px solid oklch(0.62 0.22 295 / 55%);
-    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-    cursor: pointer;
-    transition:
-      transform 0.2s,
-      background 0.2s;
-  }
-  .arise-tag:hover {
-    transform: translateY(-2px) scale(1.05);
-    background: oklch(0.3 0.12 295 / 85%);
-  }
-  .arise-tag__rank {
+  .shard-label {
+    position: absolute;
     display: grid;
-    place-items: center;
-    width: 1.3rem;
-    height: 1.3rem;
-    font-family: var(--font-michroma);
-    font-size: 10px;
-    color: var(--system);
-    border: 1px solid currentColor;
+    gap: 1px;
+    width: max-content;
+    max-width: 210px;
+    pointer-events: none;
+    text-shadow: 0 0 12px oklch(0.04 0.02 290), 0 0 4px oklch(0.04 0.02 290), 0 1px 2px #000;
+    animation: label-in 0.35s ease-out both;
   }
-  .arise-tag--s .arise-tag__rank {
-    color: var(--rank-s);
-    box-shadow: 0 0 10px oklch(0.8 0.15 80 / 50%);
+  .shard-label--top {
+    bottom: 18px;
+    left: 0;
+    transform: translateX(-50%);
+    text-align: center;
   }
-  .arise-tag__name {
-    font-size: 12px;
+  .shard-label--bottom {
+    top: 18px;
+    left: 0;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+  .shard-label--left,
+  .shard-label--right {
+    max-width: 150px;
+  }
+  .shard-label--left {
+    right: 20px;
+    top: 0;
+    transform: translateY(-50%);
+    text-align: right;
+  }
+  .shard-label--right {
+    left: 20px;
+    top: 0;
+    transform: translateY(-50%);
+    text-align: left;
+  }
+  .shard-label__name {
+    font-size: 13px;
     font-weight: 600;
+    line-height: 1.2;
+    color: white;
   }
-  .arise-tag__cmd {
-    font-family: var(--font-michroma);
+  .shard-label__sub {
+    font-family: var(--font-geist-mono);
     font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--arcane-hot);
-    text-shadow: 0 0 10px var(--arcane);
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    color: var(--hue);
+  }
+
+  /* ── the project on display: a card projected above its shard ── */
+  .holo-card {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-50%);
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    max-width: 240px;
+    padding: 7px 12px 8px;
+    text-align: center;
+    pointer-events: none;
+    border: 1px solid color-mix(in oklch, var(--hue) 70%, transparent);
+    background:
+      repeating-linear-gradient(0deg, color-mix(in oklch, var(--hue) 10%, transparent) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, color-mix(in oklch, var(--hue) 20%, transparent), transparent),
+      oklch(0.07 0.03 280 / 92%);
+    box-shadow:
+      0 0 24px -6px var(--hue),
+      inset 0 0 18px -8px var(--hue);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    animation: holo-card-in 0.45s ease-out both;
+  }
+  .holo-card--below {
+    top: 0;
+    bottom: auto;
+  }
+  .holo-card[data-still] {
+    animation: none;
+  }
+  .holo-card__tag {
+    font-family: var(--font-geist-mono);
+    font-size: 8px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--hue);
+  }
+  .holo-card__name {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: white;
+    text-shadow: 0 0 10px var(--hue);
+  }
+  .holo-card__sub {
+    font-family: var(--font-geist-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in oklch, white 70%, var(--hue));
+  }
+  /* the same project's card in the Projects window — what marks it when there is no scene */
+  .on-display {
+    border-color: var(--color-gold);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-gold) 60%, transparent),
+      0 0 28px -8px var(--color-gold);
   }
 
   /* ── gauges ── */
   .bar {
     position: relative;
-    height: 6px;
+    height: 3px;
     background: oklch(1 0 0 / 7%);
     overflow: hidden;
-    clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
   }
   .bar > span {
     position: absolute;
@@ -381,37 +625,194 @@
     transform: translateX(3px);
   }
 
-  /* ── cinematic letterbox bars during focus / ARISE ── */
-  .letterbox::before,
-  .letterbox::after {
+  /* full-screen System interrupt frame (error / 404) */
+  /* ── the System window: every notice and prompt the System raises ── */
+  @keyframes sys-open {
+    from {
+      opacity: 0;
+      clip-path: inset(48% 0 48% 0);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes sys-scan {
+    to {
+      background-position: 0 -200%;
+    }
+  }
+  .sys-window {
+    --sys: var(--system);
+    position: relative;
+    font-family: var(--font-rajdhani), var(--font-geist), sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: oklch(0.93 0.03 232);
+    background:
+      linear-gradient(oklch(0.78 0.13 232 / 5%), transparent 30%),
+      linear-gradient(180deg, oklch(0.2 0.06 255 / 82%), oklch(0.1 0.04 265 / 90%));
+    border: 1px solid color-mix(in oklch, var(--sys) 55%, transparent);
+    box-shadow:
+      0 0 0 1px oklch(0 0 0 / 60%),
+      0 0 34px -6px color-mix(in oklch, var(--sys) 60%, transparent),
+      inset 0 0 28px -12px color-mix(in oklch, var(--sys) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    animation: sys-open 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  /* the brackets at its corners */
+  .sys-window::before,
+  .sys-window::after {
     content: "";
-    position: fixed;
-    left: 0;
-    right: 0;
-    height: 0;
-    background: #000;
-    z-index: 5;
-    transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--sys);
+    filter: drop-shadow(0 0 6px var(--sys));
     pointer-events: none;
   }
-  .letterbox::before {
-    top: 0;
+  .sys-window::before {
+    top: -3px;
+    left: -3px;
+    border-right: 0;
+    border-bottom: 0;
   }
-  .letterbox::after {
-    bottom: 0;
+  .sys-window::after {
+    right: -3px;
+    bottom: -3px;
+    border-left: 0;
+    border-top: 0;
   }
-  .letterbox[data-on="true"]::before,
-  .letterbox[data-on="true"]::after {
-    height: 7vh;
+  .sys-scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(transparent 0%, color-mix(in oklch, var(--sys) 9%, transparent) 50%, transparent 100%);
+    background-size: 100% 200%;
+    animation: sys-scan 3.2s linear infinite;
+    mix-blend-mode: screen;
+  }
+  .sys-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sys);
+    text-shadow: 0 0 12px color-mix(in oklch, var(--sys) 70%, transparent);
+  }
+  .sys-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, color-mix(in oklch, var(--sys) 60%, transparent), transparent);
+  }
+  .sys-button {
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: oklch(0.93 0.03 232);
+    border: 1px solid color-mix(in oklch, var(--sys) 45%, transparent);
+    background: color-mix(in oklch, var(--sys) 7%, transparent);
+    transition:
+      background 0.15s,
+      box-shadow 0.15s,
+      color 0.15s;
+  }
+  .sys-button:hover,
+  .sys-button:focus-visible {
+    outline: none;
+    color: white;
+    background: color-mix(in oklch, var(--sys) 24%, transparent);
+    box-shadow: 0 0 20px -4px var(--sys);
+  }
+  .sys-button[data-primary="true"] {
+    border-color: var(--sys);
+    background: color-mix(in oklch, var(--sys) 18%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sys-window {
+      animation: none;
+    }
+    .sys-scan {
+      display: none;
+    }
   }
 
-  /* legacy full-screen System interrupt frame (error / 404) */
+  /* ── the holographic map ── */
+  .holo-backdrop {
+    background: radial-gradient(ellipse at center, oklch(0.1 0.04 250 / 72%), oklch(0.03 0.02 280 / 92%));
+    backdrop-filter: blur(6px);
+    animation: holo-in 0.3s ease-out both;
+  }
+  @keyframes holo-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .holo-stage {
+    background:
+      radial-gradient(ellipse at 50% 55%, oklch(0.78 0.13 232 / 9%), transparent 62%),
+      linear-gradient(oklch(0.78 0.13 232 / 5%) 1px, transparent 1px) 0 0 / 100% 44px,
+      linear-gradient(90deg, oklch(0.78 0.13 232 / 5%) 1px, transparent 1px) 0 0 / 44px 100%;
+  }
+  /* the scan lines of the projection */
+  .holo-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, oklch(0 0 0 / 22%) 2px 3px);
+    mix-blend-mode: multiply;
+  }
+  /* the map's lines fade under the readouts at the top, so the words stay readable */
+  .holo-shade {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 9.5rem;
+    pointer-events: none;
+    background: linear-gradient(to bottom, oklch(0.07 0.03 255 / 94%) 0%, oklch(0.07 0.03 255 / 78%) 55%, transparent 100%);
+  }
+
   .system-frame {
     position: relative;
-    border: 1px solid var(--border);
+    border: 1px solid var(--hair);
     background: var(--glass);
-    box-shadow: 0 0 40px oklch(0.62 0.22 295 / 20%);
+    box-shadow: 0 0 60px -10px oklch(0.62 0.22 295 / 25%);
     backdrop-filter: blur(10px);
+  }
+
+  /* the sky dims toward the console, so the System's words always read */
+  .scrim {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: 58dvh;
+    pointer-events: none;
+    background: linear-gradient(to top, var(--void) 4%, oklch(0.06 0.02 290 / 78%) 34%, transparent);
+  }
+
+  /* fade the top of a scroller into the sky */
+  /* behind the System's words: the scene dims where the text is, so neither prints over the other */
+  .console-scrim {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: calc(var(--console-clear, 0px) + 90px);
+    z-index: 29;
+    pointer-events: none;
+    background: linear-gradient(to top, oklch(0.05 0.02 290 / 96%) 0%, oklch(0.05 0.02 290 / 88%) 62%, transparent 100%);
+    transition: opacity 0.6s;
+  }
+  .fade-top {
+    mask-image: linear-gradient(to bottom, transparent, #000 2.2rem);
+  }
+  /* a long answer: a thin bar shows there is more below */
+  .answer-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.62 0.22 295 / 70%) transparent;
+    touch-action: pan-y;
   }
 }
 
@@ -445,10 +846,41 @@
   }
 }
 
+@keyframes sweep {
+  from {
+    background-position: -100% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes holo-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scaleY(0.2);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes aura-pulse {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.45;
   }
   50% {
     opacity: 1;
@@ -491,8 +923,46 @@
   .glitch::before,
   .glitch::after,
   .bar > span::after,
-  .sys-panel__scan {
+  .sys-panel__scan,
+  .prompt[data-running="true"]::after {
     animation: none;
     content: none;
+  }
+  .shard-label,
+  .oracle .caret {
+    animation: none;
+  }
+}
+
+/* ── the plain record (/record): a document, not a scene ───────── */
+@layer components {
+  .plain-link {
+    text-decoration: underline;
+    text-decoration-color: oklch(1 0 0 / 22%);
+    text-underline-offset: 4px;
+    transition: text-decoration-color 0.2s, color 0.2s;
+  }
+  .plain-link:hover {
+    color: var(--arcane-hot);
+    text-decoration-color: currentColor;
+  }
+}
+@media print {
+  html,
+  body {
+    height: auto;
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .plain * {
+    color: #111 !important;
+    border-color: #ccc !important;
+  }
+}
+
+/* on a phone the window lists what is in focus; floating labels would only cover it */
+@media (max-width: 640px) {
+  .shard-label {
+    display: none;
   }
 }

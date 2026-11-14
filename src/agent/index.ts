@@ -11,7 +11,7 @@
  *               the v2 runtime at app/api/copilotkit
  */
 
-export type { SystemSnapshot, ZoneSnapshot } from "./system-snapshot";
+export type { SystemSnapshot, SectorSnapshot } from "./system-snapshot";
 export { getSystemSnapshot, useSystemSnapshot } from "./system-snapshot";
 export type { SystemCommand } from "./system-commands";
 export { executeSystemCommand, systemCommands } from "./system-commands";

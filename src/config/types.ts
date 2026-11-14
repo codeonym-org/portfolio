@@ -6,7 +6,7 @@ export type Tone = "system" | "arcane" | "gold" | "ember";
 export type Rarity = "legendary" | "epic" | "rare" | "common";
 
 export interface Stat {
-  /** Solo Leveling stat code (STR, INT, ...) */
+  /** short code beside the bar (AI, BE, ...) */
   code: string;
   /** What the stat actually measures */
   label: string;
@@ -18,6 +18,8 @@ export interface PlayerLinks {
   github: string;
   linkedin: string;
   email: string;
+  /** international format, as printed on the CV */
+  phone: string;
 }
 
 /** honorific earned through deeds — shown as gold cards at the Awakening Circle */
@@ -30,16 +32,17 @@ export interface PlayerTitle {
 
 export interface Player {
   name: string;
+  /** what the System calls him: it is his companion, so it uses his first name */
+  firstName: string;
+  /** how his first name is said, respelled for the voice and for readers: "A-yoob" */
+  pronounced: string;
   handle: string;
   title: string;
   job: string;
   location: string;
+  /** where Ayoub lives, for the map card: coordinates of the city, IANA time zone */
+  base: { city: string; country: string; lat: number; lon: number; timeZone: string; countryCentre: { lon: number; lat: number } };
   guild: string;
-  level: number;
-  /** hunter rank letter (S/A/B...) shown beside the level */
-  rank: string;
-  /** flavor line under the rank (e.g. next assessment) */
-  rankNote: string;
   titles: PlayerTitle[];
   profile: string[];
   creed: string;
@@ -48,11 +51,69 @@ export interface Player {
   languages: { name: string; grade: string }[];
 }
 
+export type GateRank = "S" | "A" | "B" | "C";
+
+/** one way into the record: a named, ranked page */
+export interface Gate {
+  /** also the route: /gates/<id> */
+  id: string;
+  name: string;
+  rank: GateRank;
+  /** sealed = shown in the Gate Realm, not built yet */
+  state: "open" | "sealed";
+  tagline: string;
+  description: string;
+  /** what the visitor finds inside, three short lines */
+  holds: string[];
+  audience: string;
+  /** how much the device has to work: Light or Heavy */
+  cost: string;
+}
+
+/** what a planet of the Gate Realm is made of: each kind has its own shader branch */
+export type PlanetKind = "ocean" | "cracked" | "gas" | "ice" | "lava" | "crystal" | "barren";
+
+/** one world of the Gate Realm; a planet that holds a gate is charted */
+export interface Planet {
+  id: string;
+  /** the gate this planet holds; none = uncharted */
+  gate?: string;
+  kind: PlanetKind;
+  /** distance from the star, in scene units */
+  orbit: number;
+  /** radius, in scene units */
+  size: number;
+  /** where on its orbit it starts, in turns (0–1) */
+  phase: number;
+  /** low ground, high ground, glow */
+  palette: [string, string, string];
+  ring?: "full" | "broken";
+  moons?: number;
+  /** axial tilt, radians */
+  tilt: number;
+}
+
+/** an organization Ayoub works in */
+export interface Guild {
+  id: string;
+  name: string;
+  /** Ayoub's role there: employed, or founder and maintainer */
+  role: "Engineer" | "Founder";
+  /** what kind of place it is, in two words */
+  kind: string;
+  summary: string;
+  link?: string;
+}
+
 export interface Quest {
   id: string;
   name: string;
   rank: QuestRank;
   type: "main" | "side";
+  /** must match a Guild id (guilds.config) */
+  guild: string;
+  /** personal projects only: released, or still being built */
+  stage?: "released" | "in development";
   status: QuestStatus;
   period?: string;
   summary: string;
@@ -60,9 +121,11 @@ export interface Quest {
   /** tech stack, framed as quest rewards */
   rewards: string[];
   link?: string;
+  /** documentation site, when the project has one */
+  docs?: string;
 }
 
-/** job = the Player's craft; secondary = everything the job isn't */
+/** job = Ayoub's craft; secondary = everything the job isn't */
 export type SkillSet = "job" | "secondary";
 
 export interface SkillSetDef {
@@ -178,47 +241,50 @@ export interface SystemScreenCopy {
   footer: string;
 }
 
-/* ─────────────────────────── V5 · THE WORLD ─────────────────────────── */
+/* ─────────────────────────── THE RECORD ─────────────────────────── */
 
-/** every explorable zone in the temple — each one opens its own panel */
-export type ZoneId =
-  | "awakening"
-  | "guild"
-  | "crypt"
-  | "armory"
-  | "treasury"
-  | "gate";
+/** the six sectors of the record — each one is a ring of shards around the Monolith */
+export type SectorId =
+  | "status"
+  | "experience"
+  | "projects"
+  | "skills"
+  | "inventory"
+  | "contact";
 
 /** where a USE / link / agent command can send the visitor */
-export type Destination = ZoneId | "cv";
+export type Destination = SectorId | "cv";
 
-export interface ZoneDef {
-  id: ZoneId;
-  /** landmark name shown on markers, map and HUD */
+export interface SectorDef {
+  id: SectorId;
+  /** in-world name shown on beacons, the index and the window */
   name: string;
-  /** what the panel holds, in plain words (e.g. "Status & Profile") */
+  /** what the window holds, in plain words (e.g. "Status & Profile") */
   section: string;
-  /** one-line flavor under the name on the zone banner */
+  /** one-line flavor under the name */
   epithet: string;
   icon: LucideIcon;
   tone: Tone;
-  /** world position of the landmark center, [x, z] */
-  position: [number, number];
-  /** where the Hunter stands to use it (walk-to target), [x, z] */
-  approach: [number, number];
-  /** walk within this radius of `position` to get the interaction prompt */
-  radius: number;
-  /** verb on the interaction prompt: "[E] <verb> <name>" */
-  verb: string;
   /** agent-facing routing hint (exposed through src/agent) */
   description: string;
 }
 
-/** visitor-side objectives — completing them levels the visitor up */
-export interface VisitorQuest {
+/** what an interview answer is about */
+export type InterviewTopic = "motivation" | "work" | "strengths" | "practical" | "terms";
+
+/**
+ * One HR question and the owner's answer to it.
+ *  · `confirmed`   — his own words, approved by him in a grilling session
+ *  · `from-record` — drafted from what the record already states; waits for his word
+ *  · `open`        — asked, not answered yet: the agent does not answer it
+ */
+export interface InterviewEntry {
   id: string;
-  name: string;
-  /** objective line under the name */
-  objective: string;
-  xp: number;
+  topic: InterviewTopic;
+  question: string;
+  status: "confirmed" | "from-record" | "open";
+  /** first person, as he would say it — absent while the entry is `open` */
+  answer?: string;
+  /** a salary, a start date, an agreement: only the real owner settles it, whatever is on file */
+  binding?: boolean;
 }

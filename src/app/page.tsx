@@ -1,14 +1,6 @@
-import { LoadingScreen, TitleScreen } from "@/components/hud/intro-screens";
-import { WorldHud } from "@/components/hud/world-hud";
-import { WorldCanvas } from "@/components/world/world-canvas";
+import { FirstLightGate } from "@/components/gates/first-light-gate";
 
+/** `/` opens the default gate with no choice to make; the Gate Realm is at /gates */
 export default function Home() {
-  return (
-    <main className="grain relative h-dvh w-full overflow-hidden">
-      <WorldCanvas />
-      <WorldHud />
-      <TitleScreen />
-      <LoadingScreen />
-    </main>
-  );
+  return <FirstLightGate />;
 }

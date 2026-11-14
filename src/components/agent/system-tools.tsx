@@ -3,24 +3,18 @@
 import { useMemo } from "react";
 import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
-import { FileText, Mail } from "lucide-react";
-import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
+import { mayOffer, unseen } from "@/agent/guide";
 import { systemCommands, type SystemCommand } from "@/agent/system-commands";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
-import { zoneById } from "@/config/world.config";
-import { play } from "@/lib/audio";
-import { masteryGrade, rarityTile } from "@/lib/rarity";
-import { cn } from "@/lib/utils";
-import { levelFor, useWorldStore } from "@/store/world-store";
+import { focusLabel, useWorldStore } from "@/store/world-store";
 
 /**
  * ── THE SYSTEM'S HANDS ────────────────────────────────────────
- * Registers every world command as a CopilotKit v2 frontend tool
+ * Registers every record command as a CopilotKit v2 frontend tool
  * (executed here, in the browser, when the agent calls it), plus two
- * generative-UI tools that draw cards inside the dialogue, and feeds
- * the live world state to the agent as context.
+ * presentation tools whose cards the console draws under the reply
+ * (see `agent-bridge.tsx` → `interface/cards.tsx`), and feeds the
+ * live state of the record to the agent as context.
  */
 
 /** one `useFrontendTool` per registry entry — the registry is static, so hook order is too */
@@ -38,16 +32,9 @@ function CommandTool({ command }: { command: SystemCommand }) {
   return null;
 }
 
-const LINKS = [
-  { id: "github", label: "GitHub", icon: GithubMark, href: player.links.github },
-  { id: "linkedin", label: "LinkedIn", icon: LinkedinMark, href: player.links.linkedin },
-  { id: "email", label: "Email", icon: Mail, href: `mailto:${player.links.email}` },
-  { id: "cv", label: "CV (PDF)", icon: FileText, href: "/cv.pdf" },
-] as const;
-
 const linksSchema = z.object({
   links: z
-    .array(z.enum(["github", "linkedin", "email", "cv"]))
+    .array(z.enum(["email", "phone", "linkedin", "github", "cv"]))
     .optional()
     .describe("Which channels to show; omit for all."),
 });
@@ -57,69 +44,26 @@ const skillsSchema = z.object({
   title: z.string().optional().describe("Short caption, e.g. 'AGENT STACK'"),
 });
 
-function ContactCard({ ids }: { ids?: string[] }) {
-  const shown = LINKS.filter((l) => !ids?.length || ids.includes(l.id));
-  return (
-    <div className="grid grid-cols-2 gap-1.5">
-      {shown.map((l) => (
-        <a
-          key={l.id}
-          href={l.href}
-          target={l.id === "email" ? undefined : "_blank"}
-          rel="noreferrer noopener"
-          onClick={() => play("click")}
-          className="hud-chip pointer-events-auto justify-start gap-2 px-3 py-2 text-sm"
-        >
-          <l.icon className="size-4 text-system" />
-          {l.label}
-        </a>
-      ))}
-    </div>
-  );
-}
-
-function SkillCard({ ids, title }: { ids?: string[]; title?: string }) {
-  const setInspect = useWorldStore((s) => s.setInspect);
-  const list = (ids ?? []).map((id) => findSkill(id)).filter((s): s is NonNullable<typeof s> => !!s);
-  if (!list.length) return null;
-  return (
-    <div className="space-y-1.5">
-      {title && <p className="font-display text-[9px] tracking-[0.3em] text-system">{title.toUpperCase()}</p>}
-      <div className="flex flex-wrap gap-1.5">
-        {list.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => {
-              play("click");
-              setInspect({ kind: "skill", id: s.id });
-            }}
-            className={cn("flex items-center gap-1.5 border px-2 py-1 text-xs transition-shadow", rarityTile[s.rarity])}
-          >
-            <s.icon className="size-3.5" />
-            <span className="text-foreground/90">{s.name}</span>
-            <span className="font-display text-[9px]">{masteryGrade(s.mastery)}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function PresentationTools() {
   useFrontendTool({
     name: "show_contact_card",
     description:
-      "Draw a contact card inside the dialogue with clickable GitHub / LinkedIn / email / CV buttons. Use when the visitor wants to reach, hire or follow the Player.",
+      "Draw a contact card under your reply with clickable email / phone / LinkedIn / GitHub / CV buttons. Use when the visitor wants to reach, hire or follow him.",
     parameters: linksSchema,
     handler: async ({ links }) =>
       `Contact card shown (${links?.join(", ") || "all channels"}). The visitor sees the buttons — do not list the links or address in text; reply with one short line.`,
-    render: ({ args }) => <ContactCard ids={args.links} />,
+  });
+  useFrontendTool({
+    name: "show_map",
+    description:
+      "Draw a world map under your reply with his base marked, his current local time and the time difference with the visitor (computed in the visitor's browser). Use when the visitor asks where he is based, his location, his time zone, what time it is for him, or whether working hours overlap.",
+    parameters: z.object({}),
+    handler: async () => "Map shown: his base, his local time and the difference with the visitor's clock. You do not know the visitor's time zone — do not state the difference yourself; reply with one short line.",
   });
   useFrontendTool({
     name: "present_skills",
     description:
-      "Draw a row of skill badges (with mastery grades) inside the dialogue; each badge opens its inspect card. Use when answering about skills or tech stack.",
+      "Draw a row of skill badges (with mastery grades) under your reply; each badge opens its inspect card, and the Monolith lights their shards. Use when answering about skills or tech stack.",
     parameters: skillsSchema,
     handler: async ({ ids }) => {
       const unknown = ids.filter((id) => !findSkill(id));
@@ -127,47 +71,48 @@ function PresentationTools() {
         ? `Shown, but unknown skill ids were skipped: ${unknown.join(", ")}. Valid ids: ${skills.map((s) => s.id).join(", ")}.`
         : `Presented ${ids.length} skill badges with grades. The visitor sees them — do not list the skills again; add at most two lines of insight.`;
     },
-    render: ({ args }) => <SkillCard ids={args.ids} title={args.title} />,
   });
   return null;
 }
 
 /** what the visitor is looking at right now — kept small, the dossier lives server-side */
-function WorldContext() {
-  const panel = useWorldStore((s) => s.panel);
-  const nearZone = useWorldStore((s) => s.nearZone);
+function RecordContext() {
+  const sector = useWorldStore((s) => s.sector);
+  const caseFile = useWorldStore((s) => s.caseFile);
   const cvOpen = useWorldStore((s) => s.cvOpen);
-  const mapOpen = useWorldStore((s) => s.mapOpen);
   const inspect = useWorldStore((s) => s.inspect);
   const visited = useWorldStore((s) => s.visited);
-  const completed = useWorldStore((s) => s.completed);
-  const risen = useWorldStore((s) => s.risen);
-  const xp = useWorldStore((s) => s.xp);
+  const briefRead = useWorldStore((s) => s.briefRead);
+  const cvRead = useWorldStore((s) => s.cvRead);
   const muted = useWorldStore((s) => s.muted);
   const quality = useWorldStore((s) => s.quality);
   const touch = useWorldStore((s) => s.touch);
+  const inspected = useWorldStore((s) => s.inspected);
+  const offers = useWorldStore((s) => s.offers);
 
-  const value = useMemo(
-    () => ({
-      openWindow: panel ? `${panel} (${zoneById[panel].section})` : null,
-      hunterStandingAt: nearZone,
+  const value = useMemo(() => {
+    const left = unseen({ visited, briefRead, cvRead, inspected });
+    const allowed = mayOffer({ offers });
+    return {
+      broughtForward: focusLabel({ sector, caseFile }),
       cvViewerOpen: cvOpen,
-      worldMapOpen: mapOpen,
       inspecting: inspect ? { kind: inspect.kind, id: inspect.id } : null,
-      visitor: {
-        level: levelFor(xp),
-        xp,
-        zonesDiscovered: visited,
-        systemQuestsCompleted: completed,
-        shadowsRisen: risen,
-        shadowsStillFallen: quests.filter((q) => !risen.includes(q.id)).map((q) => q.id),
+      visitor: { sectionsOpened: visited, briefRead, cvRead },
+      // for the System's own decision to propose an action or not (see the prompt, THE VISITOR)
+      guide: {
+        mayPropose: allowed
+          ? true
+          : `no: the visitor refused ${offers.declinedInARow} proposals in a row. No proposal and no invitation until they ask what to see next.`,
+        notSeenYet: left.length
+          ? left.map((n) => `${n.id}: ${n.command.name}${Object.entries(n.command.args).map(([k, v]) => ` ${k}=${v}`).join("")}`)
+          : "nothing: the visitor has seen the whole record. Propose nothing unless a specific entry answers their question.",
+        proposedThisVisit: offers.log.length ? offers.log.map((p) => `${p.key} → ${p.outcome}`) : "nothing yet",
       },
       settings: { soundMuted: muted, graphics: quality, device: touch ? "touch/mobile" : "desktop" },
-    }),
-    [panel, nearZone, cvOpen, mapOpen, inspect, visited, completed, risen, xp, muted, quality, touch],
-  );
+    };
+  }, [sector, caseFile, cvOpen, inspect, visited, briefRead, cvRead, muted, quality, touch, inspected, offers]);
 
-  useAgentContext({ description: "Live state of the visitor's world (what is open, where the Hunter stands, visitor progress)", value });
+  useAgentContext({ description: "Live state of the record (what is brought forward, what is open, what the visitor has seen)", value });
   return null;
 }
 
@@ -178,9 +123,7 @@ export function SystemTools() {
         <CommandTool key={c.name} command={c} />
       ))}
       <PresentationTools />
-      <WorldContext />
+      <RecordContext />
     </>
   );
 }
-
-export const PRESENTATION_TOOLS = new Set(["show_contact_card", "present_skills"]);

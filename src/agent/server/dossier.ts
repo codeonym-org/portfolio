@@ -1,10 +1,13 @@
 import "server-only";
 import { achievements, chronicle } from "@/config/chronicle.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
+import { interview } from "@/config/interview.config";
 import { player } from "@/config/player.config";
+import { guilds, findGuild } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skills } from "@/config/skills.config";
-import { visitorQuests, zones } from "@/config/world.config";
+import { sectors } from "@/config/world.config";
+import { interviewGrounding } from "../interview-grounding";
 
 /**
  * ── THE PLAYER DOSSIER ────────────────────────────────────────
@@ -21,12 +24,12 @@ const grade = (m: number) => (m >= 90 ? "S" : m >= 85 ? "A" : m >= 78 ? "B" : "C
 
 function identity() {
   return [
-    `Name: ${player.name} (handle "${player.handle}")`,
+    `Name: ${player.firstName} (said "${player.pronounced}"; handle "${player.handle}"; full name ${player.name}, given only when asked)`,
     `Role: ${player.job} — ${player.title}`,
-    `Guild (employer): ${player.guild} · Location: ${player.location}`,
-    `Hunter rank ${player.rank} · LV.${player.level} (${player.rankNote})`,
+    `Location: ${player.location}`,
+    `Organisations: ${guilds.map((g) => `${g.name} [${g.id}] — ${g.role} (${g.kind}). ${g.summary}${g.link ? ` ${g.link}` : ""}`).join(" | ")}`,
     `Languages: ${player.languages.map((l) => `${l.name} (${l.grade})`).join(", ")}`,
-    `Links: GitHub ${player.links.github} · LinkedIn ${player.links.linkedin} · Email ${player.links.email}`,
+    `Links: GitHub ${player.links.github} · LinkedIn ${player.links.linkedin} · Email ${player.links.email} · Phone ${player.links.phone}`,
   ].join("\n");
 }
 
@@ -34,27 +37,27 @@ function profile() {
   return [
     ...player.profile,
     `Creed: "${player.creed}"`,
-    `Titles: ${player.titles.map((t) => `${t.name} — ${t.description}`).join(" | ")}`,
-    `Stats: ${player.stats.map((s) => `${s.code} ${s.value} (${s.label})`).join(", ")}`,
+    `Known for: ${player.titles.map((t) => `${t.name} — ${t.description}`).join(" | ")}`,
+    `Strengths (self-rated, 0-100): ${player.stats.map((s) => `${s.code} ${s.value} (${s.label})`).join(", ")}`,
   ].join("\n");
 }
 
 function experience() {
   return chronicle
-    .map((c) => `- ${c.period} · ${c.role} @ ${c.organization}\n  ${c.summary}\n  Highlights: ${c.highlights.join("; ")}`)
+    .map((c) => `- [${c.id}] ${c.period} · ${c.role} @ ${c.organization}\n  ${c.summary}\n  Highlights: ${c.highlights.join("; ")}`)
     .join("\n");
 }
 
 function education() {
-  return achievements.map((a) => `- ${a.period} · ${a.title} — ${a.issuer}`).join("\n");
+  return achievements.map((a) => `- [${a.id}] ${a.period} · ${a.title} — ${a.issuer}`).join("\n");
 }
 
 function projects(full: boolean) {
   return quests
     .map((q) => {
-      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "main quest" : "side quest"} · rank ${q.rank} · ${q.status}${q.period ? ` · ${q.period}` : ""}`;
+      const head = `- [${q.id}] ${q.name} · ${q.type === "main" ? "work at OpenSNZ" : "personal project"} · organisation ${findGuild(q.guild)?.name ?? q.guild} · ${q.stage ?? q.status}${q.period ? ` · ${q.period}` : ""}`;
       const body = full
-        ? `\n  ${q.summary}\n  ${q.details.map((d) => `• ${d}`).join("\n  ")}\n  Stack: ${q.rewards.join(", ")}${q.link ? `\n  Link: ${q.link}` : ""}`
+        ? `\n  ${q.summary}\n  ${q.details.map((d) => `• ${d}`).join("\n  ")}\n  Stack: ${q.rewards.join(", ")}${q.link ? `\n  Link: ${q.link}` : ""}${q.docs ? `\n  Docs: ${q.docs}` : ""}`
         : `\n  ${q.summary} Stack: ${q.rewards.join(", ")}`;
       return head + body;
     })
@@ -86,9 +89,8 @@ function inventory(full: boolean) {
 }
 
 function world() {
-  const zoneLines = zones.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
-  const questLines = visitorQuests.map((q) => `- ${q.id}: "${q.name}" — ${q.objective} (+${q.xp} XP)`).join("\n");
-  return `Zones of the temple (each opens a System window / tab):\n${zoneLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
+  const sectorLines = sectors.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
+  return `Sections of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}`;
 }
 
 export const dossierDigest = [
@@ -96,21 +98,23 @@ export const dossierDigest = [
   identity(),
   "## PROFILE",
   profile(),
-  "## EXPERIENCE (Guild Hall)",
+  "## EXPERIENCE (sector: experience; ids in brackets, evidence kind \"experience\")",
   experience(),
-  "## EDUCATION",
+  "## EDUCATION (sector: experience; ids in brackets, evidence kind \"education\")",
   education(),
-  "## PROJECTS = QUESTS (Shadow Crypt; ids in brackets)",
+  "## PROJECTS (section: projects; ids in brackets, evidence kind \"quest\")",
   projects(false),
-  "## SKILLS (Armory; ids in brackets, grade S≥90 A≥85 B≥78)",
+  "## SKILLS (sector: skills; ids in brackets, grade S≥90 A≥85 B≥78, evidence kind \"skill\")",
   skillTree(false),
-  "## INVENTORY (Treasury; ids in brackets)",
+  "## INVENTORY (sector: inventory; ids in brackets, evidence kind \"item\")",
   inventory(false),
+  "## INTERVIEW (ids in brackets; not shown in any window)",
+  interviewGrounding(interview),
   "## THE WORLD",
   world(),
 ].join("\n");
 
-export const ARCHIVE_SECTIONS = ["identity", "experience", "education", "projects", "skills", "inventory", "world"] as const;
+export const ARCHIVE_SECTIONS = ["identity", "experience", "education", "projects", "skills", "inventory", "interview", "world"] as const;
 export type ArchiveSection = (typeof ARCHIVE_SECTIONS)[number];
 
 export function archive(section: ArchiveSection): string {
@@ -127,6 +131,8 @@ export function archive(section: ArchiveSection): string {
       return skillTree(true);
     case "inventory":
       return inventory(true);
+    case "interview":
+      return interviewGrounding(interview);
     case "world":
       return world();
   }

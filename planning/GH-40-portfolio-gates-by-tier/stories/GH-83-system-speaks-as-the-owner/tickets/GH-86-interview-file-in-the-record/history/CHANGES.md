@@ -1,0 +1,4 @@
+- 2026-11-13: drafted by the story's global pass.
+- 2026-11-13: issue #86 created (https://github.com/codeonym-org/portfolio/issues/86), status tracked.
+- 2026-11-14: ticket pass by the agent (decision 001); file, grounding and tests built on 86-interview-file. Waits for the owner's answers (follow-up).
+- 2026-11-14: first interview session with the owner (decision 002); every entry confirmed, salary left open. Status done.

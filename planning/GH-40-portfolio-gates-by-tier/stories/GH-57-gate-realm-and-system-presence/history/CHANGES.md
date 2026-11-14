@@ -1,0 +1,7 @@
+- 2026-11-12: asked for by the owner; story pass by the agent alone (decisions 001, 002); six tickets drafted.
+- 2026-11-12: tracker issues created: GH-57, tickets GH-58 to GH-63.
+- 2026-11-12: ticket GH-61 built and merged (#67). Owner's review of 58 to 60: decision 003; new ticket GH-68 before GH-62.
+- 2026-11-12: tickets GH-68 (#69) and GH-62 (#70) built and merged.
+- 2026-11-13: ticket GH-63 built and merged (#71). All seven tickets are done; the story is done and its issue closed.
+- 2026-11-13: owner's review of the offers: decision 004; the story is reopened for one ticket, GH-72.
+- 2026-11-13: owner's review: ticket GH-74 (a long answer scrolls; a proposal waits for the answer).
