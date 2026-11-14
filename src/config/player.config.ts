@@ -25,7 +25,7 @@ export const player: Player = {
       id: "citadel-architect",
       name: "Multi-agent architect",
       description:
-        "Designed the modular multi-agent architecture behind the pharmaceutical catalog system.",
+        "Designed the modular multi-agent architecture behind AiCA, the pharmaceutical catalog platform.",
     },
     {
       id: "gate-opener",

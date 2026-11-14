@@ -32,7 +32,7 @@ Read this first, then `planning/GH-40-portfolio-gates-by-tier/` (decisions, draf
 | #43 | Story 3: live GitHub data + a map (#53, #54) | done, merged into `40-gates` (#55, #56) |
 | #57 | Story 4: the Gate Realm and a System with presence (#58–#63, #68, #72, #74) | done, merged into `40-gates` (#64–#67, #69–#71) |
 | #44 | Story 5: The Deep (Erebus) | dropped by the owner on 2026-11-13; the work is kept on the remote branch `backup/erebus-world` (never delete it). Closing #44 is the owner's call |
-| #83 | Story 6: the System speaks as the owner, no Solo Leveling persona (#84–#88) | #84, #85, #87, #88 done, merged into `40-gates` (#89–#93); #86 open until the owner's interview session |
+| #83 | Story 6: the System speaks as the owner, no Solo Leveling persona (#84–#88) | done, merged into `40-gates` (#89–#94) |
 | #39 | PR: the living record → `main` | draft; superseded by the epic branch, do not merge alone |
 
 What exists on `40-gates`: guilds as entries; ten projects (two OpenSNZ, eight personal, by guild); new CV and
@@ -59,8 +59,8 @@ the phone number as a contact channel; the gate registry (`src/config/gates.conf
 5. Not checked by the agent anywhere: voice with a real microphone (hold V), real phones, pinch gestures,
    Safari, Firefox.
 6. The hologram draws Morocco with the Sahara as one outline (`scripts/assets/holo-map.mjs`).
-7. Story GH-83: the first interview session, to fill the open answers in `src/config/interview.config.ts` (#86
-   stays open until then); the stock voice for the replica (GH-87 follow-up); whether to close #44.
+7. Story GH-83: the stock voice for the replica (GH-87 follow-up); whether to close #44; a new export of
+   `public/cv.pdf` if it still names the project "Multi-Agent Pharmaceutical Catalog System" (now AiCA).
 
 ## Done: story GH-57. Next: GH-44
 
@@ -99,13 +99,13 @@ Asked for by the owner on 2026-11-13, after dropping The Deep. Its design is in
 |---|---|---|
 | #84 | Plain names for the record, the organisations and the stranger | done (#89) |
 | #85 | Projects lit on load; no arise, XP, levels or quests | done (#90) |
-| #86 | The interview file: his answers to common HR questions (`interview.config.ts`) | merged (#91); open until the owner's first interview session |
+| #86 | The interview file: his answers to common HR questions (`interview.config.ts`) | done (#91, then the owner's interview session in #94) |
 | #87 | The agent answers as his AI replica, in the first person, and hands open or binding questions to him | done (#92) |
 | #88 | The chosen project on display: an aura and a projected card in the sky, marked in the Projects window | done (#93) |
 
 Rules from this story: the agent speaks as Ayoub in the first person and its first reply discloses it is his AI
-replica; it never settles anything binding (salary, start date, contract) and answers open questions with "I'd
-rather answer that myself." plus the contact card. The theme (gates, ranks, the System, the dark sky) stays.
+replica; it gives binding answers on file (start date, contract) as information but never settles them; salary
+has no answer and, like any question with no answer, gets "I'd rather answer that myself." plus the contact card. The theme (gates, ranks, the System, the dark sky) stays.
 
 Next: nothing is planned. When the owner is done with the open points, the epic is complete; the owner merges
 `40-gates` into `main` (decision 008) and closes pull request #39 as superseded.

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { interview } from "../config/interview.config.ts";
 import type { InterviewEntry } from "../config/types.ts";
-import { interviewGrounding, interviewLine, interviewProblems } from "./interview-grounding.ts";
+import { handedToTheOwner, interviewGrounding, interviewLine, interviewProblems } from "./interview-grounding.ts";
 
 test("every entry of the interview file is well formed", () => {
   assert.deepEqual(interviewProblems(interview), []);
@@ -32,4 +32,14 @@ test("a malformed file is reported", () => {
     { id: "a", topic: "work", question: "Q?", status: "confirmed" },
   ];
   assert.equal(interviewProblems(bad).length, 3);
+});
+
+test("only questions with no answer are handed to the owner; a binding answer on file is shared", () => {
+  const entries: InterviewEntry[] = [
+    { id: "salary", topic: "terms", question: "Salary?", status: "open", binding: true },
+    { id: "start", topic: "terms", question: "Start?", status: "confirmed", binding: true, answer: "After my notice period." },
+    { id: "why", topic: "motivation", question: "Why?", status: "confirmed", answer: "Because I like it." },
+  ];
+  assert.equal(handedToTheOwner(entries), "· Salary?");
+  assert.match(interviewGrounding(entries), /\(terms, binding\) Q: Start\?\n {2}A \[confirmed\]: After my notice period\./);
 });
