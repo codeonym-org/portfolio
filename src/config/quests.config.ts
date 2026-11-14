@@ -238,15 +238,17 @@ export const quests: Quest[] = [
     type: "side",
     guild: "codeonym-oss",
     status: "ongoing",
-    stage: "in development",
+    stage: "released",
     period: "since 2026/11",
     summary:
-      "Records reproducible feature demos from a short Playwright script: a coding agent or a person writes the script, and flow-reel replays it in a sandbox on a virtual display while recording the screen. Not published yet.",
+      "Turns an end-to-end script into a narrated, captioned demo video: deterministic, in a container, with a local voice. A person or a coding agent writes an ordinary Playwright script plus flow-reel words (comments to speak, sounds to play), and the composer replays it on a virtual display and records the screen. Published on npm.",
     details: [
-      "The same script gives the same video, step for step.",
-      "Records narrated video with captions, fitted step timings, a smooth cursor, click ripples, automatic zoom and interaction sounds.",
-      "Each step is one sentence to be spoken and the Playwright actions it describes.",
-      "Writes the video, a transcript, an event log and SRT / WebVTT captions next to the script.",
+      "A demo is code: one command (npx flow-reel compose) replays the script in Docker or Podman, times every step, voices each comment and fits the video around the speech.",
+      "Polishes the picture with a drawn cursor, click ripples, automatic zoom and interface sounds, and writes a 1080p video, captions, a timed transcript and an event log.",
+      "Deterministic: the same script gives the same result every time, with no retakes and no voice-over drifting out of sync.",
+      "Local and offline: speech comes from a pinned local model, so no API key is needed.",
+      "Agent-friendly: an agent that can write a Playwright test can write a demo.",
+      "Built to extend: a small core with ports for E2E tools, voices and storage.",
     ],
     rewards: [
       "TypeScript",
