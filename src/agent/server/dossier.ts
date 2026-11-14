@@ -1,11 +1,13 @@
 import "server-only";
 import { achievements, chronicle } from "@/config/chronicle.config";
 import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
+import { interview } from "@/config/interview.config";
 import { player } from "@/config/player.config";
 import { guilds, findGuild } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skills } from "@/config/skills.config";
 import { sectors } from "@/config/world.config";
+import { interviewGrounding } from "../interview-grounding";
 
 /**
  * ── THE PLAYER DOSSIER ────────────────────────────────────────
@@ -106,11 +108,13 @@ export const dossierDigest = [
   skillTree(false),
   "## INVENTORY (sector: inventory; ids in brackets, evidence kind \"item\")",
   inventory(false),
+  "## INTERVIEW (ids in brackets; not shown in any window)",
+  interviewGrounding(interview),
   "## THE WORLD",
   world(),
 ].join("\n");
 
-export const ARCHIVE_SECTIONS = ["identity", "experience", "education", "projects", "skills", "inventory", "world"] as const;
+export const ARCHIVE_SECTIONS = ["identity", "experience", "education", "projects", "skills", "inventory", "interview", "world"] as const;
 export type ArchiveSection = (typeof ARCHIVE_SECTIONS)[number];
 
 export function archive(section: ArchiveSection): string {
@@ -127,6 +131,8 @@ export function archive(section: ArchiveSection): string {
       return skillTree(true);
     case "inventory":
       return inventory(true);
+    case "interview":
+      return interviewGrounding(interview);
     case "world":
       return world();
   }

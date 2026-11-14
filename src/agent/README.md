@@ -96,6 +96,7 @@ Pure modules have unit tests: `pnpm test`.
 | `../record/case-file.ts` | case file schema, URL encoding, resolution against the record |
 | `server/agent.ts` | the `createAgent` graph, system prompt, middleware |
 | `server/dossier.ts` | grounding rendered from `src/config/*` (digest + archive) |
+| `interview-grounding.ts` | the interview file (`src/config/interview.config.ts`) as grounding: each HR question, its answer and its state |
 | `server/tools.ts` | backend tools (`consult_archive`) |
 | `server/model.ts` | OpenRouter model + per-request model id |
 | `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads |
