@@ -41,7 +41,7 @@ export default function PlainRecord() {
           <span className="text-muted-foreground"> — {h.title}</span>
         </h1>
         <p className="mt-5 font-mono text-xs text-muted-foreground">
-          {h.handle} · {h.line}
+          {h.handle} · {h.line} · {h.pronounced}
         </p>
         <div className="mt-8 space-y-4 text-[1.05rem] leading-relaxed text-foreground/85">
           {h.profile.map((p) => (

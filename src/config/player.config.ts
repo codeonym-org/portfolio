@@ -8,6 +8,8 @@ import type { Player } from "./types";
 export const player: Player = {
   name: "BOUAROUR AYOUB",
   firstName: "Ayoub",
+  // he says it A-EY-OO-BE; this respelling is the one the voice gets right
+  pronounced: "A-yoob",
   handle: "codeonym",
   title: "AI Agent Engineer",
   job: "Software Engineer",
