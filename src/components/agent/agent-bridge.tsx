@@ -5,6 +5,8 @@ import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 import type { Message, ToolCall } from "@ag-ui/client";
 import { SYSTEM_AGENT_ID } from "@/agent/constants";
 import { runLocally } from "@/agent/converse";
+import { cleanReply, withDisclosure, withoutRepeatedDisclosure } from "@/agent/reply-hygiene";
+import { player } from "@/config/player.config";
 import { parseVoiceTask } from "@/agent/voice/protocol";
 import { isSectorId, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -63,7 +65,7 @@ function cardOf(name: string, args: Record<string, unknown>): Card | null {
 }
 
 /** every assistant message between two visitor messages is one turn: its cards, then its words */
-function toTurns(messages: Message[], settled: Set<string>): Turn[] {
+function toTurns(messages: Message[], settled: Set<string>, running: boolean): Turn[] {
   const turns: Turn[] = [];
   let open: Turn | null = null;
   for (const m of messages) {
@@ -75,7 +77,8 @@ function toTurns(messages: Message[], settled: Set<string>): Turn[] {
       const calls = (m as { toolCalls?: ToolCall[] }).toolCalls ?? [];
       // a card appears once its tool call's arguments have fully arrived
       const cards = calls.filter((c) => settled.has(c.id)).map((c) => cardOf(c.function.name, parseArgs(c))).filter((c): c is Card => !!c);
-      const text = textOf(m);
+      // tool calls written out as text, or a run of "… … …" from a model that lost the thread, are never shown
+      const text = cleanReply(textOf(m));
       if (!text && !cards.length) continue;
       if (!open) {
         open = { id: m.id, role: "system", text, cards };
@@ -86,6 +89,15 @@ function toTurns(messages: Message[], settled: Set<string>): Turn[] {
       }
     }
   }
+  // the first answer to the stranger discloses the replica, and only that one. The prompt asks the model
+  // for it; the model does not always comply, so the console makes sure. The first answer is checked once
+  // complete, so a disclosure still streaming in is not doubled.
+  const first = turns.findIndex((t) => t.role === "visitor" && !t.voice);
+  turns.forEach((t, i) => {
+    if (t.role !== "system" || i <= first) return;
+    if (i !== first + 1) t.text = withoutRepeatedDisclosure(t.text);
+    else if (!running || turns.slice(i + 1).some((n) => n.role === "visitor")) t.text = withDisclosure(t.text, player.firstName);
+  });
   return turns;
 }
 
@@ -186,7 +198,7 @@ export function AgentBridge() {
         }
       }
     }
-    session.upsertTurns(toTurns(messages, settled));
+    session.upsertTurns(toTurns(messages, settled, running));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `tail`, `calls` and `running` are the change signals for the mutable message list
   }, [tail, calls, running]);
 
