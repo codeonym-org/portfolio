@@ -35,7 +35,7 @@ function Notice({ toast }: { toast: Toast }) {
   );
 }
 
-/** System notices: quests, ARISE, anything the agent pushes. Each is a small System window that closes by itself. */
+/** System notices: a section opened, anything the agent pushes. Each is a small System window that closes by itself. */
 export function Toasts() {
   const toasts = useWorldStore((s) => s.toasts);
   // beside an open window, notices move over the stage instead of covering what is being read

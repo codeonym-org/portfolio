@@ -5,9 +5,8 @@ import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
 import { mayOffer, unseen } from "@/agent/guide";
 import { systemCommands, type SystemCommand } from "@/agent/system-commands";
-import { quests } from "@/config/quests.config";
 import { findSkill, skills } from "@/config/skills.config";
-import { focusLabel, levelFor, syncPercent, useWorldStore } from "@/store/world-store";
+import { focusLabel, useWorldStore } from "@/store/world-store";
 
 /**
  * ── THE SYSTEM'S HANDS ────────────────────────────────────────
@@ -83,9 +82,8 @@ function RecordContext() {
   const cvOpen = useWorldStore((s) => s.cvOpen);
   const inspect = useWorldStore((s) => s.inspect);
   const visited = useWorldStore((s) => s.visited);
-  const completed = useWorldStore((s) => s.completed);
-  const risen = useWorldStore((s) => s.risen);
-  const xp = useWorldStore((s) => s.xp);
+  const briefRead = useWorldStore((s) => s.briefRead);
+  const cvRead = useWorldStore((s) => s.cvRead);
   const muted = useWorldStore((s) => s.muted);
   const quality = useWorldStore((s) => s.quality);
   const touch = useWorldStore((s) => s.touch);
@@ -93,21 +91,13 @@ function RecordContext() {
   const offers = useWorldStore((s) => s.offers);
 
   const value = useMemo(() => {
-    const left = unseen({ visited, completed, inspected });
+    const left = unseen({ visited, briefRead, cvRead, inspected });
     const allowed = mayOffer({ offers });
     return {
       broughtForward: focusLabel({ sector, caseFile }),
       cvViewerOpen: cvOpen,
       inspecting: inspect ? { kind: inspect.kind, id: inspect.id } : null,
-      visitor: {
-        level: levelFor(xp),
-        xp,
-        sync: `${syncPercent({ visited, risen, completed })}%`,
-        sectorsOpened: visited,
-        systemQuestsCompleted: completed,
-        shadowsRisen: risen,
-        shadowsStillFallen: quests.filter((q) => !risen.includes(q.id)).map((q) => q.id),
-      },
+      visitor: { sectionsOpened: visited, briefRead, cvRead },
       // for the System's own decision to propose an action or not (see the prompt, THE VISITOR)
       guide: {
         mayPropose: allowed
@@ -120,9 +110,9 @@ function RecordContext() {
       },
       settings: { soundMuted: muted, graphics: quality, device: touch ? "touch/mobile" : "desktop" },
     };
-  }, [sector, caseFile, cvOpen, inspect, visited, completed, risen, xp, muted, quality, touch, inspected, offers]);
+  }, [sector, caseFile, cvOpen, inspect, visited, briefRead, cvRead, muted, quality, touch, inspected, offers]);
 
-  useAgentContext({ description: "Live state of the record (what is brought forward, what is open, visitor progress)", value });
+  useAgentContext({ description: "Live state of the record (what is brought forward, what is open, what the visitor has seen)", value });
   return null;
 }
 

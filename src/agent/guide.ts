@@ -15,19 +15,19 @@ const index: StepIndex = { playerName: player.firstName, flagship: flagship && {
 
 type State = ReturnType<typeof useWorldStore.getState>;
 
-export function seenBy(s: Pick<State, "visited" | "completed" | "inspected">): Seen {
-  return { sectors: s.visited, briefRead: s.completed.includes("brief"), cvRead: s.completed.includes("license"), inspected: s.inspected };
+export function seenBy(s: Pick<State, "visited" | "briefRead" | "cvRead" | "inspected">): Seen {
+  return { sectors: s.visited, briefRead: s.briefRead, cvRead: s.cvRead, inspected: s.inspected };
 }
 
 export const mayOffer = (s: Pick<State, "offers">) => s.offers.declinedInARow < MAX_DECLINED;
 export const offerTooSoon = (s: Pick<State, "offers">) => Date.now() - s.offers.lastAt < OFFER_GAP_MS;
 
 /** everything left to see, for the agent to choose from (or not) */
-export function unseen(s: Pick<State, "visited" | "completed" | "inspected">): NextStep[] {
+export function unseen(s: Pick<State, "visited" | "briefRead" | "cvRead" | "inspected">): NextStep[] {
   return unseenSteps(seenBy(s), index);
 }
 
-export function suggestedNext(s: Pick<State, "visited" | "completed" | "inspected">): NextStep | null {
+export function suggestedNext(s: Pick<State, "visited" | "briefRead" | "cvRead" | "inspected">): NextStep | null {
   return nextStep(seenBy(s), index);
 }
 

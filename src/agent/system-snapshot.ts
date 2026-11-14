@@ -5,9 +5,9 @@ import { quests } from "@/config/quests.config";
 import { skillCategories, skillSets, skills } from "@/config/skills.config";
 import { systemConfig } from "@/config/system.config";
 import type { Destination, InspectTarget, SectorId } from "@/config/types";
-import { visitorQuests, sectors } from "@/config/world.config";
+import { sectors } from "@/config/world.config";
 import type { CaseFile } from "@/record/case-file";
-import { levelFor, syncPercent, useWorldStore } from "@/store/world-store";
+import { useWorldStore } from "@/store/world-store";
 
 /**
  * ── AGENT BRIDGE · READ SIDE ──────────────────────────────────
@@ -45,14 +45,9 @@ export interface SystemSnapshot {
     sectors: SectorSnapshot[];
   };
   visitor: {
-    level: number;
-    xp: number;
-    /** share of the record uncovered, 0–100 */
-    sync: number;
-    questsCompleted: string[];
-    quests: { id: string; name: string; objective: string; done: boolean }[];
-    /** quest (project) ids already extracted as shadows */
-    shadowsRisen: string[];
+    sectionsOpened: string[];
+    briefRead: boolean;
+    cvRead: boolean;
   };
   player: typeof player;
   quests: typeof quests;
@@ -135,12 +130,9 @@ export function getSystemSnapshot(): SystemSnapshot {
       })),
     },
     visitor: {
-      level: levelFor(s.xp),
-      xp: s.xp,
-      sync: syncPercent(s),
-      questsCompleted: s.completed,
-      quests: visitorQuests.map((q) => ({ id: q.id, name: q.name, objective: q.objective, done: s.completed.includes(q.id) })),
-      shadowsRisen: s.risen,
+      sectionsOpened: s.visited,
+      briefRead: s.briefRead,
+      cvRead: s.cvRead,
     },
     ...dossier,
   };

@@ -266,12 +266,3 @@ export interface SectorDef {
   /** agent-facing routing hint (exposed through src/agent) */
   description: string;
 }
-
-/** visitor-side objectives — completing them levels the visitor up */
-export interface VisitorQuest {
-  id: string;
-  name: string;
-  /** objective line under the name */
-  objective: string;
-  xp: number;
-}

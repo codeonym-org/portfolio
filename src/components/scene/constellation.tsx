@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Html, useGLTF } from "@react-three/drei";
 import { type BufferGeometry, Color, type Group, type Mesh, MeshStandardMaterial } from "three";
 import { quests } from "@/config/quests.config";
 import type { SectorId } from "@/config/types";
-import { sectorById, sectors, world } from "@/config/world.config";
+import { sectorById, sectors } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { nodeKeyOf } from "@/record/case-file";
 import { damp, haloPoints, orbitPoint, seeded, type Vec3 } from "@/record/layout";
 import { boundOrbit, inspectTargetOf, nodesOfSector, recordNodes, type RecordNode } from "@/record/nodes";
-import { ARISE_MS, live, useWorldStore } from "@/store/world-store";
+import { live, useWorldStore } from "@/store/world-store";
 import { COLORS, hueColor, toneColor, view } from "./view";
 
 export const SHARDS_URL = "/models/record/shards.glb";
@@ -63,10 +63,6 @@ function sideOf([x, y]: Vec3): Side {
 /** what touching a shard does — the same for a click in the sky and a row in the palette */
 export function activateNode(node: RecordNode) {
   const s = useWorldStore.getState();
-  if (node.kind === "quest" && !s.risen.includes(node.id)) {
-    if (!s.rising) s.arise(node.id);
-    return;
-  }
   const target = inspectTargetOf(node);
   if (target) {
     play("blade", { volume: 0.3 });
@@ -100,12 +96,12 @@ function Beacon({ sector }: { sector: SectorId }) {
   );
 }
 
-function Label({ node, side, note, dormant }: { node: RecordNode; side: Side; note?: string; dormant?: boolean }) {
+function Label({ node, side, note }: { node: RecordNode; side: Side; note?: string }) {
   return (
     <Html center zIndexRange={[14, 0]} style={{ pointerEvents: "none" }}>
       <div className={`shard-label shard-label--${side}`} style={{ ["--hue" as string]: hueColor[node.hue] }}>
         <span className="shard-label__name">{node.label}</span>
-        <span className="shard-label__sub">{dormant ? `DORMANT · click to ${world.hud.arise}` : (note ?? node.sub)}</span>
+        <span className="shard-label__sub">{note ?? node.sub}</span>
       </div>
     </Html>
   );
@@ -121,13 +117,10 @@ export function Constellation() {
   const gltf = useGLTF(SHARDS_URL, false, false);
   const sector = useWorldStore((s) => s.sector);
   const caseFile = useWorldStore((s) => s.caseFile);
-  const risen = useWorldStore((s) => s.risen);
-  const rising = useWorldStore((s) => s.rising);
   const hovered = useWorldStore((s) => s.hovered);
   const setHovered = useWorldStore((s) => s.setHovered);
 
   const groups = useRef<(Group | null)[]>([]);
-  const riseStart = useRef(0);
 
   const geometry = useMemo(() => {
     const out = {} as Record<SectorId, BufferGeometry>;
@@ -143,10 +136,6 @@ export function Constellation() {
   }, [sector, caseFile]);
 
   const notes = useMemo(() => new Map(caseFile?.evidence.map((e, i) => [nodeKeyOf(e), `evidence ${String(i + 1).padStart(2, "0")}`]) ?? []), [caseFile]);
-
-  useEffect(() => {
-    if (rising) riseStart.current = performance.now();
-  }, [rising]);
 
   const scratch = useMemo<Vec3>(() => [0, 0, 0], []);
 
@@ -164,8 +153,6 @@ export function Constellation() {
       if (!group) continue;
       const place = formation.get(node.key);
       const isQuest = node.kind === "quest";
-      const isRisen = isQuest && state.risen.includes(node.id);
-      const isRising = isQuest && state.rising === node.id;
 
       let x: number, y: number, z: number;
       if (place) {
@@ -173,8 +160,9 @@ export function Constellation() {
         y = place[1] * view.haloScale * view.haloSquash;
         z = place[2];
       } else {
-        const orbit = isRisen ? boundOrbit(questOrder.get(node.id) ?? 0) : node.orbit;
-        orbitPoint(orbit, t, scratch, isRisen ? Math.max(view.orbitScale, 0.8) : view.orbitScale);
+        // projects ride close to the Monolith; everything else keeps its sector's ring
+        const orbit = isQuest ? boundOrbit(questOrder.get(node.id) ?? 0) : node.orbit;
+        orbitPoint(orbit, t, scratch, isQuest ? Math.max(view.orbitScale, 0.8) : view.orbitScale);
         x = scratch[0] * cos + scratch[2] * sin;
         y = scratch[1];
         z = -scratch[0] * sin + scratch[2] * cos;
@@ -186,25 +174,21 @@ export function Constellation() {
       nodePositions[i * 3 + 1] = p.y;
       nodePositions[i * 3 + 2] = p.z;
 
-      // glow: dormant shadows are dark glass; what is brought forward burns
-      let glow = isQuest && !isRisen ? 0.04 : 0.8;
-      if (focused) glow = place ? (isQuest && !isRisen ? 0.45 : 1.6) : glow * 0.3;
-      if (isRising) {
-        const k = Math.min(1, (performance.now() - riseStart.current) / ARISE_MS);
-        glow = k * k * 7 * (0.7 + 0.3 * Math.sin(t * 40 * k));
-      }
+      // glow: every shard is lit; what is brought forward burns
+      let glow = 0.8;
+      if (focused) glow = place ? 1.6 : glow * 0.3;
       if (state.hovered === node.key) glow = Math.max(glow * 1.6, 2.2);
       nodeFlash[i] *= Math.exp(-dt * 2.2);
       glow += nodeFlash[i] * 3.5;
       const mat = materials[i];
       mat.emissiveIntensity = damp(mat.emissiveIntensity, glow, 7, dt);
 
-      const big = (place ? (node.kind === "skill" ? 1.7 : 1.3) : 1) * (state.hovered === node.key ? 1.4 : 1) * (isRising ? 1.5 : 1);
+      const big = (place ? (node.kind === "skill" ? 1.7 : 1.3) : 1) * (state.hovered === node.key ? 1.4 : 1);
       const scale = damp(group.scale.x, node.size * big, 6, dt);
       group.scale.setScalar(scale);
 
       const mesh = group.children[0];
-      mesh.rotation.y += dt * (0.25 + seeded(i, 10) * 0.5) * (isRising ? 9 : 1);
+      mesh.rotation.y += dt * (0.25 + seeded(i, 10) * 0.5);
       const lean = place ? 0 : (seeded(i, 11) - 0.5) * 1.3;
       mesh.rotation.z = damp(mesh.rotation.z, lean, 3, dt);
       mesh.rotation.x = damp(mesh.rotation.x, place ? 0 : (seeded(i, 12) - 0.5) * 0.9, 3, dt);
@@ -237,7 +221,6 @@ export function Constellation() {
       {recordNodes.map((node, i) => {
         const place = formation.get(node.key);
         const beacon = !formation.size ? leaders.get(node.key) : undefined;
-        const dormant = node.kind === "quest" && !risen.includes(node.id);
         const labeled = hovered === node.key || (showFormationLabels && !!place);
         return (
           <group
@@ -252,7 +235,7 @@ export function Constellation() {
               <sphereGeometry args={[node.kind === "skill" ? 1.9 : 1.1, 8, 6]} />
             </mesh>
             {beacon && hovered !== node.key && <Beacon sector={beacon} />}
-            {labeled && <Label node={node} side={place ? sideOf(place) : "top"} note={notes.get(node.key)} dormant={dormant && rising !== node.id} />}
+            {labeled && <Label node={node} side={place ? sideOf(place) : "top"} note={notes.get(node.key)} />}
           </group>
         );
       })}

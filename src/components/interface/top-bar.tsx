@@ -1,74 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
-import { Check, DoorOpen, FileText, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
+import { DoorOpen, FileText, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { player } from "@/config/player.config";
 import { systemConfig } from "@/config/system.config";
-import { visitorQuests, world } from "@/config/world.config";
+import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { toggleImmersion, useCanImmerse, useImmersive } from "@/lib/immersion";
 import { cn } from "@/lib/utils";
-import { levelFor, syncPercent, useWorldStore } from "@/store/world-store";
-
-/** how much of the record the visitor has uncovered — and what is left */
-function Sync() {
-  const visited = useWorldStore((s) => s.visited);
-  const risen = useWorldStore((s) => s.risen);
-  const completed = useWorldStore((s) => s.completed);
-  const xp = useWorldStore((s) => s.xp);
-  const [open, setOpen] = useState(false);
-  const percent = syncPercent({ visited, risen, completed });
-  const R = 9;
-  const C = 2 * Math.PI * R;
-  return (
-    <div className="relative">
-      <button type="button" aria-expanded={open} aria-label={`${world.hud.syncLabel} ${percent}% — ${world.hud.questsLabel}`} onClick={() => setOpen((o) => !o)} className="hud-chip h-9 px-2.5">
-        <svg viewBox="0 0 24 24" className="size-5 -rotate-90">
-          <circle cx="12" cy="12" r={R} fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="2" />
-          <circle cx="12" cy="12" r={R} fill="none" stroke="var(--arcane-hot)" strokeWidth="2" strokeDasharray={C} strokeDashoffset={C * (1 - percent / 100)} className="transition-[stroke-dashoffset] duration-700" />
-        </svg>
-        <span className="font-mono text-[11px] tabular-nums">
-          <span className="hidden text-muted-foreground sm:inline">{world.hud.syncLabel} </span>
-          {percent}%
-        </span>
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="glass glass-edge sys-panel absolute top-11 right-0 z-50 w-72 space-y-3 p-4"
-          >
-            <div className="flex items-baseline justify-between">
-              <p className="eyebrow">{world.hud.questsLabel}</p>
-              <p className="font-mono text-[10px] text-muted-foreground">
-                VISITOR LV.{levelFor(xp)} · {xp} XP
-              </p>
-            </div>
-            <ul className="space-y-2">
-              {visitorQuests.map((q) => {
-                const done = completed.includes(q.id);
-                return (
-                  <li key={q.id} className="flex items-start gap-2.5 text-sm">
-                    <span className={cn("mt-0.5 grid size-4 shrink-0 place-items-center border", done ? "border-rank-s bg-rank-s/20 text-rank-s" : "border-white/20")}>{done && <Check className="size-3" />}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className={cn("block leading-tight", done ? "text-muted-foreground line-through" : "text-foreground")}>{q.name}</span>
-                      <span className="block text-xs text-muted-foreground">{q.objective}</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-rank-s">+{q.xp}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+import { useWorldStore } from "@/store/world-store";
 
 export function TopBar() {
   const muted = useWorldStore((s) => s.muted);
@@ -90,7 +30,6 @@ export function TopBar() {
         </span>
       </button>
       <div className="pointer-events-auto flex items-center gap-1.5">
-        <Sync />
         <Link href="/gates" aria-label="Gates — every way into the record" title="Gates — every way into the record" className="hud-chip h-9 px-2.5">
           <DoorOpen className="size-4" />
           <span className="hidden font-mono text-[11px] md:inline">{world.hud.gates}</span>

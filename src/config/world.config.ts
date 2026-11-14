@@ -6,7 +6,7 @@ import {
   Skull,
   Swords,
 } from "lucide-react";
-import type { SectorDef, SectorId, VisitorQuest } from "./types";
+import type { SectorDef, SectorId } from "./types";
 
 /**
  * ── THE RECORD ────────────────────────────────────────────────
@@ -91,49 +91,6 @@ export function isSectorId(value: string): value is SectorId {
   return value in sectorById;
 }
 
-/** visitor objectives, tracked as SYNC and persisted per browser */
-export const visitorQuests: VisitorQuest[] = [
-  {
-    id: "awaken",
-    name: "Awakening",
-    objective: "Address the System",
-    xp: 100,
-  },
-  {
-    id: "brief",
-    name: "Read the Brief",
-    objective: "Open the one-minute brief",
-    xp: 100,
-  },
-  {
-    id: "explore",
-    name: "Cartographer",
-    objective: "Open every sector of the record",
-    xp: 300,
-  },
-  {
-    id: "arise",
-    name: "Shadow Extraction",
-    objective: "Command every fallen quest to ARISE",
-    xp: 400,
-  },
-  {
-    id: "license",
-    name: "Credentials Check",
-    objective: "Inspect the Hunter's License",
-    xp: 150,
-  },
-  {
-    id: "party",
-    name: "Form a Party",
-    objective: "Reach the Gate",
-    xp: 150,
-  },
-];
-
-/** XP needed to go from level n to n+1 */
-export const xpPerLevel = 250;
-
 export const world = {
   boot: {
     eyebrow: "THE LIVING RECORD",
@@ -148,14 +105,10 @@ export const world = {
   },
 
   hud: {
-    syncLabel: "SYNC",
-    questsLabel: "SYSTEM QUESTS",
     indexLabel: "INDEX",
     traceLabel: "RUN TRACE",
     traceIdle: "idle — nothing running",
     paletteHint: "Search the record or run a command…",
-    arise: "ARISE",
-    ariseAll: "ARISE — ALL",
     plain: "plain record",
     gates: "gates",
   },
@@ -177,12 +130,6 @@ export const world = {
 
   toasts: {
     sectorOpened: "SECTION OPENED",
-    questComplete: "QUEST COMPLETE",
-    levelUp: "LEVEL UP",
-    arise: "ARISE",
-    ariseBody: "has risen. It is bound to the Monolith.",
-    allComplete:
-      "You have seen the whole record. Ayoub would be glad to hear from you: his contact details are one click away.",
   },
 
   /** THE SYSTEM — the agent that lives in the Monolith */

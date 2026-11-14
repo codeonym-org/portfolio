@@ -3,13 +3,12 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AgentDevBridge } from "@/agent/dev-bridge";
-import { castEffect } from "@/agent/system-commands";
 import { sectors } from "@/config/world.config";
-import { chime, duckMusic, play, preloadSounds, startMusic } from "@/lib/audio";
+import { chime, play, preloadSounds, startMusic } from "@/lib/audio";
 import { toggleImmersion } from "@/lib/immersion";
 import { decodeCase, resolveCase } from "@/record/case-file";
 import { hasNode } from "@/record/nodes";
-import { live, useWorldStore } from "@/store/world-store";
+import { useWorldStore } from "@/store/world-store";
 import { Boot } from "./boot";
 import { Console } from "./console";
 import { IndexWheel } from "./index-wheel";
@@ -32,19 +31,9 @@ function useWorldSounds() {
   useEffect(
     () =>
       useWorldStore.subscribe((s, prev) => {
-        if (s.rising && !prev.rising) {
-          play("portal", { volume: 0.5 });
-          live.aberration = Math.min(2, live.aberration + 0.6);
-        }
-        if (!s.rising && prev.rising && s.risen.length > prev.risen.length) {
-          duckMusic();
-          play("arise");
-          castEffect("awaken");
-        }
         if (s.toasts.length > prev.toasts.length) chime(0.3);
         if (s.prompt && s.prompt !== prev.prompt) play("system");
         if (s.inspect && !prev.inspect) play("open", { volume: 0.4 });
-        if (s.completed.length > prev.completed.length) play("levelup", { volume: 0.5 });
       }),
     [],
   );

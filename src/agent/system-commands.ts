@@ -9,7 +9,7 @@ import { chime, play } from "@/lib/audio";
 import { setImmersion } from "@/lib/immersion";
 import { caseSchema, encodeCase, resolveCase } from "@/record/case-file";
 import { hasNode } from "@/record/nodes";
-import { ARISE_MS, levelFor, live, pulse, syncPercent, useWorldStore, type Quality } from "@/store/world-store";
+import { live, pulse, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
 import { useSession } from "@/store/session-store";
 import { MAX_DECLINED, OFFER_GAP_MS, proposalKey } from "./next-step";
@@ -58,43 +58,11 @@ function download(href: string, filename: string) {
   a.remove();
 }
 
-/** a rise that has not finished by now has stalled */
-const RISE_STALL_MS = ARISE_MS * 3;
-
 /** the lens split, the shake and the shockwave, for big moments */
-export function castEffect(effect: "tremor" | "surge" | "awaken") {
-  if (effect !== "surge") live.shake = Math.min(1.2, live.shake + (effect === "awaken" ? 0.9 : 0.6));
-  if (effect !== "tremor") live.aberration = Math.min(2, live.aberration + (effect === "awaken" ? 1.6 : 1));
-  if (effect === "awaken") live.shock = 1;
-}
-
-/** raise every fallen shadow, one after another; resolves with how many rose */
-function ariseAll(): Promise<number> {
-  const fallen = () => quests.filter((q) => !store().risen.includes(q.id));
-  const before = store().risen.length;
-  return new Promise((resolve) => {
-    let timer = 0;
-    let stall = 0;
-    const finish = () => {
-      unsubscribe();
-      window.clearTimeout(timer);
-      window.clearTimeout(stall);
-      resolve(store().risen.length - before);
-    };
-    const step = () => {
-      window.clearTimeout(stall);
-      stall = window.setTimeout(finish, RISE_STALL_MS);
-      if (store().rising) return;
-      const next = fallen()[0];
-      if (!next) return finish();
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => store().arise(next.id), 150);
-    };
-    const unsubscribe = useWorldStore.subscribe((s, prev) => {
-      if (prev.rising && !s.rising) step();
-    });
-    step();
-  });
+export function castEffect(effect: "tremor" | "surge" | "shockwave") {
+  if (effect !== "surge") live.shake = Math.min(1.2, live.shake + (effect === "shockwave" ? 0.9 : 0.6));
+  if (effect !== "tremor") live.aberration = Math.min(2, live.aberration + (effect === "shockwave" ? 1.6 : 1));
+  if (effect === "shockwave") live.shock = 1;
 }
 
 export const systemCommands: SystemCommand[] = [
@@ -175,36 +143,6 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
-    name: "arise",
-    description:
-      "Command a fallen quest (project) to ARISE: its dormant shard ignites, its sealed details open and it binds to the Monolith on a tight orbit. Omit id to raise the next fallen one. One at a time — each extraction takes a few seconds.",
-    parameters: z.object({ id: z.enum(quests.map((q) => q.id) as [string, ...string[]]).optional() }),
-    handler: ({ id }) => {
-      const s = store();
-      if (s.rising) return `Another shadow is mid-extraction (${s.rising}); try again in a few seconds.`;
-      const target = id ?? quests.find((q) => !s.risen.includes(q.id))?.id;
-      if (!target) return "Every quest has already risen.";
-      if (s.risen.includes(target)) return `"${target}" has already risen.`;
-      s.arise(target);
-      return `ARISE — "${target}" is being extracted.`;
-    },
-  }),
-  define({
-    name: "arise_all",
-    description: "Raise EVERY fallen quest (project), one extraction after another, until all of them are bound to the Monolith. Takes a few seconds per shadow.",
-    parameters: z.object({}),
-    handler: async () => {
-      const s = store();
-      if (quests.every((q) => s.risen.includes(q.id))) return "Every quest has already risen.";
-      const count = await ariseAll();
-      const risen = store().risen.length;
-      const tally = `${count} shadow${count === 1 ? "" : "s"} extracted`;
-      return risen === quests.length
-        ? `ARISE — ${tally}; the legion is complete (${risen}/${quests.length}).`
-        : `ARISE — ${tally}, then the extraction stalled (${risen}/${quests.length} risen). Offer to try again.`;
-    },
-  }),
-  define({
     name: "open_cv",
     description: "Open the full CV (PDF) viewer, with a download option.",
     parameters: z.object({}),
@@ -231,7 +169,7 @@ export const systemCommands: SystemCommand[] = [
     parameters: z.object({}),
     handler: () => {
       download(CV_URL, CV_FILE);
-      store().completeQuest("license");
+      useWorldStore.setState({ cvRead: true });
       return `Download of ${CV_FILE} started on the visitor's device.`;
     },
   }),
@@ -297,19 +235,6 @@ export const systemCommands: SystemCommand[] = [
     },
   }),
   define({
-    name: "reset_progress",
-    description:
-      "Wipe the visitor's progress (level, XP, opened sectors, completed quests, risen shadows) and start over. ONLY when the visitor explicitly asks to reset / start over.",
-    parameters: z.object({}),
-    handler: () => {
-      const s = store();
-      if (s.rising) return "A shadow is mid-extraction; try again in a few seconds.";
-      s.closeFocus();
-      s.resetProgress();
-      return "Progress reset: the visitor is back to level 1 and every shadow has fallen again.";
-    },
-  }),
-  define({
     name: "set_sound",
     description: "Mute or unmute all audio.",
     parameters: z.object({ muted: z.boolean() }),
@@ -345,11 +270,11 @@ export const systemCommands: SystemCommand[] = [
   define({
     name: "cast_effect",
     description:
-      "Play a cinematic effect for dramatic moments: tremor (camera shake), surge (the lens splits + a deep hum), awaken (both, with a shockwave across the void and the ARISE roar).",
-    parameters: z.object({ effect: z.enum(["tremor", "surge", "awaken"]) }),
+      "Play a cinematic effect for dramatic moments: tremor (camera shake), surge (the lens splits + a deep hum), shockwave (both, with a shockwave across the void).",
+    parameters: z.object({ effect: z.enum(["tremor", "surge", "shockwave"]) }),
     handler: ({ effect }) => {
       castEffect(effect);
-      play(effect === "awaken" ? "arise" : effect === "surge" ? "portal" : "blade");
+      play(effect === "shockwave" ? "shockwave" : effect === "surge" ? "portal" : "blade");
       return `Effect "${effect}" cast.`;
     },
   }),
@@ -359,7 +284,7 @@ export const systemCommands: SystemCommand[] = [
       "Propose ONE action to the visitor in a System window they can accept, refuse or ignore. Accepting runs the action for them. OPTIONAL: call it only when a specific action clearly follows from what the visitor just asked and would show them something they have not seen (see THE VISITOR in your instructions); most replies need none. It returns at once — the visitor answers in their own time, and the App Context (guide.proposedThisVisit) shows how they answered. At most one per reply, after your other tools. Never propose what is already open, already seen, or already proposed during this visit.",
     parameters: z.object({
       message: z.string().min(8).max(170).describe("What the System proposes, one or two short sentences ending with a question, in the visitor's language. Only facts from the record."),
-      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "arise_all", "open_map"]).describe("What accepting does."),
+      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map"]).describe("What accepting does."),
       sector: SECTOR.optional().describe("For open_sector."),
       kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
       id: z.string().optional().describe("For inspect_entity: the exact id from the dossier."),
@@ -403,15 +328,6 @@ export const systemCommands: SystemCommand[] = [
         }),
       );
       return "Proposal shown in a System window. The visitor will answer in their own time. Finish your reply now: it must NOT contain another invitation, question or next step — the window is the proposal.";
-    },
-  }),
-  define({
-    name: "visitor_progress",
-    description: "Report the visitor's level, XP, SYNC, opened sectors, completed System quests and risen shadows.",
-    parameters: z.object({}),
-    handler: () => {
-      const s = store();
-      return `Visitor LV.${levelFor(s.xp)} (${s.xp} XP), SYNC ${syncPercent(s)}%. Sectors opened: ${s.visited.join(", ") || "none"}. Quests done: ${s.completed.join(", ") || "none"}. Shadows risen: ${s.risen.length}/${quests.length}.`;
     },
   }),
 ];

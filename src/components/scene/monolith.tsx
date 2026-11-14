@@ -79,7 +79,7 @@ function glowTexture() {
  * THE SYSTEM's body: an obsidian crystal broken into thirty pieces
  * (built in Blender, see scripts/assets/monolith.py). At rest it is
  * almost sealed and only the seams glow. It opens while the System
- * thinks, breathes with its voice, and bursts on ARISE.
+ * thinks, breathes with its voice, and opens while the System thinks.
  */
 export function Monolith() {
   const { scene } = useGLTF(MONOLITH_URL, false, false);
@@ -130,7 +130,6 @@ export function Monolith() {
     let want = 0.03 + Math.sin(t * 0.7) * 0.012;
     if (live.agentBusy) want = 0.3 + Math.sin(t * 4.2) * 0.05;
     want = Math.max(want, (live.voiceSurge - 1) * 0.075);
-    if (s.rising) want = 0.85;
     if (s.hovered === "monolith") want += 0.07;
     // opening is quick, sealing is slow and heavy
     view.open = damp(view.open, want, want > view.open ? 5 : 1.5, dt);

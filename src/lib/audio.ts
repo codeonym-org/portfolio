@@ -13,9 +13,8 @@ const SOUNDS = {
   open: "/audio/open.mp3",
   close: "/audio/close.mp3",
   confirm: "/audio/confirm.mp3",
-  levelup: "/audio/levelup.mp3",
   portal: "/audio/portal.mp3",
-  arise: "/audio/arise.mp3",
+  shockwave: "/audio/shockwave.mp3",
   system: "/audio/notify.mp3",
   coins: "/audio/coins.mp3",
   blade: "/audio/blade.mp3",
@@ -25,7 +24,7 @@ export type SoundId = keyof typeof SOUNDS;
 
 const VOLUME: Partial<Record<SoundId, number>> = {
   hover: 0.25,
-  arise: 0.9,
+  shockwave: 0.9,
   portal: 0.5,
   system: 0.4,
 };
@@ -118,15 +117,6 @@ export function startMusic() {
   void music.el.play().catch(() => {});
   music.gain.gain.cancelScheduledValues(ac.currentTime);
   music.gain.gain.setTargetAtTime(MUSIC_LEVEL, ac.currentTime, 1.6);
-}
-
-/** duck the music under big moments (ARISE, level up) */
-export function duckMusic(seconds = 2.5) {
-  if (!ctx || !music) return;
-  const g = music.gain.gain;
-  g.cancelScheduledValues(ctx.currentTime);
-  g.setTargetAtTime(MUSIC_DUCKED, ctx.currentTime, 0.1);
-  g.setTargetAtTime(MUSIC_LEVEL, ctx.currentTime + seconds, 0.8);
 }
 
 /** hold the music down while the System listens or speaks */

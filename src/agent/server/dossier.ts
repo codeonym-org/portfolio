@@ -5,7 +5,7 @@ import { player } from "@/config/player.config";
 import { guilds, findGuild } from "@/config/guilds.config";
 import { quests } from "@/config/quests.config";
 import { skillCategories, skills } from "@/config/skills.config";
-import { sectors, visitorQuests } from "@/config/world.config";
+import { sectors } from "@/config/world.config";
 
 /**
  * ── THE PLAYER DOSSIER ────────────────────────────────────────
@@ -88,8 +88,7 @@ function inventory(full: boolean) {
 
 function world() {
   const sectorLines = sectors.map((z) => `- ${z.id}: ${z.name} → ${z.section}. ${z.description}`).join("\n");
-  const questLines = visitorQuests.map((q) => `- ${q.id}: "${q.name}" — ${q.objective} (+${q.xp} XP)`).join("\n");
-  return `Sections of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}\nVisitor quests (the visitor earns XP by exploring):\n${questLines}`;
+  return `Sections of the record (each is a ring of shards around the Monolith and opens one window):\n${sectorLines}`;
 }
 
 export const dossierDigest = [
