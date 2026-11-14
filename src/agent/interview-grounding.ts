@@ -29,6 +29,14 @@ export function interviewGrounding(entries: readonly InterviewEntry[]): string {
   return [INTERVIEW_RULES, ...entries.map(interviewLine)].join("\n");
 }
 
+/** the questions with no answer on file, and the binding ones: what the replica must hand to the real owner */
+export function handedToTheOwner(entries: readonly InterviewEntry[]): string {
+  return entries
+    .filter((e) => e.status === "open" || e.binding)
+    .map((e) => `· ${e.question}`)
+    .join("\n");
+}
+
 /** what is wrong with the file, in words — empty when every entry is well formed */
 export function interviewProblems(entries: readonly InterviewEntry[]): string[] {
   const problems: string[] = [];

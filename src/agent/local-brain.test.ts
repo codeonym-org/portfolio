@@ -77,3 +77,17 @@ test("a sector word inside a project's name does not select that project", () =>
   assert.deepEqual(answerLocally("show me his skills", withDesign).actions, [{ name: "open_sector", args: { sector: "skills" } }]);
   assert.deepEqual(answerLocally("tell me about design-skills", withDesign).actions, [{ name: "inspect_entity", args: { kind: "quest", id: "design-skills" } }]);
 });
+
+test("plain commands in the second person open the matching section", () => {
+  assert.deepEqual(actions("Show me your projects"), [{ name: "open_sector", args: { sector: "projects" } }]);
+  assert.deepEqual(actions("Walk me through your experience"), [{ name: "open_sector", args: { sector: "experience" } }]);
+  assert.deepEqual(actions("Tell me about yourself"), [{ name: "open_sector", args: { sector: "status" } }]);
+  assert.deepEqual(actions("Why should I hire you?"), [{ name: "assemble_case", args: { title: "Why him" } }]);
+  assert.deepEqual(actions("How do I reach you?"), [{ name: "open_sector", args: { sector: "contact" } }]);
+});
+
+test("the local index does not speak as the owner", () => {
+  for (const q of ["Tell me about yourself", "Show me your projects", "hello", "Where are you based?", "what salary do you expect"]) {
+    assert.doesNotMatch(answerLocally(q, index).text, /\b(I|my|me)\b/, q);
+  }
+});

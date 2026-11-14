@@ -83,6 +83,7 @@ export const interview: InterviewEntry[] = [
   { id: "team-style", topic: "work", question: "How do you like to work in a team?", status: "open" },
   { id: "looking-for", topic: "motivation", question: "What are you looking for in your next role?", status: "open" },
   { id: "next-years", topic: "motivation", question: "Where do you want to be in a few years?", status: "open" },
+  { id: "why-new-role", topic: "motivation", question: "Why are you looking for a new role, or why would you leave your current one?", status: "open" },
   { id: "open-to-offers", topic: "practical", question: "Are you open to new opportunities right now?", status: "open" },
   { id: "remote-relocation", topic: "practical", question: "Would you work remotely, or relocate?", status: "open" },
   { id: "contract", topic: "terms", question: "Which kinds of contract do you take: employment, freelance, part time?", status: "open", binding: true },
