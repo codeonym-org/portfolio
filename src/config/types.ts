@@ -266,3 +266,23 @@ export interface SectorDef {
   /** agent-facing routing hint (exposed through src/agent) */
   description: string;
 }
+
+/** what an interview answer is about */
+export type InterviewTopic = "motivation" | "work" | "strengths" | "practical" | "terms";
+
+/**
+ * One HR question and the owner's answer to it.
+ *  · `confirmed`   — his own words, approved by him in a grilling session
+ *  · `from-record` — drafted from what the record already states; waits for his word
+ *  · `open`        — asked, not answered yet: the agent does not answer it
+ */
+export interface InterviewEntry {
+  id: string;
+  topic: InterviewTopic;
+  question: string;
+  status: "confirmed" | "from-record" | "open";
+  /** first person, as he would say it — absent while the entry is `open` */
+  answer?: string;
+  /** a salary, a start date, an agreement: only the real owner settles it, whatever is on file */
+  binding?: boolean;
+}

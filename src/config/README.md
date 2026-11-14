@@ -6,7 +6,7 @@ agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 
 | File                  | What it controls                                                        |
 | --------------------- | ----------------------------------------------------------------------- |
-| `world.config.ts`     | The six sectors (names, sections, tones), visitor quests + XP, boot and HUD copy, the System's greeting and suggestions, credits |
+| `world.config.ts`     | The six sectors (names, sections, tones), boot and HUD copy, the System's greeting and suggestions, credits |
 | `player.config.ts`    | Identity, what he is known for, strengths, links, languages, profile     |
 | `quests.config.ts`    | Projects — each one is a lit shard near the Monolith; each names its organisation |
 | `gates.config.ts`     | The gates: named, ranked ways into the record, open or sealed (`/gates`) |
@@ -14,6 +14,7 @@ agent's grounding, `/record` and `/llms.txt` are all rendered from them.
 | `skills.config.ts`    | Skill sets, categories (sections of the Skills window), skills          |
 | `inventory.config.ts` | Documents, degrees and interests; `unlocks` = `"cv"` or a sector id      |
 | `chronicle.config.ts` | Experience timeline and education                                       |
+| `interview.config.ts` | His answers to common HR questions, for the agent; filled by grilling sessions with him |
 | `system.config.ts`    | Version, vitals, error / 404 screen copy                                |
 | `types.ts`            | Shared shapes — TypeScript will flag any invalid edit                   |
 
