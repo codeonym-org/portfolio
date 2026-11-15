@@ -20,18 +20,18 @@ import { useVoiceStore, voiceLive } from "@/components/agent/voice/voice-store";
 import { useWorldStore } from "@/store/world-store";
 import { headUniforms, JAW, rigHead } from "./head-shader";
 import { mouthLive, useInterview } from "./interview-store";
-import { Furniture, prepare, Room, ROOM } from "./office-room";
+import { Office, prepare } from "./office-world";
 
 /**
  * ── THE INTERVIEW ROOM ────────────────────────────────────────
- * An office in the evening. He sits behind a desk (a laptop and his
+ * A bright office. He sits behind a desk (a laptop and his
  * papers on it) facing the stranger, who sits where the camera is,
  * like the panel in a real interview. He is one Rodin model made from
  * a photo of him seated, with a small rig (hips, spine, neck, head).
  * All his movement is by hand: breathing, a slow sway, his gaze
  * following the stranger, glances at the laptop, leaning in to
  * listen, nods as he speaks, blinks, and the jaw with his voice.
- * The room and its furniture are in office-room.
+ * The room and its furniture are in office-world.
  */
 
 const MODELS = { avatar: "/models/office/avatar.glb" };
@@ -72,7 +72,7 @@ function Avatar() {
   const motion = useRef({ yaw: 0, pitch: 0, roll: 0, lean: 0 });
 
   useEffect(() => {
-    prepare(gltf.scene, true);
+    prepare(gltf.scene);
     const body = gltf.scene.getObjectByName("body") as Mesh | undefined;
     const material = body?.material as MeshStandardMaterial | undefined;
     if (body) body.frustumCulled = false;
@@ -235,8 +235,8 @@ export default function OfficeStage() {
       camera={{ fov: 34, near: 0.05, far: 30, position: [0, 0.45, 2.4] }}
       gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }}
     >
-      <color attach="background" args={["#14110f"]} />
-      <hemisphereLight args={["#fff3e6", "#3a2c22", 0.9]} />
+      <color attach="background" args={["#9fb0b1"]} />
+      <hemisphereLight args={["#ffffff", "#8d9794", 1.5]} />
       {/* the key: a large soft lamp in front of him, a little above his eyes, from the stranger's left */}
       <spotLight
         position={[-1.1, 1.15, 2.6]}
@@ -254,18 +254,17 @@ export default function OfficeStage() {
       />
       {/* the fill, from the other side, so no half of his face is dark */}
       <pointLight position={[1.3, 0.7, 2.2]} intensity={3.2} distance={6} decay={1.5} color="#ffeede" />
-      {/* the dusk from the window behind him, as a faint cool rim */}
-      <directionalLight position={[1.6, 0.9, -1.4]} intensity={0.5} color="#a9c0ff" />
-      {/* the room's own lamps: one over the shelves, one on the ceiling */}
-      <pointLight position={[-1.25, 1.55, ROOM.back + 0.4]} intensity={2} distance={3.5} decay={1.8} color="#ffd9ae" />
-      <pointLight position={[0.4, 1.8, -0.4]} intensity={3} distance={5} decay={1.6} color="#fff0e0" />
+      {/* daylight from a window out of frame, as a faint cool rim behind him */}
+      <directionalLight position={[1.6, 0.9, -1.4]} intensity={0.5} color="#dbe6ff" />
+      {/* the ceiling lights: one over the far wall, one over him */}
+      <pointLight position={[-0.6, 1.8, -2]} intensity={5} distance={6} decay={1.6} color="#ffffff" />
+      <pointLight position={[0.4, 1.8, -0.4]} intensity={3} distance={5} decay={1.6} color="#fff6ec" />
       <Environment resolution={128} environmentIntensity={0.7}>
         <Lightformer form="rect" intensity={2} color="#ffe6cc" position={[0, 2.5, 3]} scale={[4, 1.2, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#7f9fd8" position={[1.4, 0.6, -3]} scale={[1.5, 1.6, 1]} />
       </Environment>
-      <Room />
       <Suspense fallback={null}>
-        <Furniture />
+        <Office />
         <Avatar />
       </Suspense>
       <Framing />
