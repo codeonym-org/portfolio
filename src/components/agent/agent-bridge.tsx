@@ -11,6 +11,7 @@ import { parseVoiceTask } from "@/agent/voice/protocol";
 import { isSectorId, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { caseSchema } from "@/record/case-file";
+import { useHistory } from "@/store/history-store";
 import { compactArgs, useSession, type Card, type Turn } from "@/store/session-store";
 import { live, pulse } from "@/store/world-store";
 
@@ -22,6 +23,10 @@ import { live, pulse } from "@/store/world-store";
  * with its arguments and how long it took). Also registers the
  * agent as the session's sender; if a run fails, the same message is
  * answered by the local index instead.
+ *
+ * The conversation is the one the history store calls current: the
+ * agent runs under its thread id, starts from its saved messages, and
+ * everything said is written back into it (`store/history-store.ts`).
  */
 
 function textOf(m: Message): string {
@@ -101,6 +106,9 @@ function toTurns(messages: Message[], settled: Set<string>, running: boolean): T
   return turns;
 }
 
+/** how long a message waits for the runtime to hand over the real agent */
+const READY_WAIT_MS = 8000;
+
 /** how long a run may go without a single new token or tool call before the local index takes over */
 const STALL_MS = 25_000;
 
@@ -128,15 +136,17 @@ function stalled(agent: { messages: unknown[]; isRunning: boolean }, stop: () =>
 }
 
 export function AgentBridge() {
-  const { agent } = useAgent({ agentId: SYSTEM_AGENT_ID });
+  const { agent, isReady } = useAgent({ agentId: SYSTEM_AGENT_ID });
   const { copilotkit } = useCopilotKit();
-  const refs = useRef({ agent, copilotkit });
+  const refs = useRef({ agent, copilotkit, isReady });
   const seen = useRef(new Set<string>());
+  /** tool calls of a conversation that was resumed: they ran in the past, they are not traced again */
+  const resumed = useRef(new Set<string>());
   const runs = useRef(0);
 
   useEffect(() => {
-    refs.current = { agent, copilotkit };
-  }, [agent, copilotkit]);
+    refs.current = { agent, copilotkit, isReady };
+  }, [agent, copilotkit, isReady]);
 
   const messages = agent.messages as Message[];
   const running = agent.isRunning;
@@ -146,12 +156,20 @@ export function AgentBridge() {
     const session = useSession.getState();
     session.set({
       agentSend: async (text) => {
-        const { agent, copilotkit } = refs.current;
         play("confirm", { volume: 0.3 });
-        useSession.getState().set({ notice: null });
-        const before = agent.messages.length;
-        agent.addMessage({ id: crypto.randomUUID(), role: "user", content: text });
+        useSession.getState().set({ notice: null, running: true });
+        // the question shows at once
+        const question = { id: crypto.randomUUID(), role: "user" as const, content: text };
+        refs.current.agent.addMessage(question);
+        // until the runtime has answered, the agent is a stand-in: a run on it goes nowhere.
+        // The real one is given the conversation when it comes, the question with it.
+        const deadline = Date.now() + READY_WAIT_MS;
+        while (!refs.current.isReady && Date.now() < deadline) await new Promise((r) => setTimeout(r, 120));
+        const { agent, copilotkit } = refs.current;
+        if (!agent.messages.some((m) => m.id === question.id)) agent.addMessage(question);
+        const before = agent.messages.findIndex((m) => m.id === question.id);
         try {
+          if (!refs.current.isReady) throw new Error("the runtime did not answer");
           await Promise.race([copilotkit.runAgent({ agent }), stalled(agent, () => copilotkit.stopAgent({ agent }))]);
           const answered = (agent.messages as Message[]).slice(before + 1).some((m) => m.role === "assistant");
           if (!answered) throw new Error("the run ended without a reply");
@@ -166,6 +184,40 @@ export function AgentBridge() {
     });
     return () => useSession.getState().set({ agentSend: null, agentStop: null });
   }, []);
+
+  // the conversation in progress: taken from the history when it changes, written back as it goes on.
+  // `agent` is a stand-in until the runtime has answered, then the real one: both are given the conversation.
+  useEffect(() => {
+    useHistory.getState().load();
+    let applying = false;
+    const apply = () => {
+      const { current, conversations } = useHistory.getState();
+      const saved = conversations.find((c) => c.id === current);
+      const messages = (saved?.messages ?? []) as Message[];
+      applying = true;
+      try {
+        if (agent.isRunning) void copilotkit.stopAgent({ agent });
+        agent.threadId = current;
+        resumed.current = new Set(messages.flatMap((m) => ((m as { toolCalls?: ToolCall[] }).toolCalls ?? []).map((c) => c.id)));
+        useSession.getState().set({ turns: saved?.turns ?? [], trace: [] });
+        agent.setMessages(messages);
+      } finally {
+        applying = false;
+      }
+    };
+    apply();
+    const stopHistory = useHistory.subscribe((s, prev) => {
+      if (s.current !== prev.current) apply();
+    });
+    const stopSession = useSession.subscribe((s, prev) => {
+      if (applying || s.turns === prev.turns) return;
+      useHistory.getState().record({ turns: s.turns, messages: agent.messages });
+    });
+    return () => {
+      stopHistory();
+      stopSession();
+    };
+  }, [agent, copilotkit]);
 
   // the run itself is a step of the trace
   useEffect(() => {
@@ -188,6 +240,7 @@ export function AgentBridge() {
     for (const m of messages) {
       if (m.role !== "assistant") continue;
       for (const call of (m as { toolCalls?: ToolCall[] }).toolCalls ?? []) {
+        if (resumed.current.has(call.id)) continue;
         const args = parseArgs(call);
         const result = results.get(call.id);
         const failed = result !== undefined && /^(Invalid|Unknown command|No \w+ "|Command ".*" failed)/.test(result);

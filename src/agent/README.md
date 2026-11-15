@@ -112,7 +112,10 @@ Pure modules have unit tests: `pnpm test`.
 | `interview-grounding.ts` | the interview file (`src/config/interview.config.ts`) as grounding: each HR question, its answer and its state |
 | `server/tools.ts` | backend tools (`consult_archive`) |
 | `server/model.ts` | OpenRouter model + per-request model id |
-| `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads |
+| `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads, none kept past seven days |
+| `retention.ts` | the retention period (seven days from the first message) and which threads a store must forget |
+| `history.ts` | the conversations a browser keeps: what is saved, what is dropped, which one is resumed |
+| `../store/history-store.ts` | those conversations in `localStorage`, and the thread in progress |
 | `server/in-process-client.ts` | LangGraph SDK client served by the local graph |
 | `server/system-agent.ts` | AG-UI agents (text + voice); route app context into CopilotKit state |
 | `server/middleware.ts` | history window + app-context note (shared by both agents) |
@@ -120,6 +123,19 @@ Pure modules have unit tests: `pnpm test`.
 | `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut, the disclosure on the first reply only |
 | `../components/agent/` | provider, frontend tools, the bridge to the session store |
 | `../store/session-store.ts` | turns, cards and the run trace the interface renders |
+
+## Conversations and retention
+
+Nothing is stored in a database. On the server a conversation lives in the process's memory: the runner's threads
+(`InMemoryAgentRunner`) and the graphs' checkpoints (`BoundedMemorySaver`). Both are capped at 300 threads and both
+forget a thread seven days after its first message (`retention.ts`; the runner is swept from the route, at most every
+ten minutes). A serverless instance is recycled long before that, so the server's memory is a cache, not the record.
+
+The record is the visitor's own browser: `store/history-store.ts` saves each conversation in `localStorage` under its
+thread id (the turns shown, the text agent's AG-UI messages, what was said aloud) and drops it seven days after its
+first message. The link (`components/agent/agent-bridge.tsx`) runs the agent under the current thread id and starts it
+from the saved messages, and AG-UI sends the whole message list with every run, so a thread the server has forgotten
+continues with its context. The voice agent starts over in a resumed conversation; the text agent holds what was said.
 
 ## Environment
 

@@ -1,33 +1,35 @@
 import "server-only";
 import { MemorySaver, type Checkpoint, type CheckpointMetadata } from "@langchain/langgraph";
 import type { RunnableConfig } from "@langchain/core/runnables";
+import { Lifetimes, RETENTION_MS } from "../retention";
 
 /**
  * ── BOUNDED MEMORY ────────────────────────────────────────────
  * MemorySaver keeps every checkpoint of every thread for the life of
  * the process — on a warm serverless instance that only grows. This
- * one keeps the most recently written `maxThreads` conversations and
- * forgets the oldest; a forgotten visitor simply starts a fresh chat.
+ * one keeps the most recently written `maxThreads` conversations, and
+ * none for longer than the retention period (seven days from its
+ * first message). A forgotten visitor's browser still holds the
+ * conversation and sends it again with the next message.
  */
 export class BoundedMemorySaver extends MemorySaver {
-  private readonly recent = new Map<string, true>();
+  private readonly lives: Lifetimes;
 
-  constructor(private readonly maxThreads: number) {
+  constructor(maxThreads: number, maxAgeMs = RETENTION_MS) {
     super();
+    this.lives = new Lifetimes(maxThreads, maxAgeMs);
+  }
+
+  async getTuple(config: RunnableConfig) {
+    const threadId = config.configurable?.thread_id as string | undefined;
+    // read at the start of a run: a conversation past its time begins again
+    if (threadId && this.lives.expire(threadId, Date.now())) await this.deleteThread(threadId);
+    return super.getTuple(config);
   }
 
   async put(config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata) {
     const threadId = config.configurable?.thread_id as string | undefined;
-    if (threadId) {
-      // re-insert so Map order tracks recency
-      this.recent.delete(threadId);
-      this.recent.set(threadId, true);
-      while (this.recent.size > this.maxThreads) {
-        const oldest = this.recent.keys().next().value as string;
-        this.recent.delete(oldest);
-        await this.deleteThread(oldest);
-      }
-    }
+    if (threadId) for (const gone of this.lives.touch(threadId, Date.now())) await this.deleteThread(gone);
     return super.put(config, checkpoint, metadata);
   }
 }

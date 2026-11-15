@@ -23,6 +23,8 @@ export interface Turn {
   cards?: Card[];
   /** spoken, or handed over by the voice */
   voice?: boolean;
+  /** when it was first seen (ms since the epoch); set by the store */
+  at?: number;
 }
 
 export interface TraceStep {
@@ -53,7 +55,7 @@ interface SessionState {
   agentSend: Sender | null;
   agentStop: (() => void) | null;
 
-  set: (patch: Partial<Pick<SessionState, "turns" | "running" | "online" | "notice" | "mode" | "agentSend" | "agentStop">>) => void;
+  set: (patch: Partial<Pick<SessionState, "turns" | "trace" | "running" | "online" | "notice" | "mode" | "agentSend" | "agentStop">>) => void;
   /** add turns, or replace the ones already there (matched by id) — order of first appearance is kept */
   upsertTurns: (turns: Turn[]) => void;
   /** start or update a step; steps are keyed by id */
@@ -79,9 +81,9 @@ export const useSession = create<SessionState>((set) => ({
       let changed = false;
       for (const turn of incoming) {
         const i = turns.findIndex((t) => t.id === turn.id);
-        if (i === -1) turns.push(turn);
+        if (i === -1) turns.push({ ...turn, at: turn.at ?? Date.now() });
         else if (turns[i].text === turn.text && (turns[i].cards?.length ?? 0) === (turn.cards?.length ?? 0)) continue;
-        else turns[i] = turn;
+        else turns[i] = { ...turn, at: turns[i].at };
         changed = true;
       }
       return changed ? { turns } : s;

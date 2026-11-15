@@ -9,6 +9,7 @@ import { formatTaskReports, formatVoiceTask, parseTaskEvent, TASK_EVENT, type Ta
 import { TaskQueue, type TaskRecord } from "@/agent/voice/task-queue";
 import { world } from "@/config/world.config";
 import { holdMusicDuck, play } from "@/lib/audio";
+import { useHistory } from "@/store/history-store";
 import { useSession } from "@/store/session-store";
 import { focusLabel, live, useWorldStore } from "@/store/world-store";
 import { HoldRecorder, canRecord, MAX_MS } from "./recorder";
@@ -281,6 +282,20 @@ export function VoiceLink() {
     voiceControl.press = () => void press();
     voiceControl.release = () => void release();
 
+    /* ── another conversation: the voice starts over in it (the text agent holds what was said there) ── */
+    const stopHistory = useHistory.subscribe((s, prev) => {
+      if (s.current === prev.current) return;
+      turn++;
+      speaker.stop();
+      if (voiceRunning) refs.current.voice.abortRun();
+      queue.clear();
+      reports.length = 0;
+      refs.current.voice.setMessages([]);
+      refs.current.voice.threadId = crypto.randomUUID();
+      store({ heard: "", reply: "", tasks: [], notice: null });
+      setPhase("idle");
+    });
+
     /* ── hold V (never while typing) ── */
     const typing = (e: KeyboardEvent) => !!(e.target as HTMLElement | null)?.closest("input, textarea, [contenteditable=true]");
     const onDown = (e: KeyboardEvent) => {
@@ -312,6 +327,7 @@ export function VoiceLink() {
     store({ available: true });
 
     return () => {
+      stopHistory();
       disposed = true;
       cancelAnimationFrame(raf);
       window.clearTimeout(holdTimer);

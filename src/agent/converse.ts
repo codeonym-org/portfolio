@@ -64,7 +64,8 @@ const YES = /^(yes|yeah|yep|ok|okay|sure|go|do it|please|accept|oui|d'accord|vas
 /** answer from the local index, running its commands the way the agent would — visibly, one by one */
 export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
   const session = useSession.getState();
-  const id = `local-${++localSeq}`;
+  // unique across visits: a conversation resumed later keeps the ids of its earlier turns
+  const id = `local-${Date.now().toString(36)}-${++localSeq}`;
   if (opts.echo !== false) session.upsertTurns([{ id: `${id}-q`, role: "visitor", text }]);
   session.set({ running: true });
   live.agentBusy = true;

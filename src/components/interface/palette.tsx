@@ -11,6 +11,7 @@ import { sectorById, sectors, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { recordNodes } from "@/record/nodes";
+import { useHistory } from "@/store/history-store";
 import { compactArgs, useSession } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
 
@@ -65,6 +66,15 @@ function buildEntries(): Entry[] {
       search: `${a.label} ${a.search}`.toLowerCase(),
       run: () => runCommand(a.name, a.args),
     })),
+    {
+      id: "action:new-conversation",
+      label: "Start a new conversation",
+      sub: "the one in progress is kept seven days",
+      group: "Commands",
+      color: toneColor.system,
+      search: "start a new conversation fresh reset clear chat history thread again",
+      run: () => useHistory.getState().fresh(),
+    },
     ...recordNodes
       .filter((n) => n.kind !== "player")
       .map((n) => ({

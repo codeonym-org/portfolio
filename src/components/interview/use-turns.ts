@@ -2,15 +2,14 @@
 
 import { create } from "zustand";
 import { useSession } from "@/store/session-store";
-import { buildTurns, newMemory, type InterviewTurn } from "./turns";
+import { buildTurns, type InterviewTurn } from "./turns";
 import { useVoiceLog } from "./voice-log";
 
-const memory = newMemory();
 const useTurnList = create<{ turns: InterviewTurn[] }>(() => ({ turns: [] }));
 
 /** keep the list of turns up to date for as long as the interview is open; returns how to stop */
 export function followTurns() {
-  const sync = () => useTurnList.setState({ turns: buildTurns(useSession.getState().turns, useVoiceLog.getState().log, memory, Date.now()) });
+  const sync = () => useTurnList.setState({ turns: buildTurns(useSession.getState().turns, useVoiceLog.getState().log) });
   sync();
   const stopSession = useSession.subscribe((s, prev) => {
     if (s.turns !== prev.turns) sync();
