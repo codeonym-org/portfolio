@@ -9,6 +9,7 @@ import { world } from "@/config/world.config";
 import { preloadSounds } from "@/lib/audio";
 import { useWorldStore } from "@/store/world-store";
 import { AirInput } from "./air-input";
+import { BusinessCard } from "./business-card";
 import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
 import { TopBar } from "./top-bar";
@@ -96,6 +97,7 @@ export function Interview() {
       <TurnCanvas />
       <TopBar />
       <Transcript />
+      <BusinessCard />
       <AnimatePresence mode="wait">{mode === "text" ? <AirInput key="text" /> : <MicButton key="audio" />}</AnimatePresence>
       <CvModal />
       {mapOpen && <HoloMap />}

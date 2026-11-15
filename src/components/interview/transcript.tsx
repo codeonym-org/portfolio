@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, ChevronUp, Keyboard, Mic, X } from "lucide-react";
-import { converse } from "@/agent/converse";
 import { Markdown } from "@/components/agent/markdown";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/store/session-store";
 import { useInterview } from "./interview-store";
-import { nextQuestions, type InterviewTurn } from "./turns";
+import type { InterviewTurn } from "./turns";
 import { useTurns } from "./use-turns";
 
 const copy = world.interview;
@@ -22,9 +20,7 @@ const DRIFT = 110;
 const clock = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 const since = (ms: number) => `+${String(Math.floor(ms / 60000)).padStart(2, "0")}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 
-function TurnCard({ turn, n, start, front, last, ask }: { turn: InterviewTurn; n: number; start: number; front: boolean; last: boolean; ask: (q: string) => void }) {
-  const turns = useTurns();
-  const next = last && front ? nextQuestions(turns, world.agent.suggestions, 3) : [];
+function TurnCard({ turn, n, start, front }: { turn: InterviewTurn; n: number; start: number; front: boolean }) {
   const Icon = turn.spoken ? Mic : Keyboard;
   return (
     <div className="tx-card px-5 pt-3.5 pb-4">
@@ -47,18 +43,6 @@ function TurnCard({ turn, n, start, front, last, ask }: { turn: InterviewTurn; n
           ))}
         </div>
       )}
-      {next.length > 0 && (
-        <div className="mt-4 border-t border-white/10 pt-3">
-          <p className="air-label mb-2 text-[8px]">{copy.next}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {next.map((q) => (
-              <button key={q} type="button" onClick={() => ask(q)} className="rounded-full border border-dashed border-[oklch(0.8_0.1_215/0.5)] px-3 py-1 text-[12.5px] text-white/85 transition hover:bg-[oklch(0.8_0.1_215/0.15)]">
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -70,12 +54,10 @@ function TurnCard({ turn, n, start, front, last, ask }: { turn: InterviewTurn; n
  * you are reading; older turns hang behind it, each further back and
  * higher, drifting to one side then the other. The wheel, the arrow
  * keys, a swipe or the rail of time at the bottom move through them.
- * From the last turn you can ask what comes next.
  */
 export function Transcript() {
   const open = useInterview((s) => s.transcript);
   const toggle = useInterview((s) => s.toggleTranscript);
-  const running = useSession((s) => s.running);
   const turns = useTurns();
   const [chosen, setChosen] = useState<number | null>(null);
   const wheel = useRef(0);
@@ -94,6 +76,7 @@ export function Transcript() {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      if (useInterview.getState().card) return;
       if (e.key === "Escape") close();
       else if (e.key === "ArrowUp" || e.key === "ArrowLeft") move(-1);
       else if (e.key === "ArrowDown" || e.key === "ArrowRight") move(1);
@@ -101,14 +84,6 @@ export function Transcript() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
-
-  const ask = (q: string) => {
-    if (running) return;
-    play("confirm", { volume: 0.35 });
-    setChosen(null);
-    toggle();
-    void converse(q);
-  };
 
   const start = turns[0]?.at ?? 0;
 
@@ -178,7 +153,7 @@ export function Transcript() {
                   transition={{ type: "spring", stiffness: 170, damping: 24, mass: 0.9 }}
                   onClick={back > 0 ? () => setChosen(i) : undefined}
                 >
-                  <TurnCard turn={turn} n={i + 1} start={start} front={back === 0} last={i === last} ask={ask} />
+                  <TurnCard turn={turn} n={i + 1} start={start} front={back === 0} />
                 </motion.div>
               );
             })}

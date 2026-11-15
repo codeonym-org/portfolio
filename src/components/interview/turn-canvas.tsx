@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { Check, LoaderCircle, X } from "lucide-react";
-import { converse } from "@/agent/converse";
 import { executeSystemCommand } from "@/agent/system-commands";
 import type { TaskRecord } from "@/agent/voice/task-queue";
 import { Markdown } from "@/components/agent/markdown";
@@ -23,7 +22,6 @@ import { useWorldStore, type SystemPrompt } from "@/store/world-store";
 import { AirWindow } from "./air-window";
 import { useInterview } from "./interview-store";
 import { TurnPreview } from "./turn-preview";
-import { nextQuestions } from "./turns";
 import { useTurns } from "./use-turns";
 
 const copy = world.interview;
@@ -49,7 +47,7 @@ const TINT = {
 /** a finished tool call or task stays this long, then leaves */
 const SETTLED_MS = 2600;
 /** what one turn may put on the canvas */
-const KEEP = { cards: 2, events: 5, next: 3 };
+const KEEP = { cards: 2, events: 5 };
 /** how far the windows stand from his face */
 const BESIDE = 28;
 
@@ -156,33 +154,11 @@ function QuestionBody({ prompt }: { prompt: SystemPrompt }) {
   );
 }
 
-/** what he could be asked next: chips to press */
-function Next({ questions, ask }: { questions: string[]; ask: (q: string) => void }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {questions.map((q, i) => (
-        <motion.button
-          key={q}
-          type="button"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0, transition: { delay: 0.1 + i * 0.08 } }}
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => ask(q)}
-          className="rounded-full border border-dashed border-white/25 bg-white/5 px-3 py-1 text-[12.5px] text-white/80 transition-colors hover:border-white/50 hover:bg-white/12 hover:text-white"
-        >
-          {q}
-        </motion.button>
-      ))}
-    </div>
-  );
-}
-
 /**
  * ── THE TURN ON THE CANVAS ────────────────────────────────────
  * Only the turn in progress is on the canvas, and everything has its
  * place, so nothing collides: the question at the bottom centre,
- * above the input; his words and what to ask next on his left; what
+ * above the input; his words on his left; what
  * he shows and opens on his right; what he is doing (tool calls,
  * tasks, notes) as a row of chips under the top bar. Every window
  * can be moved by its top and put away with its cross. When the next
@@ -237,8 +213,8 @@ export function TurnCanvas() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       const s = useWorldStore.getState();
-      if (s.mapOpen || s.cvOpen || useInterview.getState().transcript) return;
-      if (active) setHidden((h) => new Set([...h, `q:${active.id}`, `a:${active.id}`, `next:${active.id}`, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
+      if (s.mapOpen || s.cvOpen || useInterview.getState().transcript || useInterview.getState().card) return;
+      if (active) setHidden((h) => new Set([...h, `q:${active.id}`, `a:${active.id}`, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
       if (s.sector || s.caseFile || s.brief) s.closeFocus();
       if (s.inspect) s.setInspect(null);
       if (s.prompt) s.ignore();
@@ -252,12 +228,6 @@ export function TurnCanvas() {
   const live = !!active && (active.spoken ? phase === "decoding" || phase === "thinking" || phase === "speaking" : running);
   const wide = viewport.w >= 900 && viewport.w / viewport.h >= 0.85;
   const head = face ?? { x: viewport.w / 2 - 110, y: viewport.h * 0.2, w: 220, h: 240 };
-  const questions = nextQuestions(turns, world.agent.suggestions, KEEP.next);
-  const ask = (q: string) => {
-    if (running) return;
-    play("confirm", { volume: 0.35 });
-    void converse(q);
-  };
   /** the room the input takes at the bottom */
   const floor = mode === "text" ? 128 : 236;
 
@@ -277,20 +247,12 @@ export function TurnCanvas() {
     ...(notice ? [{ id: `notice:${notice}`, node: <Chip settled after={6000} leave={() => hide(`notice:${notice}`)}><span className="truncate font-sans text-[12px]">{notice}</span></Chip> }] : []),
   ].filter((e) => shown(e.id));
 
-  /** his side: his words, then what to ask next */
+  /** his side: his words */
   const his: ReactNode[] = [];
   if (active && shown(`a:${active.id}`) && (active.him || live)) {
     his.push(
       <AirWindow key={`a:${active.id}`} layoutId={`a:${active.id}`} label={copy.panes.words} tint={TINT.him} movable={wide} onClose={() => hide(`a:${active.id}`)}>
         {active.him ? <Words id={active.id} text={active.him} live={live} /> : <Thinking />}
-      </AirWindow>,
-    );
-  }
-  const nextId = `next:${active?.id ?? "start"}`;
-  if (questions.length && shown(nextId) && (!active || (!!active.him && !live))) {
-    his.push(
-      <AirWindow key={nextId} label={active ? copy.next : copy.start} tint={TINT.next} small movable={wide} onClose={() => hide(nextId)}>
-        <Next questions={questions} ask={ask} />
       </AirWindow>,
     );
   }

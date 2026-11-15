@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, Keyboard, Mic, Waypoints } from "lucide-react";
+import { ArrowLeft, IdCard, Keyboard, Mic, Waypoints } from "lucide-react";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -17,14 +17,16 @@ const MODES: { id: InterviewMode; icon: typeof Mic }[] = [
 /**
  * ── THE TOP OF THE ROOM ───────────────────────────────────────
  * Always there: the way out on the left, the TEXT / AUDIO switch in
- * the middle (a thumb that slides to the side chosen), and the
- * transcript on the right.
+ * the middle (a thumb that slides to the side chosen), and his
+ * business card and the transcript on the right.
  */
 export function TopBar() {
   const mode = useInterview((s) => s.mode);
   const setMode = useInterview((s) => s.setMode);
   const transcript = useInterview((s) => s.transcript);
   const toggleTranscript = useInterview((s) => s.toggleTranscript);
+  const card = useInterview((s) => s.card);
+  const toggleCard = useInterview((s) => s.toggleCard);
 
   const choose = (next: InterviewMode) => {
     if (next === mode) return;
@@ -59,6 +61,7 @@ export function TopBar() {
             type="button"
             role="radio"
             aria-checked={mode === id}
+            aria-label={copy.modes[id]}
             onClick={() => choose(id)}
             className={cn(
               "relative flex h-full items-center gap-2 rounded-full px-3.5 font-display text-[10px] tracking-[0.3em] transition-colors outline-none focus-visible:ring-1 focus-visible:ring-system sm:px-5",
@@ -75,26 +78,43 @@ export function TopBar() {
             <motion.span className="relative" animate={{ rotate: mode === id ? [0, -14, 10, 0] : 0, scale: mode === id ? 1.1 : 1 }} transition={{ duration: 0.45 }}>
               <Icon className="size-3.5" />
             </motion.span>
-            <span className="relative">{copy.modes[id]}</span>
+            <span className="relative hidden min-[480px]:inline">{copy.modes[id]}</span>
           </button>
         ))}
       </div>
 
-      <button
-        type="button"
-        aria-pressed={transcript}
-        aria-label={copy.transcript}
-        title={copy.transcript}
-        onClick={() => {
-          play(transcript ? "close" : "click", { volume: 0.4 });
-          toggleTranscript();
-        }}
-        className={cn("air pointer-events-auto flex h-11 items-center gap-2 !rounded-full px-3.5 transition sm:px-4", transcript ? "text-white" : "text-white/75 hover:text-white")}
-        style={{ ["--air-tint" as string]: "oklch(0.74 0.17 300)" }}
-      >
-        <Waypoints className={cn("size-4 transition-transform", transcript && "rotate-90")} />
-        <span className="hidden font-display text-[10px] tracking-[0.3em] sm:inline">{copy.transcript.toUpperCase()}</span>
-      </button>
+      <div className="pointer-events-none flex items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={card}
+          aria-label={copy.card.label}
+          title={copy.card.label}
+          onClick={() => {
+            play("click", { volume: 0.4 });
+            toggleCard();
+          }}
+          className="air pointer-events-auto flex h-11 items-center gap-2 !rounded-full px-3.5 text-white/75 transition hover:text-white lg:px-4"
+          style={{ ["--air-tint" as string]: "oklch(0.8 0.14 160)" }}
+        >
+          <IdCard className="size-4" />
+          <span className="hidden font-display text-[10px] tracking-[0.3em] lg:inline">{copy.card.open.toUpperCase()}</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={transcript}
+          aria-label={copy.transcript}
+          title={copy.transcript}
+          onClick={() => {
+            play(transcript ? "close" : "click", { volume: 0.4 });
+            toggleTranscript();
+          }}
+          className={cn("air pointer-events-auto flex h-11 items-center gap-2 !rounded-full px-3.5 transition lg:px-4", transcript ? "text-white" : "text-white/75 hover:text-white")}
+          style={{ ["--air-tint" as string]: "oklch(0.74 0.17 300)" }}
+        >
+          <Waypoints className={cn("size-4 transition-transform", transcript && "rotate-90")} />
+          <span className="hidden font-display text-[10px] tracking-[0.3em] lg:inline">{copy.transcript.toUpperCase()}</span>
+        </button>
+      </div>
     </motion.nav>
   );
 }
