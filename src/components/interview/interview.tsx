@@ -7,13 +7,15 @@ import { useAgentContext } from "@copilotkit/react-core/v2";
 import { CvModal } from "@/components/interface/inspect";
 import { world } from "@/config/world.config";
 import { preloadSounds } from "@/lib/audio";
+import { useHistory } from "@/store/history-store";
+import { useSession } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
 import { AirInput } from "./air-input";
 import { BusinessCard } from "./business-card";
 import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
+import { SpaceTime } from "./space-time";
 import { TopBar } from "./top-bar";
-import { Transcript } from "./transcript";
 import { TurnCanvas } from "./turn-canvas";
 import { followTurns } from "./use-turns";
 import { followVoice } from "./voice-log";
@@ -62,9 +64,11 @@ function Arrival() {
  * way out, the TEXT / AUDIO switch, the transcript), the input at the
  * bottom (a pane to type on, or a microphone to hold), the turn in
  * progress laid out around his face (`turn-canvas`), the turn before
- * kept small in a corner, and the transcript: a hologram of every
- * turn hanging in space. The same agent as the record answers,
- * through the same link.
+ * kept small in a corner, and the transcript: every turn on one
+ * thread through space-time, with the history of the conversations
+ * kept in this browser behind it (`space-time.tsx`). The same agent
+ * as the record answers, through the same link. A conversation left
+ * in progress is resumed.
  */
 export function Interview() {
   const mode = useInterview((s) => s.mode);
@@ -81,6 +85,10 @@ export function Interview() {
     window.addEventListener("keydown", preloadSounds, { once: true });
     const unfollowVoice = followVoice();
     const unfollowTurns = followTurns();
+    // a conversation left in progress comes back: say so
+    const { conversations, current } = useHistory.getState();
+    const resumed = conversations.find((c) => c.id === current);
+    if (resumed) useSession.getState().set({ notice: copy.space.resumed(new Date(resumed.updatedAt).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })) });
     return () => {
       unfollowVoice();
       unfollowTurns();
@@ -96,7 +104,7 @@ export function Interview() {
       <Arrival />
       <TurnCanvas />
       <TopBar />
-      <Transcript />
+      <SpaceTime />
       <BusinessCard />
       <AnimatePresence mode="wait">{mode === "text" ? <AirInput key="text" /> : <MicButton key="audio" />}</AnimatePresence>
       <CvModal />

@@ -7,6 +7,7 @@ import { create } from "zustand";
  */
 
 export type InterviewMode = "text" | "audio";
+export type SpaceLevel = "turns" | "time";
 
 export interface Rect {
   x: number;
@@ -31,9 +32,15 @@ interface InterviewState {
   face: Rect | null;
   /** the avatar has loaded */
   present: boolean;
-  /** the transcript window is open */
+  /** the space of the transcript is open */
   transcript: boolean;
+  /** what it shows: the turns of this conversation along their thread, or every conversation kept, along time */
+  level: SpaceLevel;
+  /** open the transcript on the thread, or close it */
   toggleTranscript: () => void;
+  /** open it on the history, or close it if the history is what is shown */
+  toggleHistory: () => void;
+  setLevel: (level: SpaceLevel) => void;
   setMode: (mode: InterviewMode) => void;
   set: (patch: Partial<Pick<InterviewState, "face" | "present">>) => void;
   /** read the saved mode, once on mount */
@@ -45,7 +52,10 @@ export const useInterview = create<InterviewState>((set) => ({
   face: null,
   present: false,
   transcript: false,
-  toggleTranscript: () => set((s) => ({ transcript: !s.transcript })),
+  level: "turns",
+  toggleTranscript: () => set((s) => ({ transcript: !s.transcript, level: "turns" })),
+  toggleHistory: () => set((s) => (s.transcript && s.level === "time" ? { transcript: false, level: "turns" } : { transcript: true, level: "time" })),
+  setLevel: (level) => set({ level }),
   setMode: (mode) => {
     try {
       window.localStorage.setItem(MODE_KEY, mode);

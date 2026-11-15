@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, IdCard, Keyboard, Mic, Waypoints } from "lucide-react";
+import { ArrowLeft, History, IdCard, Keyboard, Mic, Waypoints } from "lucide-react";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,8 @@ export function TopBar() {
   const setMode = useInterview((s) => s.setMode);
   const transcript = useInterview((s) => s.transcript);
   const toggleTranscript = useInterview((s) => s.toggleTranscript);
+  const toggleHistory = useInterview((s) => s.toggleHistory);
+  const level = useInterview((s) => s.level);
   const card = useWorldStore((s) => s.cardOpen);
 
   const choose = (next: InterviewMode) => {
@@ -98,6 +100,21 @@ export function TopBar() {
         >
           <IdCard className="size-4" />
           <span className="hidden font-display text-[10px] tracking-[0.3em] lg:inline">{copy.card.open.toUpperCase()}</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={transcript && level === "time"}
+          aria-label={copy.space.historyLabel}
+          title={copy.space.historyLabel}
+          onClick={() => {
+            play(transcript && level === "time" ? "close" : "click", { volume: 0.4 });
+            toggleHistory();
+          }}
+          className="air pointer-events-auto hidden h-11 items-center gap-2 !rounded-full px-3.5 text-white/75 transition hover:text-white sm:flex lg:px-4"
+          style={{ ["--air-tint" as string]: "oklch(0.86 0.1 215)" }}
+        >
+          <History className="size-4" />
+          <span className="hidden font-display text-[10px] tracking-[0.3em] xl:inline">{copy.space.history.toUpperCase()}</span>
         </button>
         <button
           type="button"
