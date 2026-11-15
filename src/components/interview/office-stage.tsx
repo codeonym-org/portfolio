@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF, useTexture } from "@react-three/drei";
 import {
-  CanvasTexture,
   Bone,
   Box3,
   Group,
@@ -21,6 +20,7 @@ import { useVoiceStore, voiceLive } from "@/components/agent/voice/voice-store";
 import { useWorldStore } from "@/store/world-store";
 import { headUniforms, JAW, rigHead } from "./head-shader";
 import { mouthLive, useInterview } from "./interview-store";
+import { Furniture, prepare, Room, ROOM } from "./office-room";
 
 /**
  * ── THE INTERVIEW ROOM ────────────────────────────────────────
@@ -31,14 +31,11 @@ import { mouthLive, useInterview } from "./interview-store";
  * All his movement is by hand: breathing, a slow sway, his gaze
  * following the stranger, glances at the laptop, leaning in to
  * listen, nods as he speaks, blinks, and the jaw with his voice.
- * The desk and chair are Rodin models too; the room is drawn here.
+ * The room and its furniture are in office-room.
  */
 
-const MODELS = { avatar: "/models/office/avatar.glb", face: "/models/office/face.webp", desk: "/models/office/desk.glb", chair: "/models/office/chair.glb" };
+const MODELS = { avatar: "/models/office/avatar.glb", face: "/models/office/face.webp" };
 const DRACO = "/draco/";
-
-/** the room, in metres: the floor, the far wall, the side walls, the ceiling */
-const ROOM = { floor: -0.74, back: -1.5, side: 2.4, ceiling: 1.95 };
 
 /** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
 const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const, chin: 0.04 };
@@ -59,20 +56,6 @@ function turn(bone: Object3D, world: Quaternion) {
 
 const euler = (pitch: number, yaw: number, roll: number) =>
   new Quaternion().setFromAxisAngle(Y, yaw).multiply(new Quaternion().setFromAxisAngle(X, pitch)).multiply(new Quaternion().setFromAxisAngle(Z, roll));
-
-function prepare(root: Object3D, shadows: boolean) {
-  root.traverse((o) => {
-    const mesh = o as Mesh;
-    if (!mesh.isMesh) return;
-    if (mesh.name.toLowerCase().startsWith("icosphere")) mesh.visible = false;
-    mesh.castShadow = shadows;
-    mesh.receiveShadow = true;
-    const m = mesh.material as MeshStandardMaterial;
-    if (m.map) m.map.colorSpace = SRGBColorSpace;
-    m.metalness = Math.min(m.metalness, 0.05);
-    m.envMapIntensity = 0.5;
-  });
-}
 
 function Avatar() {
   const gltf = useGLTF(MODELS.avatar, DRACO);
@@ -188,173 +171,6 @@ function Avatar() {
   );
 }
 
-function Props() {
-  const desk = useGLTF(MODELS.desk, DRACO);
-  const chair = useGLTF(MODELS.chair, DRACO);
-  useEffect(() => {
-    prepare(desk.scene, true);
-    prepare(chair.scene, true);
-  }, [desk.scene, chair.scene]);
-  return (
-    <>
-      {/* turned so the laptop and the papers face him; the stranger sees the back of the lid */}
-      <primitive object={desk.scene} position={[0.3, -0.227, 0.68]} rotation={[0, Math.PI, 0]} scale={0.79} />
-      <primitive object={chair.scene} position={[0, -0.265, -0.06]} scale={0.5} />
-      {/* the desk's front panel: the scan ends at his knees, and nobody needs to see that */}
-      <mesh position={[0.3, -0.37, 0.66]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 0.56, 0.025]} />
-        <meshStandardMaterial color="#a8926f" roughness={0.6} />
-      </mesh>
-    </>
-  );
-}
-
-/** books on a shelf: muted spines of different heights */
-function Shelf({ position }: { position: [number, number, number] }) {
-  const books = useMemo(() => {
-    const colors = ["#3b4a5a", "#6b4a3a", "#2f3a33", "#8a7a62", "#4a3b52", "#5a5a5a", "#7a3b32", "#2e2e36"];
-    let x = -0.42;
-    const out: { x: number; h: number; w: number; c: string; tilt: number }[] = [];
-    for (let i = 0; x < 0.42; i++) {
-      const w = 0.025 + ((i * 37) % 5) * 0.006;
-      const h = 0.2 + ((i * 53) % 7) * 0.012;
-      out.push({ x: x + w / 2, h, w, c: colors[i % colors.length], tilt: i % 9 === 8 ? 0.2 : 0 });
-      x += w + 0.003;
-    }
-    return out;
-  }, []);
-  return (
-    <group position={position}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[0.95, 0.025, 0.24]} />
-        <meshStandardMaterial color="#4a3a2e" roughness={0.6} />
-      </mesh>
-      {books.map((b, i) => (
-        <mesh key={i} position={[b.x, 0.0125 + b.h / 2, 0]} rotation={[0, 0, b.tilt]} castShadow>
-          <boxGeometry args={[b.w, b.h, 0.17]} />
-          <meshStandardMaterial color={b.c} roughness={0.8} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/** the office: a wood floor, warm walls, a window onto the dusk, a shelf, a print, a lamp's glow */
-/** the sky outside at dusk, and a far skyline: a small canvas */
-function useDusk() {
-  return useMemo(() => {
-    if (typeof document === "undefined") return null;
-    const c = document.createElement("canvas");
-    c.width = 128;
-    c.height = 160;
-    const g = c.getContext("2d")!;
-    const sky = g.createLinearGradient(0, 0, 0, 160);
-    sky.addColorStop(0, "#1d2b52");
-    sky.addColorStop(0.55, "#4a5f96");
-    sky.addColorStop(0.8, "#c98a6a");
-    sky.addColorStop(1, "#e7a774");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, 128, 160);
-    // the city, dark against the glow, a few lit windows
-    g.fillStyle = "#151826";
-    let x = 0;
-    for (let i = 0; x < 128; i++) {
-      const w = 8 + ((i * 29) % 13);
-      const h = 18 + ((i * 47) % 34);
-      g.fillRect(x, 160 - h, w, h);
-      g.fillStyle = "#f2c37a";
-      for (let k = 0; k < 4; k++) if ((i * 7 + k * 13) % 5 === 0) g.fillRect(x + 2 + ((k * 3) % (w - 3)), 160 - h + 4 + k * 6, 2, 2);
-      g.fillStyle = "#151826";
-      x += w + 1;
-    }
-    const t = new CanvasTexture(c);
-    t.colorSpace = SRGBColorSpace;
-    return t;
-  }, []);
-}
-
-function Room() {
-  const { floor, back, side, ceiling } = ROOM;
-  const dusk = useDusk();
-  const h = ceiling - floor;
-  return (
-    <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floor, 0]} receiveShadow>
-        <planeGeometry args={[side * 2, 6]} />
-        <meshStandardMaterial color="#4a3627" roughness={0.55} />
-      </mesh>
-      {/* a rug under the desk */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floor + 0.004, 0.45]} receiveShadow>
-        <planeGeometry args={[2.6, 2]} />
-        <meshStandardMaterial color="#2c2a2e" roughness={0.95} />
-      </mesh>
-      <mesh position={[0, floor + h / 2, back]} receiveShadow>
-        <planeGeometry args={[side * 2, h]} />
-        <meshStandardMaterial color="#b9aea2" roughness={0.92} />
-      </mesh>
-      <mesh position={[-side, floor + h / 2, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[6, h]} />
-        <meshStandardMaterial color="#aca196" roughness={0.92} />
-      </mesh>
-      <mesh position={[side, floor + h / 2, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[6, h]} />
-        <meshStandardMaterial color="#aca196" roughness={0.92} />
-      </mesh>
-      <mesh position={[0, ceiling, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[side * 2, 6]} />
-        <meshStandardMaterial color="#3a332e" roughness={1} />
-      </mesh>
-      {/* skirting */}
-      <mesh position={[0, floor + 0.05, back + 0.01]}>
-        <boxGeometry args={[side * 2, 0.1, 0.02]} />
-        <meshStandardMaterial color="#2d2621" roughness={0.6} />
-      </mesh>
-
-      {/* the window, right of him: dusk outside, mullions and a sill */}
-      <group position={[1.35, 0.55, back + 0.005]}>
-        <mesh>
-          <planeGeometry args={[1.3, 1.5]} />
-          <meshBasicMaterial map={dusk} toneMapped={false} />
-        </mesh>
-        {[-0.65, 0, 0.65].map((x) => (
-          <mesh key={x} position={[x, 0, 0.02]}>
-            <boxGeometry args={[0.05, 1.55, 0.04]} />
-            <meshStandardMaterial color="#1f1b18" roughness={0.5} />
-          </mesh>
-        ))}
-        {[-0.75, 0.1, 0.75].map((y) => (
-          <mesh key={y} position={[0, y, 0.02]}>
-            <boxGeometry args={[1.35, 0.05, 0.04]} />
-            <meshStandardMaterial color="#1f1b18" roughness={0.5} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* a shelf of books, left of him, and a framed print above it */}
-      <Shelf position={[-1.25, 0.32, back + 0.13]} />
-      <Shelf position={[-1.25, -0.08, back + 0.13]} />
-      <group position={[-1.25, 0.95, back + 0.02]}>
-        <mesh castShadow>
-          <boxGeometry args={[0.72, 0.52, 0.03]} />
-          <meshStandardMaterial color="#1c1916" roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 0, 0.017]}>
-          <planeGeometry args={[0.62, 0.42]} />
-          <meshStandardMaterial color="#c9bba6" roughness={0.9} />
-        </mesh>
-        <mesh position={[-0.08, 0.02, 0.019]}>
-          <circleGeometry args={[0.12, 48]} />
-          <meshStandardMaterial color="#7c5cff" roughness={0.9} />
-        </mesh>
-        <mesh position={[0.1, -0.05, 0.02]}>
-          <circleGeometry args={[0.08, 48]} />
-          <meshStandardMaterial color="#3fb8e8" roughness={0.9} />
-        </mesh>
-      </group>
-    </group>
-  );
-}
-
 /** frames the room for the screen, and tells the windows where his face is */
 function Framing() {
   const camera = useThree((s) => s.camera);
@@ -437,7 +253,7 @@ export default function OfficeStage() {
       </Environment>
       <Room />
       <Suspense fallback={null}>
-        <Props />
+        <Furniture />
         <Avatar />
       </Suspense>
       <Framing />
@@ -446,5 +262,3 @@ export default function OfficeStage() {
 }
 
 useGLTF.preload(MODELS.avatar, DRACO);
-useGLTF.preload(MODELS.desk, DRACO);
-useGLTF.preload(MODELS.chair, DRACO);
