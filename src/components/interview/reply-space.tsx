@@ -21,6 +21,7 @@ import { useWorldStore, type SystemPrompt, type Toast } from "@/store/world-stor
 import type { TaskRecord } from "@/agent/voice/task-queue";
 import { useInterview } from "./interview-store";
 import { placePanes, type Box, type Placement } from "./pane-layout";
+import { useVoiceLog } from "./voice-log";
 
 const copy = world.interview;
 
@@ -48,43 +49,23 @@ const WIDTH: Record<Pane["kind"], number> = { you: 300, words: 400, card: 400, t
 const SIDE: Partial<Record<Pane["kind"], "left" | "right">> = { words: "left", card: "right", record: "right", question: "right", tool: "right", task: "right" };
 /** a finished tool call or task stays this long, then leaves */
 const SETTLED_MS = 2600;
+/** once a new question is asked, what was on screen before it dims, then leaves after this long */
+const PAST_MS = 9000;
+/** what counts as a message: these leave with the past; what the stranger opened stays until closed */
+const MESSAGE: ReadonlySet<Pane["kind"]> = new Set(["you", "words", "card", "tool", "task", "notice"]);
+/** the colour of each window's edge */
+const TINT: Record<Pane["kind"], string> = {
+  you: "oklch(0.78 0.13 232)",
+  words: "oklch(0.74 0.17 300)",
+  card: "oklch(0.8 0.12 160)",
+  record: "oklch(0.8 0.12 160)",
+  tool: "oklch(0.8 0.14 80)",
+  task: "oklch(0.8 0.14 80)",
+  question: "oklch(0.7 0.19 40)",
+  notice: "oklch(0.75 0.02 260)",
+};
 /** how much of the conversation stays on screen */
 const KEEP = { you: 2, words: 3, cards: 4, tools: 5 };
-
-/** the voice's words and what it heard, one window per turn */
-function useVoicePanes() {
-  const [log, setLog] = useState<{ id: string; kind: "heard" | "voice"; text: string }[]>([]);
-  useEffect(() => {
-    let seq = 0;
-    let heardId = "";
-    let replyId = "";
-    return useVoiceStore.subscribe((s, prev) => {
-      if (s.heard !== prev.heard) {
-        if (!s.heard) heardId = "";
-        else {
-          heardId ||= `heard-${++seq}`;
-          const id = heardId;
-          setLog((l) => [...l.filter((e) => e.id !== id), { id, kind: "heard" as const, text: s.heard }].slice(-6));
-        }
-      }
-      if (s.reply !== prev.reply) {
-        if (!s.reply) replyId = "";
-        else {
-          replyId ||= `voice-${++seq}`;
-          const id = replyId;
-          setLog((l) => {
-            const i = l.findIndex((e) => e.id === id);
-            if (i === -1) return [...l, { id, kind: "voice" as const, text: s.reply }].slice(-6);
-            const next = l.slice();
-            next[i] = { ...next[i], text: s.reply };
-            return next;
-          });
-        }
-      }
-    });
-  }, []);
-  return log;
-}
 
 /** everything the reply is made of right now, newest last */
 function usePanes(dismissed: ReadonlySet<string>): Pane[] {
@@ -93,7 +74,7 @@ function usePanes(dismissed: ReadonlySet<string>): Pane[] {
   const trace = useSession((s) => s.trace);
   const notice = useSession((s) => s.notice);
   const tasks = useVoiceStore((s) => s.tasks);
-  const voiceLog = useVoicePanes();
+  const voiceLog = useVoiceLog((s) => s.log);
   const phase = useVoiceStore((s) => s.phase);
   const sector = useWorldStore((s) => s.sector);
   const caseFile = useWorldStore((s) => s.caseFile);
@@ -122,7 +103,7 @@ function usePanes(dismissed: ReadonlySet<string>): Pane[] {
         panes.push({ id: `card:${t.id}:${n}`, kind: "card", card });
       });
     }
-    for (const e of voiceLog) panes.push(e.kind === "heard" ? { id: e.id, kind: "you", text: e.text } : { id: e.id, kind: "words", text: e.text, live: phase === "thinking" || phase === "speaking" });
+    for (const e of voiceLog.slice(-6)) panes.push(e.kind === "heard" ? { id: e.id, kind: "you", text: e.text } : { id: e.id, kind: "words", text: e.text, live: phase === "thinking" || phase === "speaking" });
     for (const step of trace.filter((s) => s.name !== "agent.run" && s.name !== "local_index.route").slice(-KEEP.tools)) panes.push({ id: `tool:${step.id}`, kind: "tool", step });
     for (const task of tasks) panes.push({ id: `task:${task.id}`, kind: "task", task });
 
@@ -256,7 +237,7 @@ function label(pane: Pane): string {
 function PaneBody({ pane, dismiss }: { pane: Pane; dismiss: () => void }) {
   switch (pane.kind) {
     case "you":
-      return <p className="text-[14px] leading-snug text-white/70 italic">“{pane.text}”</p>;
+      return <p className="text-[14px] leading-snug text-white/85">{pane.text}</p>;
     case "words":
       return <Words id={pane.id} text={pane.text} live={pane.live} />;
     case "card":
@@ -282,13 +263,20 @@ const compact = (kind: Pane["kind"]) => kind === "tool" || kind === "task" || ki
  * room: its words as they stream, each tool call while it runs, the
  * cards and the record it opens, its questions. The windows rise out
  * of his face and settle around it (`pane-layout.ts`), drifting a
- * little; the oldest give way when the room is full.
+ * little; the oldest give way when the room is full. When a new
+ * question is asked, the messages from before it dim, and a few
+ * seconds later they fade out (the transcript keeps them).
  */
 export function ReplySpace() {
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   const panes = usePanes(dismissed);
   const face = useInterview((s) => s.face);
   const mode = useInterview((s) => s.mode);
+  const transcript = useInterview((s) => s.transcript);
+  /** the windows from before the last question: dimmed, and on their way out */
+  const [past, setPast] = useState<ReadonlySet<string>>(new Set());
+  const leaving = useRef(new Map<string, number>());
+  const current = useRef(panes);
   const [placed, setPlaced] = useState<Map<string, Placement>>(new Map());
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const nodes = useRef(new Map<string, HTMLDivElement>());
@@ -297,6 +285,24 @@ export function ReplySpace() {
   const born = useRef(new Map<string, number>());
 
   const dismiss = useCallback((id: string) => setDismissed((d) => new Set(d).add(id)), []);
+
+  useEffect(() => {
+    current.current = panes;
+  });
+
+  // a new question: everything said before it fades out a few seconds later
+  const question = panes.findLast((p) => p.kind === "you")?.id;
+  useEffect(() => {
+    if (!question) return;
+    const old = current.current.filter((p) => p.id !== question && MESSAGE.has(p.kind) && !leaving.current.has(p.id)).map((p) => p.id);
+    if (!old.length) return;
+    for (const id of old) leaving.current.set(id, window.setTimeout(() => dismiss(id), PAST_MS));
+    setPast((d) => new Set([...d, ...old]));
+  }, [question, dismiss]);
+  useEffect(() => {
+    const timers = leaving.current;
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, []);
 
   useEffect(() => {
     const sync = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
@@ -346,8 +352,10 @@ export function ReplySpace() {
     const now = performance.now();
     for (const p of panes) if (!born.current.has(p.id)) born.current.set(p.id, now);
     const keepClear: Box[] = [
-      { x: viewport.w / 2 - 130, y: 0, w: 260, h: 110 },
-      mode === "text" ? { x: viewport.w / 2 - 290, y: viewport.h - 92, w: 580, h: 92 } : { x: viewport.w / 2 - 110, y: viewport.h - 210, w: 220, h: 210 },
+      { x: 0, y: 0, w: viewport.w, h: 62 },
+      mode === "text" ? { x: viewport.w / 2 - 320, y: viewport.h - 150, w: 640, h: 150 } : { x: viewport.w / 2 - 170, y: viewport.h - 220, w: 340, h: 220 },
+      // the transcript, where it opens (on a phone it covers the room: nothing to keep clear)
+      ...(transcript && viewport.w > 820 ? [{ x: viewport.w - 424, y: 70, w: 424, h: Math.min(viewport.h * 0.62, 600) + 12 }] : []),
     ];
     const newest = panes
       .filter((p) => sizes.current.has(p.id))
@@ -355,7 +363,7 @@ export function ReplySpace() {
       .map((p) => ({ id: p.id, ...sizes.current.get(p.id)!, side: SIDE[p.kind], anchor: p.kind === "you" ? ("low" as const) : undefined }));
     setPlaced((prev) => placePanes(newest, { width: viewport.w, height: viewport.h, face, keepClear }, prev));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `ids` and `measured` are the change signals
-  }, [ids, measured, face, viewport, mode]);
+  }, [ids, measured, face, viewport, mode, transcript]);
 
   const origin = face ? { x: face.x + face.w / 2, y: face.y + face.h * 0.42 } : { x: viewport.w / 2, y: viewport.h / 3 };
 
@@ -366,6 +374,7 @@ export function ReplySpace() {
           const at = placed.get(pane.id);
           const width = Math.min(WIDTH[pane.kind], viewport.w - 24 || WIDTH[pane.kind]);
           const shown = !!at?.visible;
+          const old = past.has(pane.id);
           return (
             <motion.div
               key={pane.id}
@@ -382,20 +391,20 @@ export function ReplySpace() {
               initial={{ x: origin.x - width / 2, y: origin.y - 40, opacity: 0, scale: 0.4, filter: "blur(10px)" }}
               animate={
                 at
-                  ? { x: at.x, y: at.y, opacity: shown ? 1 : 0, scale: shown ? 1 : 0.85, filter: shown ? "blur(0px)" : "blur(6px)" }
+                  ? { x: at.x, y: at.y, opacity: shown ? (old ? 0.5 : 1) : 0, scale: shown ? (old ? 0.96 : 1) : 0.85, filter: shown ? (old ? "blur(0.6px) saturate(0.5)" : "blur(0px) saturate(1)") : "blur(6px) saturate(1)" }
                   : { x: origin.x - width / 2, y: origin.y - 40, opacity: 0, scale: 0.4, filter: "blur(10px)" }
               }
-              exit={{ opacity: 0, scale: 0.8, filter: "blur(8px)", transition: { duration: 0.25 } }}
+              exit={{ opacity: 0, scale: old ? 0.92 : 0.8, y: old && at ? at.y - 18 : undefined, filter: "blur(8px) saturate(0.5)", transition: { duration: old ? 1.4 : 0.25, ease: "easeOut" } }}
               transition={{ type: "spring", stiffness: 170, damping: 22, mass: 0.9 }}
               aria-hidden={!shown}
             >
               <div
-                className={cn("pane-float glass glass-edge notch sys-panel relative [--n:12px]", compact(pane.kind) ? "px-3.5 py-2.5" : "px-4 pt-3 pb-4")}
-                style={{ ["--float-s" as string]: `${6 + (i % 3)}s`, ["--float-d" as string]: `${-(i * 1.7) % 5}s` }}
+                className={cn("air air-float", compact(pane.kind) ? "px-3.5 py-2.5" : "px-4 pt-3 pb-4")}
+                style={{ ["--air-tint" as string]: TINT[pane.kind], ["--float-s" as string]: `${6 + (i % 3)}s`, ["--float-d" as string]: `${-(i * 1.7) % 5}s` }}
               >
                 <div className={cn("flex items-center gap-2", compact(pane.kind) ? "mb-1" : "mb-2")}>
-                  <span className={cn("size-1.5 rounded-full", pane.kind === "words" ? "bg-arcane-hot shadow-[0_0_8px_var(--arcane-hot)]" : "bg-system")} />
-                  <p className="eyebrow min-w-0 flex-1 truncate text-[9px]">{label(pane)}</p>
+                  <span className="air-dot" />
+                  <p className="air-label min-w-0 flex-1 truncate">{label(pane)}</p>
                   <button
                     type="button"
                     aria-label="Close"
@@ -405,7 +414,7 @@ export function ReplySpace() {
                       else if (pane.kind === "question") useWorldStore.getState().ignore();
                       dismiss(pane.id);
                     }}
-                    className="-mr-1 grid size-6 place-items-center rounded-sm text-white/40 transition hover:bg-white/10 hover:text-white"
+                    className="-mr-1 grid size-6 place-items-center rounded-md text-white/40 transition hover:bg-white/10 hover:text-white"
                   >
                     <X className="size-3.5" />
                   </button>

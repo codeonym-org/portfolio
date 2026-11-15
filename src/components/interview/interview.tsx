@@ -8,11 +8,13 @@ import { CvModal } from "@/components/interface/inspect";
 import { world } from "@/config/world.config";
 import { preloadSounds } from "@/lib/audio";
 import { useWorldStore } from "@/store/world-store";
-import { DiscoButton } from "./disco-button";
+import { AirInput } from "./air-input";
 import { useInterview } from "./interview-store";
-import { ModeDrop } from "./mode-drop";
+import { MicButton } from "./mic-button";
 import { ReplySpace } from "./reply-space";
-import { TextDock } from "./text-dock";
+import { TopBar } from "./top-bar";
+import { Transcript } from "./transcript";
+import { followVoice } from "./voice-log";
 
 const OfficeStage = dynamic(() => import("./office-stage"), { ssr: false });
 const SystemLink = dynamic(() => import("@/components/agent/system-link"), { ssr: false });
@@ -53,12 +55,13 @@ function Arrival() {
 
 /**
  * ── THE INTERVIEW ─────────────────────────────────────────────
- * The owner's avatar at a desk in an office, facing the stranger. No menu: the TEXT /
- * AUDIO switch drips down from the top when the pointer comes near,
- * the input (a floating field, or the disco button to hold) waits at
- * the bottom, and every part of a reply floats in its own window
- * around his face. The same agent as the record answers, through the
- * same link.
+ * The owner's avatar at a desk in an office, facing the stranger.
+ * Everything else is glass hanging in the air: a bar at the top (the
+ * way out, the TEXT / AUDIO switch, the transcript), the input at the
+ * bottom (a pane to type on, or a microphone to hold), every part of
+ * a reply in its own window around his face, and the transcript drawn
+ * as a graph. The same agent as the record answers, through the same
+ * link.
  */
 export function Interview() {
   const mode = useInterview((s) => s.mode);
@@ -73,7 +76,9 @@ export function Interview() {
     // sound needs a gesture; no music in an interview
     window.addEventListener("pointerdown", preloadSounds, { once: true });
     window.addEventListener("keydown", preloadSounds, { once: true });
+    const unfollow = followVoice();
     return () => {
+      unfollow();
       window.removeEventListener("pointerdown", preloadSounds);
       window.removeEventListener("keydown", preloadSounds);
     };
@@ -82,11 +87,12 @@ export function Interview() {
   return (
     <main className="interview-room relative h-dvh w-full overflow-hidden" aria-label={copy.title}>
       <OfficeStage />
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(0_0_0/0.55)_100%)]" aria-hidden />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgb(0_0_0/0.35)_100%)]" aria-hidden />
       <Arrival />
       <ReplySpace />
-      <ModeDrop />
-      <AnimatePresence mode="wait">{mode === "text" ? <TextDock key="text" /> : <DiscoButton key="audio" />}</AnimatePresence>
+      <TopBar />
+      <Transcript />
+      <AnimatePresence mode="wait">{mode === "text" ? <AirInput key="text" /> : <MicButton key="audio" />}</AnimatePresence>
       <CvModal />
       {mapOpen && <HoloMap />}
       {ready && (
