@@ -213,7 +213,7 @@ export function TurnCanvas() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       const s = useWorldStore.getState();
-      if (s.mapOpen || s.cvOpen || useInterview.getState().transcript || useInterview.getState().card) return;
+      if (s.mapOpen || s.cvOpen || s.cardOpen || useInterview.getState().transcript) return;
       if (active) setHidden((h) => new Set([...h, `q:${active.id}`, `a:${active.id}`, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
       if (s.sector || s.caseFile || s.brief) s.closeFocus();
       if (s.inspect) s.setInspect(null);

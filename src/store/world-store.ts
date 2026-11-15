@@ -97,6 +97,8 @@ interface WorldState {
    */
   chosen: string | null;
   cvOpen: boolean;
+  /** his business card is in the stranger's hand, over everything */
+  cardOpen: boolean;
   /** the holographic map, over everything */
   mapOpen: boolean;
   paletteOpen: boolean;
@@ -129,6 +131,7 @@ interface WorldState {
   closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
   setCvOpen: (open: boolean) => void;
+  setCardOpen: (open: boolean) => void;
   setMapOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   setHovered: (key: string | null) => void;
@@ -163,6 +166,7 @@ export const useWorldStore = create<WorldState>()(
       chosen: null,
       brief: false,
       cvOpen: false,
+      cardOpen: false,
       mapOpen: false,
       paletteOpen: false,
       hovered: null,
@@ -211,6 +215,7 @@ export const useWorldStore = create<WorldState>()(
       setCvOpen: (cvOpen) => {
         set(cvOpen ? { cvOpen, cvRead: true } : { cvOpen });
       },
+      setCardOpen: (cardOpen) => set(cardOpen ? { cardOpen, paletteOpen: false } : { cardOpen }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setHovered: (hovered) => {
         if (get().hovered !== hovered) set({ hovered });

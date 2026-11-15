@@ -98,13 +98,14 @@ export const systemCommands: SystemCommand[] = [
   }),
   define({
     name: "close_windows",
-    description: "Send everything back to orbit: closes the section window, the case file, the inspect card, the palette, the map and the CV viewer.",
+    description: "Send everything back to orbit: closes the section window, the case file, the inspect card, the palette, the map, the business card and the CV viewer.",
     parameters: z.object({}),
     handler: () => {
       const s = store();
       s.closeFocus();
       s.setPaletteOpen(false);
       s.setCvOpen(false);
+      s.setCardOpen(false);
       s.setMapOpen(false);
       return "All windows closed. The record is back in orbit.";
     },
@@ -140,6 +141,16 @@ export const systemCommands: SystemCommand[] = [
       window.history.replaceState(null, "", `#${encodeCase(kept)}`);
       const dropped = unknown.length ? ` Dropped unknown evidence: ${unknown.join(", ")}.` : "";
       return `Case file "${kept.title}" assembled with ${kept.evidence.length} pieces of evidence and shown to the visitor.${dropped} Do not repeat the evidence in text — reply with one or two lines.`;
+    },
+  }),
+  define({
+    name: "show_business_card",
+    description:
+      "Hand the visitor your business card: it comes up over the whole screen, the brand mark carved on its face, and on its back your name and every way to reach you (email, phone, LinkedIn, GitHub, this site), with a button to save it as a contact. Call it whenever the visitor asks how to reach, contact, email, call or hire you, or asks for your card or your contact details.",
+    parameters: z.object({}),
+    handler: () => {
+      store().setCardOpen(true);
+      return "Your business card is in the visitor's hand: they can turn it over, press any channel, or save it as a contact. Reply with one short line; do not write or recite any contact detail.";
     },
   }),
   define({

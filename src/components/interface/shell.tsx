@@ -12,6 +12,7 @@ import { useWorldStore } from "@/store/world-store";
 import { Boot } from "./boot";
 import { Console } from "./console";
 import { IndexWheel } from "./index-wheel";
+import { BusinessCard } from "@/components/interview/business-card";
 import { CvModal, InspectCard } from "./inspect";
 import { Palette } from "./palette";
 import { SystemDialog } from "./system-dialog";
@@ -100,6 +101,7 @@ export function Shell() {
         return;
       }
       if (e.key === "Escape") {
+        if (s.cardOpen) return; // the card puts itself down
         if (s.mapOpen) s.setMapOpen(false);
         else if (s.prompt) s.ignore();
         else if (s.paletteOpen) s.setPaletteOpen(false);
@@ -143,6 +145,7 @@ export function Shell() {
       <SystemDialog />
       <InspectCard />
       <CvModal />
+      <BusinessCard />
       <Palette />
       {mapOpen && <HoloMap />}
       <Boot />

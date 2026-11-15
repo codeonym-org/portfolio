@@ -44,9 +44,9 @@ test("asking where he is shows the map", () => {
   assert.equal(answerLocally("what time is it for him", index).map, true);
 });
 
-test("contact opens the gate and shows the channels", () => {
+test("contact hands over the business card and shows the channels", () => {
   const reply = answerLocally("How do I reach him?", index);
-  assert.deepEqual(reply.actions, [{ name: "open_sector", args: { sector: "contact" } }]);
+  assert.deepEqual(reply.actions, [{ name: "show_business_card", args: {} }]);
   assert.equal(reply.contact, true);
 });
 
@@ -84,7 +84,7 @@ test("plain commands in the second person open the matching section", () => {
   assert.deepEqual(actions("Walk me through your experience"), [{ name: "open_sector", args: { sector: "experience" } }]);
   assert.deepEqual(actions("Tell me about yourself"), [{ name: "open_sector", args: { sector: "status" } }]);
   assert.deepEqual(actions("Why should I hire you?"), [{ name: "assemble_case", args: { title: "Why him" } }]);
-  assert.deepEqual(actions("How do I reach you?"), [{ name: "open_sector", args: { sector: "contact" } }]);
+  assert.deepEqual(actions("How do I reach you?"), [{ name: "show_business_card", args: {} }]);
 });
 
 test("the local index does not speak as the owner", () => {

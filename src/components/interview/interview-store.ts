@@ -34,9 +34,6 @@ interface InterviewState {
   /** the transcript window is open */
   transcript: boolean;
   toggleTranscript: () => void;
-  /** his business card is in the stranger's hand */
-  card: boolean;
-  toggleCard: () => void;
   setMode: (mode: InterviewMode) => void;
   set: (patch: Partial<Pick<InterviewState, "face" | "present">>) => void;
   /** read the saved mode, once on mount */
@@ -49,8 +46,6 @@ export const useInterview = create<InterviewState>((set) => ({
   present: false,
   transcript: false,
   toggleTranscript: () => set((s) => ({ transcript: !s.transcript })),
-  card: false,
-  toggleCard: () => set((s) => ({ card: !s.card })),
   setMode: (mode) => {
     try {
       window.localStorage.setItem(MODE_KEY, mode);

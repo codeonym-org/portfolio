@@ -7,6 +7,7 @@ import { Markdown } from "@/components/agent/markdown";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
+import { useWorldStore } from "@/store/world-store";
 import { useInterview } from "./interview-store";
 import type { InterviewTurn } from "./turns";
 import { useTurns } from "./use-turns";
@@ -76,7 +77,7 @@ export function Transcript() {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (useInterview.getState().card) return;
+      if (useWorldStore.getState().cardOpen) return;
       if (e.key === "Escape") close();
       else if (e.key === "ArrowUp" || e.key === "ArrowLeft") move(-1);
       else if (e.key === "ArrowDown" || e.key === "ArrowRight") move(1);

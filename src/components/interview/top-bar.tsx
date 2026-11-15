@@ -6,6 +6,7 @@ import { ArrowLeft, IdCard, Keyboard, Mic, Waypoints } from "lucide-react";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
+import { useWorldStore } from "@/store/world-store";
 import { useInterview, type InterviewMode } from "./interview-store";
 
 const copy = world.interview;
@@ -25,8 +26,7 @@ export function TopBar() {
   const setMode = useInterview((s) => s.setMode);
   const transcript = useInterview((s) => s.transcript);
   const toggleTranscript = useInterview((s) => s.toggleTranscript);
-  const card = useInterview((s) => s.card);
-  const toggleCard = useInterview((s) => s.toggleCard);
+  const card = useWorldStore((s) => s.cardOpen);
 
   const choose = (next: InterviewMode) => {
     if (next === mode) return;
@@ -91,7 +91,7 @@ export function TopBar() {
           title={copy.card.label}
           onClick={() => {
             play("click", { volume: 0.4 });
-            toggleCard();
+            useWorldStore.getState().setCardOpen(!card);
           }}
           className="air pointer-events-auto flex h-11 items-center gap-2 !rounded-full px-3.5 text-white/75 transition hover:text-white lg:px-4"
           style={{ ["--air-tint" as string]: "oklch(0.8 0.14 160)" }}

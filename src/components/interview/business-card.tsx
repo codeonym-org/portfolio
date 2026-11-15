@@ -8,7 +8,7 @@ import { player } from "@/config/player.config";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
-import { useInterview } from "./interview-store";
+import { useWorldStore } from "@/store/world-store";
 import { familyName, printed, vcard, type CardPerson } from "./vcard";
 
 const copy = world.interview.card;
@@ -184,7 +184,8 @@ function Stage({ close }: { close: () => void }) {
     window.addEventListener("resize", sync);
     first.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      // after the other Escape handlers have seen that the card is still up, so only the card leaves
+      if (e.key === "Escape") window.setTimeout(close, 0);
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -317,14 +318,15 @@ function Stage({ close }: { close: () => void }) {
  * codeonym; on its back, his name and every way to reach him. It
  * leans toward the pointer and the light slides over it; pressing it
  * turns it over. Under it: turn it, save it as a contact (a vCard),
- * copy the address, put it down.
+ * copy the address, put it down. The stranger takes it from the top
+ * bar of the interview, and the replica hands it over when asked how
+ * to reach him (`show_business_card`).
  */
 export function BusinessCard() {
-  const open = useInterview((s) => s.card);
-  const toggle = useInterview((s) => s.toggleCard);
+  const open = useWorldStore((s) => s.cardOpen);
   const close = useCallback(() => {
     play("close", { volume: 0.4 });
-    toggle();
-  }, [toggle]);
+    useWorldStore.getState().setCardOpen(false);
+  }, []);
   return <AnimatePresence>{open && <Stage close={close} />}</AnimatePresence>;
 }

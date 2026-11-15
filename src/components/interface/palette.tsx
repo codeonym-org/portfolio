@@ -33,6 +33,7 @@ function runCommand(name: string, args: Record<string, unknown> = {}) {
 }
 
 const ACTIONS: { label: string; sub: string; search: string; name: string; args?: Record<string, unknown> }[] = [
+  { label: "Take his business card", sub: "show_business_card()", search: "business card contact reach vcard", name: "show_business_card" },
   { label: "Open the CV", sub: "open_cv()", search: "cv resume license pdf", name: "open_cv" },
   { label: "Download the CV", sub: "download_cv()", search: "cv resume download pdf", name: "download_cv" },
   { label: "Copy the email address", sub: 'copy_contact(channel: "email")', search: "email copy contact", name: "copy_contact", args: { channel: "email" } },

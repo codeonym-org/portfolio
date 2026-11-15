@@ -102,7 +102,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   }
 
   if (has(text, ...SECTOR_WORDS.contact)) {
-    return { text: `Every channel below reaches ${p.name} directly.`, actions: [open("contact")], contact: true };
+    return { text: `Here is ${p.name}'s card: every channel on it reaches him directly.`, actions: [{ name: "show_business_card", args: {} }], contact: true };
   }
 
   const quest = mention(text, index.quests);
