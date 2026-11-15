@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, useGLTF, useTexture } from "@react-three/drei";
+import { Environment, Lightformer, useGLTF } from "@react-three/drei";
+import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
 import {
   Bone,
   Box3,
@@ -13,7 +14,6 @@ import {
   Object3D,
   PCFSoftShadowMap,
   Quaternion,
-  SRGBColorSpace,
   Vector3,
 } from "three";
 import { useVoiceStore, voiceLive } from "@/components/agent/voice/voice-store";
@@ -30,11 +30,11 @@ import { Furniture, prepare, Room, ROOM } from "./office-room";
  * a photo of him seated, with a small rig (hips, spine, neck, head).
  * All his movement is by hand: breathing, a slow sway, his gaze
  * following the stranger, glances at the laptop, leaning in to
- * listen, nods as he speaks, blinks, and the jaw with his voice.
+ * listen, nods as he speaks, and the jaw with his voice.
  * The room and its furniture are in office-room.
  */
 
-const MODELS = { avatar: "/models/office/avatar.glb", face: "/models/office/face.webp" };
+const MODELS = { avatar: "/models/office/avatar.glb" };
 const DRACO = "/draco/";
 
 /** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
@@ -59,14 +59,10 @@ const euler = (pitch: number, yaw: number, roll: number) =>
 
 function Avatar() {
   const gltf = useGLTF(MODELS.avatar, DRACO);
-  const face = useTexture(MODELS.face, (t) => {
-    t.colorSpace = SRGBColorSpace;
-    t.anisotropy = 8;
-  });
   const group = useRef<Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
-  /** a life: when he next blinks, where he looks when nobody moves */
-  const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0 });
+  /** a life: where he looks when nobody moves */
+  const life = useRef({ glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0 });
   const bones = useMemo(() => {
     const find = (name: string) => gltf.scene.getObjectByName(name) as Bone | undefined;
     return { head: find("Head"), neck: find("Neck"), chest: find("Spine2"), spine: find("Spine1") };
@@ -80,16 +76,12 @@ function Avatar() {
     const body = gltf.scene.getObjectByName("body") as Mesh | undefined;
     const material = body?.material as MeshStandardMaterial | undefined;
     if (body) body.frustumCulled = false;
-    headUniforms.uFace.value = face;
     if (material) rigHead(material);
     useInterview.getState().set({ present: true });
     useWorldStore.getState().setReady();
     const params = new URLSearchParams(window.location.search);
     const forced = params.get("mouth");
     mouthLive.forced = forced === null ? null : Math.min(1, Math.max(0, Number(forced) || 0));
-    const blink = params.get("blink");
-    if (blink !== null) life.current.nextBlink = Infinity;
-    if (blink !== null) headUniforms.uBlink.value = Math.min(1, Math.max(0, Number(blink) || 0));
     const onMove = (e: PointerEvent) => {
       pointer.current = { x: (e.clientX / window.innerWidth) * 2 - 1, y: (e.clientY / window.innerHeight) * 2 - 1 };
     };
@@ -97,7 +89,7 @@ function Avatar() {
     return () => {
       window.removeEventListener("pointermove", onMove);
     };
-  }, [gltf, face, life]);
+  }, [gltf, life]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -110,21 +102,6 @@ function Avatar() {
     const speaking = phase === "speaking";
     const listening = phase === "listening" || phase === "decoding";
     const thinking = phase === "thinking";
-
-    // ── blinks: every 2–6 s, sometimes twice; a blink takes 150 ms ──
-    if (Number.isFinite(L.nextBlink)) {
-      if (t >= L.nextBlink && L.blinkAt < 0) L.blinkAt = t;
-      if (L.blinkAt >= 0) {
-        const k = (t - L.blinkAt) / 0.15;
-        headUniforms.uBlink.value = k < 0.4 ? k / 0.4 : Math.max(0, 1 - (k - 0.4) / 0.6);
-        if (k >= 1) {
-          L.blinkAt = -1;
-          headUniforms.uBlink.value = 0;
-          L.double = !L.double && Math.random() < 0.18;
-          L.nextBlink = t + (L.double ? 0.18 : 2 + Math.random() * 4 + (listening ? 1 : 0));
-        }
-      }
-    }
 
     // ── the jaw follows his voice ──
     const target = mouthLive.forced ?? (speaking ? Math.min(1, Math.max(0, (level - 0.04) * 1.9)) : 0);
@@ -212,6 +189,23 @@ function Framing() {
   return null;
 }
 
+/** postprocessing's ToneMappingMode.NEUTRAL (the package is not ours to import): the same curve the renderer uses without effects */
+const NEUTRAL = 8;
+
+/** what a camera adds: shade where surfaces meet, a glow around the lamps, darker corners */
+function Effects() {
+  const quality = useWorldStore((s) => s.quality);
+  if (quality === "low") return null;
+  return (
+    <EffectComposer multisampling={quality === "high" ? 4 : 0}>
+      {quality === "high" ? <N8AO aoRadius={0.3} distanceFalloff={0.7} intensity={2.4} quality="medium" halfRes /> : <></>}
+      <Bloom mipmapBlur intensity={0.3} luminanceThreshold={1} luminanceSmoothing={0.25} radius={0.65} />
+      <Vignette darkness={0.42} offset={0.32} />
+      <ToneMapping mode={NEUTRAL} />
+    </EffectComposer>
+  );
+}
+
 export default function OfficeStage() {
   const present = useInterview((s) => s.present);
   return (
@@ -257,6 +251,7 @@ export default function OfficeStage() {
         <Avatar />
       </Suspense>
       <Framing />
+      <Effects />
     </Canvas>
   );
 }

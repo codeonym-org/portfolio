@@ -1,35 +1,25 @@
-import type { MeshStandardMaterial, Texture, WebGLProgramParametersWithUniforms } from "three";
+import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "three";
 
 /**
  * ── HIS FACE, ALIVE ───────────────────────────────────────────
- * He is one scanned mesh with no face rig, so the jaw and the
- * eyelids are drawn by its shader. Everything is measured in head
+ * He is one generated mesh with no face rig, so the jaw is moved
+ * by its shader. Nothing is painted on his face: it is the model's
+ * own, as generated. Everything is measured in head
  * space: the mesh position moved to HEAD.origin and scaled by
  * HEAD.scale (Y up, face toward +Z, the head about one unit wide).
  *
- * Face: the photo the scan was made from is laid over the front of
- * the head (the mesh was reshaped to it), so the eyes, the skin and
- * the beard are his own, at the photo's resolution.
  * Jaw: everything below the line where the lips meet turns about a
  * hinge near the ears; the lips part as a lens, the inside is dark,
  * the upper teeth show in shadow.
- * Blink: an eyelid of skin comes down over each eye, with a lash line.
  */
 
 /** where the head is in the mesh, and how much bigger head space is */
-export const HEAD = { origin: [-0.02, 0.508, -0.264] as const, scale: 1.876 };
-/** the photo over the face: where the mesh position lands in it, as uv = at + position.xy * per */
-const PHOTO = { px: 0.00089, eyes: [240, 333.5] as const, at: [-0.017, 0.6725] as const, size: [500, 740] as const };
-/** how much the head was slimmed in the build: all of it, and the jaw and neck on top */
-const SLIM = { all: 0.93, jaw: 0.1 };
+export const HEAD = { origin: [-0.019, 0.515, -0.18] as const, scale: 1.876 };
 export const JAW = { stomion: 0.0105, hinge: [0, 0.15, 0] as const, angle: 0.045 };
-/** the centre of each eye (on his glasses), and the eye's half width and half height */
-export const EYES = { left: [-0.14, 0.309, 0.53], right: [0.151, 0.309, 0.53], rx: 0.068, ry: 0.032 } as const;
-
-export const headUniforms = { uJaw: { value: 0 }, uBlink: { value: 0 }, uFace: { value: null as Texture | null } };
+export const headUniforms = { uJaw: { value: 0 } };
 
 const S = JAW.stomion.toFixed(3);
-const v3 = (v: readonly number[]) => `vec3(${v.map((n) => n.toFixed(3)).join(", ")})`;
+const v3 = (v: readonly number[]) => `vec3(${v.map((n) => n.toFixed(4)).join(", ")})`;
 
 const VERTEX_HEAD = /* glsl */ `
 uniform float uJaw;
@@ -37,8 +27,6 @@ varying float vJaw;
 varying float vMouth;
 varying float vLens;
 varying vec3 vRest;
-varying vec3 vRestNormal;
-varying vec2 vFaceUv;
 const vec3 JAW_HINGE = ${v3(JAW.hinge)};
 const vec3 HEAD_O = ${v3(HEAD.origin)};
 const float HEAD_K = ${HEAD.scale.toFixed(3)};
@@ -64,44 +52,23 @@ vec3 jawTurn(vec3 v, float a) {
 
 const FRAGMENT_HEAD = /* glsl */ `
 uniform float uJaw;
-uniform float uBlink;
-uniform sampler2D uFace;
-varying vec3 vRestNormal;
-varying vec2 vFaceUv;
 varying float vJaw;
 varying float vMouth;
 varying float vLens;
 varying vec3 vRest;
-// how much of this point an eyelid covers, and how close it is to the lash line
-vec2 lid(vec3 c) {
-  vec2 d = (vRest.xy - c.xy) / vec2(${EYES.rx.toFixed(3)}, ${EYES.ry.toFixed(3)});
-  float inEye = 1.0 - smoothstep(0.8, 1.0, length(d));
-  float onFace = smoothstep(c.z - 0.2, c.z - 0.16, vRest.z) * (1.0 - smoothstep(c.z + 0.1, c.z + 0.14, vRest.z));
-  float edge = c.y + ${EYES.ry.toFixed(3)} - uBlink * ${(EYES.ry * 2.15).toFixed(3)};
-  float covered = smoothstep(-0.003, 0.003, vRest.y - edge);
-  float lash = 1.0 - smoothstep(0.0, 0.007, abs(vRest.y - edge));
-  return vec2(covered, lash * step(0.02, uBlink)) * inEye * onFace;
-}
 `;
 
 export function rigHead(material: MeshStandardMaterial) {
   material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms) => {
     shader.uniforms.uJaw = headUniforms.uJaw;
-    shader.uniforms.uBlink = headUniforms.uBlink;
-    shader.uniforms.uFace = headUniforms.uFace;
     shader.vertexShader =
       VERTEX_HEAD +
       shader.vertexShader
         .replace(
           "#include <beginnormal_vertex>",
           `#include <beginnormal_vertex>
-// the head was slimmed after it was fitted to the photo: measure on the head as it was fitted
-          float slim = ${SLIM.all.toFixed(3)} * (${(1 - SLIM.jaw).toFixed(3)} + ${SLIM.jaw.toFixed(3)} * smoothstep(0.44, 0.64, position.y));
-          vec3 fitted = vec3(${PHOTO.at[0].toFixed(4)} + (position.x - ${PHOTO.at[0].toFixed(4)}) / slim, position.yz);
-          vec3 hp = (fitted - HEAD_O) * HEAD_K;
+          vec3 hp = (position - HEAD_O) * HEAD_K;
           float jw = jawWeight(hp);
-          vRestNormal = normal;
-          vFaceUv = vec2(${(PHOTO.eyes[0] / PHOTO.size[0]).toFixed(5)} + (fitted.x - ${PHOTO.at[0].toFixed(4)}) * ${(1 / PHOTO.px / PHOTO.size[0]).toFixed(5)}, ${(1 - PHOTO.eyes[1] / PHOTO.size[1]).toFixed(5)} + (fitted.y - ${PHOTO.at[1].toFixed(4)}) * ${(1 / PHOTO.px / PHOTO.size[1]).toFixed(5)});
           objectNormal = jawTurn(objectNormal, uJaw * jw);
           #ifdef USE_TANGENT
           objectTangent = jawTurn(objectTangent, uJaw * jw);
@@ -111,7 +78,6 @@ export function rigHead(material: MeshStandardMaterial) {
           "#include <begin_vertex>",
           `#include <begin_vertex>
           transformed = HEAD_O + (JAW_HINGE + jawTurn(hp - JAW_HINGE, uJaw * jw)) / HEAD_K;
-          transformed.x = ${PHOTO.at[0].toFixed(4)} + (transformed.x - ${PHOTO.at[0].toFixed(4)}) * slim;
           vJaw = jw;
           vRest = hp;
           vLens = sqrt(max(0.0, 1.0 - pow(abs(hp.x) / 0.125, 2.0)));
@@ -124,51 +90,19 @@ export function rigHead(material: MeshStandardMaterial) {
           "#include <map_fragment>",
           `#include <map_fragment>
           float ax = abs(vRest.x);
-          // his photo over the front of the head: full on the face, fading into the scan at the sides, the hair and the neck
-          float facing = smoothstep(0.25, 0.6, normalize(vRestNormal).z);
-          // through his glasses it is all photo: the scan's lenses are milky
-          facing = max(facing, (1.0 - smoothstep(0.3, 0.34, ax)) * smoothstep(0.15, 0.18, vRest.y) * (1.0 - smoothstep(0.38, 0.41, vRest.y)) * smoothstep(0.38, 0.44, vRest.z));
-          float onHead = smoothstep(0.2, 0.34, vRest.z) * smoothstep(-0.32, -0.24, vRest.y) * (1.0 - smoothstep(0.6, 0.72, vRest.y)) * (1.0 - smoothstep(0.36, 0.42, ax));
-          vec2 fuv = clamp(vFaceUv, 0.0, 1.0);
-          float inPhoto = step(abs(vFaceUv.x - 0.5), 0.49) * step(abs(vFaceUv.y - 0.5), 0.49);
-          float photo = facing * onHead * inPhoto;
-          vec3 photoColor = texture2D(uFace, fuv).rgb;
-          diffuseColor.rgb = mix(diffuseColor.rgb, photoColor, photo);
           // open: the band stretched between the lips, 0 at the upper lip and 1 at the lower
           float open = uJaw / ${JAW.angle.toFixed(3)};
           float across = clamp(vJaw / max(vLens, 0.05), 0.0, 1.0);
           float gap = smoothstep(0.02, 0.2, across) * (1.0 - smoothstep(0.8, 0.98, across)) * vMouth * smoothstep(0.0, 0.2, open) * smoothstep(0.05, 0.45, vLens);
           float teeth = smoothstep(0.08, 0.16, across) * (1.0 - smoothstep(0.26, 0.36, across)) * (1.0 - smoothstep(0.05, 0.1, ax)) * smoothstep(0.35, 0.75, open);
-          diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.04, 0.012, 0.014), vec3(0.3, 0.27, 0.24), teeth * 0.75), gap);
-          // his glasses tint everything behind them violet, and his eyes blue: no tint, and brown eyes
-          float lens = (1.0 - smoothstep(0.3, 0.34, ax)) * smoothstep(0.15, 0.18, vRest.y) * (1.0 - smoothstep(0.38, 0.41, vRest.y)) * smoothstep(0.38, 0.44, vRest.z);
-          diffuseColor.b = mix(diffuseColor.b, min(diffuseColor.b, diffuseColor.g * 0.9), lens);
-          diffuseColor.rgb *= mix(vec3(1.0), vec3(1.12, 1.1, 1.06), lens);
-          vec2 eyeL = (vRest.xy - ${v3(EYES.left)}.xy) / vec2(0.05, 0.034);
-          vec2 eyeR = (vRest.xy - ${v3(EYES.right)}.xy) / vec2(0.05, 0.034);
-          float inIris = (1.0 - smoothstep(0.6, 1.0, min(length(eyeL), length(eyeR)))) * lens;
-          float lum = dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2));
-          diffuseColor.rgb = mix(diffuseColor.rgb, lum * vec3(1.5, 0.85, 0.45), inIris * (1.0 - smoothstep(0.1, 0.3, lum)));
-          // under the chin the scan is unpainted: his beard's shadow
-          float under = smoothstep(-0.15, -0.55, normalize(vRestNormal).y) * smoothstep(0.1, 0.3, vRest.z) * smoothstep(-0.6, -0.5, vRest.y) * (1.0 - smoothstep(-0.25, -0.15, vRest.y));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1, 0.06, 0.045), under * (1.0 - photo));
-          // the eyelids
-          vec2 lidL = lid(${v3(EYES.left)});
-          vec2 lidR = lid(${v3(EYES.right)});
-          float lidCover = max(lidL.x, lidR.x);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.34, 0.2, 0.17), lidCover);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025, 0.015, 0.012), max(lidL.y, lidR.y) * 0.85);`,
+          diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.04, 0.012, 0.014), vec3(0.3, 0.27, 0.24), teeth * 0.75), gap);`,
         )
-        // the photo already carries the light on his face: no bumps and no shine over it, and part of it shown as it is
-        .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.92, photo);`)
-        .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>\n normal = normalize(mix(normal, nonPerturbedNormal, photo * 0.9));`)
         .replace(
           "#include <opaque_fragment>",
-          `outgoingLight = mix(outgoingLight, photoColor * 0.8, photo * 0.3);
-          outgoingLight *= 1.0 - gap * (1.0 - teeth * 0.6) * 0.8;
+          `outgoingLight *= 1.0 - gap * (1.0 - teeth * 0.6) * 0.8;
           #include <opaque_fragment>`,
         );
   };
-  material.customProgramCacheKey = () => "avatar-head-4";
+  material.customProgramCacheKey = () => "avatar-head-6";
   material.needsUpdate = true;
 }

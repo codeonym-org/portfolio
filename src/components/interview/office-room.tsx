@@ -2,43 +2,23 @@
 
 import { useEffect, useMemo } from "react";
 import { RoundedBox, useGLTF } from "@react-three/drei";
-import { CanvasTexture, Mesh, MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, type Object3D } from "three";
+import { Mesh, MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, type Object3D } from "three";
+import { canvasTexture, DESK, rand, ROOM } from "./office-kit";
+import { Curtain, DeskLamp, Mug, Notebook, Phone, Plant } from "./office-props";
 
 /**
  * ── THE OFFICE ────────────────────────────────────────────────
  * The room and what stands in it, built here from clean shapes: a
  * desk of oak with his laptop, his papers, a pen and a glass of
  * water; behind him a window onto the city at dusk between two
- * curtains, shelves of books, two prints, a floor lamp. Only his
- * chair is a model. Every surface that needs one gets a texture
- * drawn on a canvas (wood grain, planks, written lines, the sky).
+ * curtains, shelves of books, two prints, a plant, a floor lamp.
+ * Only his chair is a model. Every surface that needs one gets a
+ * texture drawn on a canvas (wood grain, planks, written lines, the
+ * rug, the sky). The small things on the desk are in office-props.
  */
 
 export const CHAIR = "/models/office/chair.glb";
 const DRACO = "/draco/";
-
-/** the room, in metres: the floor, the far wall, the side walls, the ceiling */
-export const ROOM = { floor: -0.74, back: -1.5, side: 2.4, ceiling: 1.95 };
-/** the desk: the height of its top, its centre, its size */
-const DESK = { top: 0, x: 0.3, z: 0.7, width: 1.8, depth: 0.78, thick: 0.035 };
-
-/** a number in 0..1 from an integer, the same every time */
-const rand = (n: number) => {
-  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-  return x - Math.floor(x);
-};
-
-function canvasTexture(width: number, height: number, draw: (g: CanvasRenderingContext2D) => void) {
-  if (typeof document === "undefined") return null;
-  const c = document.createElement("canvas");
-  c.width = width;
-  c.height = height;
-  draw(c.getContext("2d")!);
-  const t = new CanvasTexture(c);
-  t.colorSpace = SRGBColorSpace;
-  t.anisotropy = 8;
-  return t;
-}
 
 /** wood: a base colour with long, slightly wavy grain lines */
 function useWood(base: string, grain: string, seed: number) {
@@ -158,24 +138,35 @@ function useDusk() {
             x += w + 2;
           }
         };
+        // the city is far behind the glass: out of focus, the nearer row a little less
+        g.filter = "blur(3px)";
         skyline(1024, "#39375c", 11, 150, 330, 0.1);
+        g.filter = "blur(1.4px)";
         skyline(1024, "#151729", 47, 60, 240, 0.22);
+        g.filter = "none";
       }),
     [],
   );
 }
 
-/** a curtain: vertical folds, light on the ridges */
-function useFolds() {
+/** a woven rug: a field of short threads in two tones, inside a border */
+function useRug() {
   return useMemo(
     () =>
-      canvasTexture(256, 64, (g) => {
-        for (let x = 0; x < 256; x++) {
-          const v = 0.5 + 0.5 * Math.sin((x / 256) * Math.PI * 2 * 7);
-          const l = Math.round(96 + v * 70);
-          g.fillStyle = `rgb(${l},${Math.round(l * 0.92)},${Math.round(l * 0.82)})`;
-          g.fillRect(x, 0, 1, 64);
+      canvasTexture(768, 560, (g) => {
+        g.fillStyle = "#8b8478";
+        g.fillRect(0, 0, 768, 560);
+        g.fillStyle = "#586170";
+        g.fillRect(30, 30, 708, 500);
+        for (let i = 0; i < 9000; i++) {
+          g.fillStyle = rand(i) > 0.5 ? "#6a7382" : "#4b5361";
+          g.globalAlpha = 0.35;
+          g.fillRect(30 + rand(i * 3) * 704, 30 + rand(i * 7) * 498, 5, 1.2);
         }
+        g.globalAlpha = 1;
+        g.strokeStyle = "#c9c0ae";
+        g.lineWidth = 3;
+        g.strokeRect(48, 48, 672, 464);
       }),
     [],
   );
@@ -261,7 +252,12 @@ function Papers() {
 
 function Glass() {
   return (
-    <group position={[DESK.x - 0.52, DESK.top, DESK.z + 0.08]}>
+    <group position={[DESK.x - 0.6, DESK.top, DESK.z + 0.1]}>
+      {/* on a cork coaster */}
+      <mesh position={[0, 0.0015, 0]} receiveShadow>
+        <cylinderGeometry args={[0.048, 0.048, 0.003, 40]} />
+        <meshStandardMaterial color="#a8855c" roughness={0.95} />
+      </mesh>
       <mesh position={[0, 0.06, 0]}>
         <cylinderGeometry args={[0.036, 0.03, 0.12, 40, 1, true]} />
         <meshPhysicalMaterial color="#ffffff" roughness={0.04} metalness={0} transparent opacity={0.22} envMapIntensity={2} side={2} depthWrite={false} />
@@ -299,9 +295,18 @@ function Desk() {
         <boxGeometry args={[width - 0.16, legH - 0.12, 0.025]} />
         <meshStandardMaterial map={dark} roughness={0.5} />
       </mesh>
+      {/* a shadow line under the top, where it overhangs the panel */}
+      <mesh position={[x, top - thick - 0.012, z]}>
+        <boxGeometry args={[width - 0.1, 0.024, depth - 0.08]} />
+        <meshStandardMaterial map={dark} roughness={0.5} />
+      </mesh>
       <Laptop />
       <Papers />
       <Glass />
+      <DeskLamp position={[x - 0.74, top, z - 0.2]} rotation={0.25} />
+      <Notebook position={[x - 0.36, top, z + 0.17]} rotation={-0.2} />
+      <Phone position={[x - 0.2, top, z + 0.2]} rotation={0.12} />
+      <Mug position={[x + 0.3, top, z + 0.22]} rotation={2.4} />
     </group>
   );
 }
@@ -331,9 +336,22 @@ function Shelf({ position, seed }: { position: [number, number, number]; seed: n
         <meshStandardMaterial map={wood} roughness={0.55} />
       </RoundedBox>
       {books.map((b, i) => (
-        <mesh key={i} position={[b.x, 0.015 + b.h / 2, -0.02]} rotation={[0, 0, b.tilt]} castShadow receiveShadow>
-          <boxGeometry args={[b.w, b.h, b.d]} />
-          <meshStandardMaterial color={b.c} roughness={0.75} />
+        <group key={i} position={[b.x, 0.015 + b.h / 2, -0.02]} rotation={[0, 0, b.tilt]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial color={b.c} roughness={0.75} />
+          </mesh>
+          {/* the title band on the spine */}
+          <mesh position={[0, b.h * 0.22, b.d / 2 + 0.0006]}>
+            <planeGeometry args={[b.w * 0.72, b.h * 0.16]} />
+            <meshStandardMaterial color="#d9c9a0" roughness={0.6} metalness={0.3} />
+          </mesh>
+        </group>
+      ))}
+      {[-0.36, 0.36].map((bx) => (
+        <mesh key={bx} position={[bx, -0.04, -0.06]} castShadow>
+          <boxGeometry args={[0.016, 0.05, 0.12]} />
+          <meshStandardMaterial color="#26221f" roughness={0.4} metalness={0.6} />
         </mesh>
       ))}
       {/* a small pot at the end of the shelf */}
@@ -378,44 +396,63 @@ function Print({ position, size, colours }: { position: [number, number, number]
 
 function Window() {
   const dusk = useDusk();
-  const folds = useFolds();
   const frame = <meshStandardMaterial color="#2a2522" roughness={0.45} />;
+  const casing = <meshStandardMaterial color="#efeae2" roughness={0.6} />;
   const W = 1.5;
-  const H = 1.3;
+  const H = 0.98;
   return (
-    <group position={[1.3, 0.93, ROOM.back]}>
+    <group position={[1.3, 0.72, ROOM.back]}>
       <mesh position={[0, 0, 0.004]}>
         <planeGeometry args={[W, H]} />
-        <meshBasicMaterial map={dusk} toneMapped={false} />
+        <meshBasicMaterial map={dusk} />
       </mesh>
-      {/* the frame, a mullion and a transom, the sill */}
+      {/* the glass: the room, faintly, over the city */}
+      <mesh position={[0, 0, 0.012]}>
+        <planeGeometry args={[W, H]} />
+        <meshPhysicalMaterial color="#ffffff" roughness={0.02} metalness={0} transparent opacity={0.07} envMapIntensity={1.5} depthWrite={false} />
+      </mesh>
+      {/* the frame, a mullion and a transom */}
       {[-W / 2, 0, W / 2].map((x) => (
         <mesh key={x} position={[x, 0, 0.035]} castShadow>
-          <boxGeometry args={[x === 0 ? 0.035 : 0.07, H + 0.07, 0.07]} />
+          <boxGeometry args={[x === 0 ? 0.035 : 0.06, H + 0.06, 0.07]} />
           {frame}
         </mesh>
       ))}
-      {[-H / 2, 0.22, H / 2].map((y) => (
+      {[-H / 2, 0.17, H / 2].map((y) => (
         <mesh key={y} position={[0, y, 0.035]} castShadow>
-          <boxGeometry args={[W + 0.07, y === 0.22 ? 0.035 : 0.07, 0.07]} />
+          <boxGeometry args={[W + 0.06, y === 0.17 ? 0.035 : 0.06, 0.07]} />
           {frame}
         </mesh>
       ))}
-      <mesh position={[0, -H / 2 - 0.045, 0.08]} castShadow receiveShadow>
-        <boxGeometry args={[W + 0.2, 0.03, 0.16]} />
-        <meshStandardMaterial color="#e6e0d6" roughness={0.6} />
-      </mesh>
-      {/* curtains, drawn back on both sides, on a rail */}
+      {/* the casing around it, and the sill */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (W / 2 + 0.16), -0.05, 0.1]} castShadow receiveShadow>
-          <boxGeometry args={[0.34, H + 0.42, 0.06]} />
-          <meshStandardMaterial map={folds} color="#cfc4b4" roughness={0.95} />
+        <mesh key={s} position={[s * (W / 2 + 0.075), 0, 0.02]} receiveShadow>
+          <boxGeometry args={[0.09, H + 0.24, 0.04]} />
+          {casing}
         </mesh>
       ))}
-      <mesh position={[0, H / 2 + 0.2, 0.1]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.012, 0.012, W + 0.8, 12]} />
+      <mesh position={[0, H / 2 + 0.075, 0.02]} receiveShadow>
+        <boxGeometry args={[W + 0.24, 0.09, 0.04]} />
+        {casing}
+      </mesh>
+      <mesh position={[0, -H / 2 - 0.045, 0.08]} castShadow receiveShadow>
+        <boxGeometry args={[W + 0.3, 0.03, 0.16]} />
+        {casing}
+      </mesh>
+      {/* curtains, drawn back on both sides, on a rail with its two ends */}
+      {[-1, 1].map((s) => (
+        <Curtain key={s} position={[s * (W / 2 + 0.2), -0.12, 0.13]} width={0.42} height={H + 0.62} />
+      ))}
+      <mesh position={[0, H / 2 + 0.19, 0.13]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.011, 0.011, W + 0.95, 12]} />
         <meshStandardMaterial color="#2a2522" roughness={0.4} metalness={0.6} />
       </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * (W / 2 + 0.475), H / 2 + 0.19, 0.13]}>
+          <sphereGeometry args={[0.022, 16, 12]} />
+          <meshStandardMaterial color="#2a2522" roughness={0.4} metalness={0.6} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -440,9 +477,12 @@ function FloorLamp({ position }: { position: [number, number, number] }) {
   );
 }
 
+export { ROOM };
+
 export function Room() {
   const { floor, back, side, ceiling } = ROOM;
   const planks = usePlanks();
+  const rug = useRug();
   const h = ceiling - floor;
   const wall = "#cfc6ba";
   return (
@@ -452,13 +492,9 @@ export function Room() {
         <meshStandardMaterial map={planks} roughness={0.5} />
       </mesh>
       {/* a rug under the desk, with a border */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.3, floor + 0.004, 0.5]} receiveShadow>
-        <planeGeometry args={[3, 2.2]} />
-        <meshStandardMaterial color="#8b8478" roughness={1} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.3, floor + 0.006, 0.5]} receiveShadow>
-        <planeGeometry args={[2.76, 1.96]} />
-        <meshStandardMaterial color="#5d6470" roughness={1} />
+      <mesh position={[0.3, floor + 0.006, 0.5]} receiveShadow>
+        <boxGeometry args={[3, 0.012, 2.2]} />
+        <meshStandardMaterial map={rug} roughness={1} />
       </mesh>
       <mesh position={[0, floor + h / 2, back]} receiveShadow>
         <planeGeometry args={[side * 2, h]} />
@@ -495,10 +531,11 @@ export function Room() {
       ))}
 
       <Window />
-      <Shelf position={[-1.3, 0.3, back + 0.13]} seed={1} />
-      <Print position={[-1.56, 0.82, back + 0.02]} size={[0.42, 0.36]} colours={["#e7dfd0", "#7c5cff", "#3fb8e8"]} />
-      <Print position={[-1.06, 0.82, back + 0.02]} size={[0.42, 0.36]} colours={["#e7dfd0", "#e8a15c", "#2f3a4a"]} />
+      <Shelf position={[-1.05, 0.3, back + 0.13]} seed={1} />
+      <Print position={[-1.3, 0.82, back + 0.02]} size={[0.42, 0.36]} colours={["#e7dfd0", "#7c5cff", "#3fb8e8"]} />
+      <Print position={[-0.8, 0.82, back + 0.02]} size={[0.42, 0.36]} colours={["#e7dfd0", "#e8a15c", "#2f3a4a"]} />
       <FloorLamp position={[-2.05, floor, back + 0.45]} />
+      <Plant position={[-1.42, floor, back + 0.42]} rotation={0.6} height={0.96} />
     </group>
   );
 }
