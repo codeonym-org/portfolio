@@ -290,15 +290,15 @@ function Room() {
       </mesh>
       <mesh position={[0, floor + h / 2, back]} receiveShadow>
         <planeGeometry args={[side * 2, h]} />
-        <meshStandardMaterial color="#8a7d70" roughness={0.92} />
+        <meshStandardMaterial color="#b9aea2" roughness={0.92} />
       </mesh>
       <mesh position={[-side, floor + h / 2, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
         <planeGeometry args={[6, h]} />
-        <meshStandardMaterial color="#7d7064" roughness={0.92} />
+        <meshStandardMaterial color="#aca196" roughness={0.92} />
       </mesh>
       <mesh position={[side, floor + h / 2, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
         <planeGeometry args={[6, h]} />
-        <meshStandardMaterial color="#7d7064" roughness={0.92} />
+        <meshStandardMaterial color="#aca196" roughness={0.92} />
       </mesh>
       <mesh position={[0, ceiling, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[side * 2, 6]} />
@@ -405,31 +405,33 @@ export default function OfficeStage() {
       dpr={[1, 1.75]}
       shadows={{ type: PCFSoftShadowMap }}
       camera={{ fov: 34, near: 0.05, far: 30, position: [0, 0.45, 2.4] }}
-      gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping, toneMappingExposure: 1.0 }}
+      gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }}
     >
       <color attach="background" args={["#14110f"]} />
-      <hemisphereLight args={["#ffe9d6", "#2a1d14", 0.45]} />
-      {/* the key: a warm ceiling light in front of him, a little to his right */}
+      <hemisphereLight args={["#fff3e6", "#3a2c22", 0.9]} />
+      {/* the key: a large soft lamp in front of him, a little above his eyes, from the stranger's left */}
       <spotLight
-        position={[-0.9, 1.85, 1.6]}
-        angle={0.6}
-        penumbra={0.8}
-        intensity={9}
-        distance={6}
-        decay={1.6}
-        color="#ffe2c2"
+        position={[-1.1, 1.15, 2.6]}
+        angle={0.55}
+        penumbra={1}
+        intensity={11}
+        distance={7}
+        decay={1.5}
+        color="#fff0e2"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
-        shadow-normalBias={0.02}
+        shadow-normalBias={0.03}
+        shadow-radius={6}
       />
-      {/* a soft fill from where the stranger sits */}
-      <pointLight position={[0.6, 0.5, 2.2]} intensity={1.2} distance={5} decay={1.5} color="#ffeedd" />
-      {/* the dusk from the window behind him, as a cool rim */}
-      <directionalLight position={[1.6, 0.9, -1.4]} intensity={1.1} color="#8fb0ff" />
-      {/* the room's own lamps, on the walls */}
-      <pointLight position={[-1.25, 1.55, ROOM.back + 0.4]} intensity={1.4} distance={3} decay={1.8} color="#ffcf9a" />
-      <Environment resolution={128} environmentIntensity={0.5}>
+      {/* the fill, from the other side, so no half of his face is dark */}
+      <pointLight position={[1.3, 0.7, 2.2]} intensity={3.2} distance={6} decay={1.5} color="#ffeede" />
+      {/* the dusk from the window behind him, as a faint cool rim */}
+      <directionalLight position={[1.6, 0.9, -1.4]} intensity={0.5} color="#a9c0ff" />
+      {/* the room's own lamps: one over the shelves, one on the ceiling */}
+      <pointLight position={[-1.25, 1.55, ROOM.back + 0.4]} intensity={2} distance={3.5} decay={1.8} color="#ffd9ae" />
+      <pointLight position={[0.4, 1.8, -0.4]} intensity={3} distance={5} decay={1.6} color="#fff0e0" />
+      <Environment resolution={128} environmentIntensity={0.7}>
         <Lightformer form="rect" intensity={2} color="#ffe6cc" position={[0, 2.5, 3]} scale={[4, 1.2, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#7f9fd8" position={[1.4, 0.6, -3]} scale={[1.5, 1.6, 1]} />
       </Environment>
