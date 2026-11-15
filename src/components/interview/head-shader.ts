@@ -1,4 +1,4 @@
-import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "three";
+import type { MeshStandardMaterial, Texture, WebGLProgramParametersWithUniforms } from "three";
 
 /**
  * ── HIS FACE, ALIVE ───────────────────────────────────────────
@@ -7,6 +7,9 @@ import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "t
  * space: the mesh position moved to HEAD.origin and scaled by
  * HEAD.scale (Y up, face toward +Z, the head about one unit wide).
  *
+ * Face: the photo the scan was made from is laid over the front of
+ * the head (the mesh was reshaped to it), so the eyes, the skin and
+ * the beard are his own, at the photo's resolution.
  * Jaw: everything below the line where the lips meet turns about a
  * hinge near the ears; the lips part as a lens, the inside is dark,
  * the upper teeth show in shadow.
@@ -15,11 +18,13 @@ import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "t
 
 /** where the head is in the mesh, and how much bigger head space is */
 export const HEAD = { origin: [-0.02, 0.508, -0.264] as const, scale: 1.876 };
-export const JAW = { stomion: 0.019, hinge: [0, 0.15, 0] as const, angle: 0.045 };
+/** the photo over the face: where the mesh position lands in it, as uv = at + position.xy * per */
+const PHOTO = { px: 0.00089, eyes: [240, 333.5] as const, at: [-0.017, 0.6725] as const, size: [500, 740] as const };
+export const JAW = { stomion: 0.0105, hinge: [0, 0.15, 0] as const, angle: 0.045 };
 /** the centre of each eye (on his glasses), and the eye's half width and half height */
-export const EYES = { left: [-0.135, 0.313, 0.53], right: [0.152, 0.319, 0.53], rx: 0.068, ry: 0.032 } as const;
+export const EYES = { left: [-0.14, 0.309, 0.53], right: [0.151, 0.309, 0.53], rx: 0.068, ry: 0.032 } as const;
 
-export const headUniforms = { uJaw: { value: 0 }, uBlink: { value: 0 } };
+export const headUniforms = { uJaw: { value: 0 }, uBlink: { value: 0 }, uFace: { value: null as Texture | null } };
 
 const S = JAW.stomion.toFixed(3);
 const v3 = (v: readonly number[]) => `vec3(${v.map((n) => n.toFixed(3)).join(", ")})`;
@@ -30,6 +35,8 @@ varying float vJaw;
 varying float vMouth;
 varying float vLens;
 varying vec3 vRest;
+varying vec3 vRestNormal;
+varying vec2 vFaceUv;
 const vec3 JAW_HINGE = ${v3(JAW.hinge)};
 const vec3 HEAD_O = ${v3(HEAD.origin)};
 const float HEAD_K = ${HEAD.scale.toFixed(3)};
@@ -56,6 +63,9 @@ vec3 jawTurn(vec3 v, float a) {
 const FRAGMENT_HEAD = /* glsl */ `
 uniform float uJaw;
 uniform float uBlink;
+uniform sampler2D uFace;
+varying vec3 vRestNormal;
+varying vec2 vFaceUv;
 varying float vJaw;
 varying float vMouth;
 varying float vLens;
@@ -76,6 +86,7 @@ export function rigHead(material: MeshStandardMaterial) {
   material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms) => {
     shader.uniforms.uJaw = headUniforms.uJaw;
     shader.uniforms.uBlink = headUniforms.uBlink;
+    shader.uniforms.uFace = headUniforms.uFace;
     shader.vertexShader =
       VERTEX_HEAD +
       shader.vertexShader
@@ -84,6 +95,8 @@ export function rigHead(material: MeshStandardMaterial) {
           `#include <beginnormal_vertex>
           vec3 hp = (position - HEAD_O) * HEAD_K;
           float jw = jawWeight(hp);
+          vRestNormal = normal;
+          vFaceUv = vec2(${(PHOTO.eyes[0] / PHOTO.size[0]).toFixed(5)} + (position.x - ${PHOTO.at[0].toFixed(4)}) * ${(1 / PHOTO.px / PHOTO.size[0]).toFixed(5)}, ${(1 - PHOTO.eyes[1] / PHOTO.size[1]).toFixed(5)} + (position.y - ${PHOTO.at[1].toFixed(4)}) * ${(1 / PHOTO.px / PHOTO.size[1]).toFixed(5)});
           objectNormal = jawTurn(objectNormal, uJaw * jw);
           #ifdef USE_TANGENT
           objectTangent = jawTurn(objectTangent, uJaw * jw);
@@ -105,6 +118,12 @@ export function rigHead(material: MeshStandardMaterial) {
           "#include <map_fragment>",
           `#include <map_fragment>
           float ax = abs(vRest.x);
+          // his photo over the front of the head: full on the face, fading into the scan at the sides, the hair and the neck
+          float facing = smoothstep(0.25, 0.6, normalize(vRestNormal).z);
+          float onHead = smoothstep(0.2, 0.34, vRest.z) * smoothstep(-0.32, -0.24, vRest.y) * (1.0 - smoothstep(0.6, 0.72, vRest.y)) * (1.0 - smoothstep(0.36, 0.42, ax));
+          vec2 fuv = clamp(vFaceUv, 0.0, 1.0);
+          float inPhoto = step(abs(vFaceUv.x - 0.5), 0.49) * step(abs(vFaceUv.y - 0.5), 0.49);
+          diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(uFace, fuv).rgb, facing * onHead * inPhoto);
           // open: the band stretched between the lips, 0 at the upper lip and 1 at the lower
           float open = uJaw / ${JAW.angle.toFixed(3)};
           float across = clamp(vJaw / max(vLens, 0.05), 0.0, 1.0);
@@ -130,6 +149,6 @@ export function rigHead(material: MeshStandardMaterial) {
           #include <opaque_fragment>`,
         );
   };
-  material.customProgramCacheKey = () => "avatar-head";
+  material.customProgramCacheKey = () => "avatar-head-2";
   material.needsUpdate = true;
 }

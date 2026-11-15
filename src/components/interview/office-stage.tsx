@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, useGLTF } from "@react-three/drei";
+import { Environment, Lightformer, useGLTF, useTexture } from "@react-three/drei";
 import {
   CanvasTexture,
   Bone,
@@ -34,7 +34,7 @@ import { mouthLive, useInterview } from "./interview-store";
  * The desk and chair are Rodin models too; the room is drawn here.
  */
 
-const MODELS = { avatar: "/models/office/avatar.glb", desk: "/models/office/desk.glb", chair: "/models/office/chair.glb" };
+const MODELS = { avatar: "/models/office/avatar.glb", face: "/models/office/face.webp", desk: "/models/office/desk.glb", chair: "/models/office/chair.glb" };
 const DRACO = "/draco/";
 
 /** the room, in metres: the floor, the far wall, the side walls, the ceiling */
@@ -76,6 +76,10 @@ function prepare(root: Object3D, shadows: boolean) {
 
 function Avatar() {
   const gltf = useGLTF(MODELS.avatar, DRACO);
+  const face = useTexture(MODELS.face, (t) => {
+    t.colorSpace = SRGBColorSpace;
+    t.anisotropy = 8;
+  });
   const group = useRef<Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
   /** a life: when he next blinks, where he looks when nobody moves */
@@ -93,6 +97,7 @@ function Avatar() {
     const body = gltf.scene.getObjectByName("body") as Mesh | undefined;
     const material = body?.material as MeshStandardMaterial | undefined;
     if (body) body.frustumCulled = false;
+    headUniforms.uFace.value = face;
     if (material) rigHead(material);
     useInterview.getState().set({ present: true });
     useWorldStore.getState().setReady();
@@ -109,7 +114,7 @@ function Avatar() {
     return () => {
       window.removeEventListener("pointermove", onMove);
     };
-  }, [gltf, life]);
+  }, [gltf, face, life]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
