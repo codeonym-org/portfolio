@@ -1,190 +1,209 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useDragControls } from "motion/react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown, ChevronUp, Keyboard, Mic, X } from "lucide-react";
 import { converse } from "@/agent/converse";
+import { Markdown } from "@/components/agent/markdown";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
-import { useSession, type Turn } from "@/store/session-store";
+import { useSession } from "@/store/session-store";
 import { useInterview } from "./interview-store";
-import { useVoiceLog, type VoiceEntry } from "./voice-log";
+import { nextQuestions, type InterviewTurn } from "./turns";
+import { useTurns } from "./use-turns";
 
 const copy = world.interview;
-/** how many questions he is offered after the last answer */
-const NEXT = 3;
+/** how far apart two turns hang, into the depth of the room, and upward */
+const DEPTH = 340;
+const RISE = 70;
+const DRIFT = 110;
 
-/** one question, and what came of it */
-export interface Exchange {
-  id: string;
-  you: string;
-  him: string;
-  spoken: boolean;
-}
+const clock = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const since = (ms: number) => `+${String(Math.floor(ms / 60000)).padStart(2, "0")}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 
-/** when each exchange was first seen: typed and spoken ones are kept in two places, this puts them in one order */
-const seen = new Map<string, number>();
-const order = (id: string) => seen.get(id) ?? seen.set(id, seen.size).get(id)!;
-
-export function exchanges(turns: readonly Turn[], voice: readonly VoiceEntry[]): Exchange[] {
-  const out: Exchange[] = [];
-  for (const [i, t] of turns.entries()) {
-    // what the voice handed over is in the voice's own log
-    if (t.role !== "visitor" || t.voice) continue;
-    const answer = turns[i + 1]?.role === "system" ? turns[i + 1].text : "";
-    out.push({ id: t.id, you: t.text, him: answer, spoken: false });
-  }
-  for (const [i, e] of voice.entries()) {
-    if (e.kind !== "heard") continue;
-    const answer = voice[i + 1]?.kind === "voice" ? voice[i + 1].text : "";
-    out.push({ id: e.id, you: e.text, him: answer, spoken: true });
-  }
-  return out.sort((a, b) => order(a.id) - order(b.id));
-}
-
-function Node({ kind, label, text, onClick }: { kind: "you" | "him" | "next"; label?: string; text: string; onClick?: () => void }) {
-  const [open, setOpen] = useState(false);
-  const body = (
-    <>
-      {label && <span className="air-label mb-0.5 block text-[8px]">{label}</span>}
-      <span className={cn("block text-[12.5px] leading-snug", kind === "next" ? "text-white/75" : "text-white/90", !open && kind !== "next" && "line-clamp-3")}>{text}</span>
-    </>
-  );
+function TurnCard({ turn, n, start, front, last, ask }: { turn: InterviewTurn; n: number; start: number; front: boolean; last: boolean; ask: (q: string) => void }) {
+  const turns = useTurns();
+  const next = last && front ? nextQuestions(turns, world.agent.suggestions, 3) : [];
+  const Icon = turn.spoken ? Mic : Keyboard;
   return (
-    <motion.button
-      type="button"
-      layout="position"
-      initial={{ opacity: 0, scale: 0.6, x: -12 }}
-      animate={{ opacity: 1, scale: 1, x: 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      onClick={onClick ?? (() => setOpen((o) => !o))}
-      data-kind={kind}
-      className={cn("node block w-full text-left outline-none focus-visible:ring-1 focus-visible:ring-system", kind === "next" ? "px-3 py-1.5" : "px-3 py-2")}
-    >
-      {body}
-    </motion.button>
-  );
-}
-
-/** a child of the node above: an elbow from the parent's line into it */
-function Branch({ children, last, tint }: { children: React.ReactNode; last?: boolean; tint: string }) {
-  return (
-    <div className="relative pl-7">
-      <motion.span
-        aria-hidden
-        className="absolute top-0 left-2.5 h-5 w-4 rounded-bl-[10px] border-b border-l"
-        style={{ borderColor: tint, transformOrigin: "0 0" }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.3 }}
-      />
-      {!last && <span aria-hidden className="absolute top-0 bottom-0 left-2.5 border-l" style={{ borderColor: tint }} />}
-      <div className="pt-1.5">{children}</div>
+    <div className="tx-card px-5 pt-3.5 pb-4">
+      <div className="mb-3 flex items-center gap-3 font-mono text-[10px] tracking-[0.22em] text-[oklch(0.86_0.1_215)] uppercase">
+        <span className="tx-tag">T{String(n).padStart(2, "0")}</span>
+        <span>{clock(turn.at)}</span>
+        <span className="text-white/40">{since(turn.at - start)}</span>
+        <Icon className="ml-auto size-3.5 text-white/50" />
+      </div>
+      <p className="air-label mb-1 text-[8px]">{turn.spoken ? copy.panes.heard : copy.panes.you}</p>
+      <p className="mb-3 text-[15px] leading-snug text-white">{turn.you}</p>
+      <p className="air-label mb-1 text-[8px] text-[oklch(0.8_0.14_300)]">{copy.panes.words}</p>
+      <div className={cn("oracle text-[13.5px] text-white/85", front ? "max-h-[30dvh] overflow-y-auto overscroll-contain pr-1" : "line-clamp-3")}>{turn.him ? <Markdown text={turn.him} /> : "…"}</div>
+      {turn.cards.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {turn.cards.map((c, i) => (
+            <span key={i} className="rounded-full border border-[oklch(0.8_0.12_160/0.5)] px-2.5 py-0.5 font-mono text-[10px] tracking-wider text-[oklch(0.86_0.12_160)] uppercase">
+              {copy.panes.card} · {c.type}
+            </span>
+          ))}
+        </div>
+      )}
+      {next.length > 0 && (
+        <div className="mt-4 border-t border-white/10 pt-3">
+          <p className="air-label mb-2 text-[8px]">{copy.next}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {next.map((q) => (
+              <button key={q} type="button" onClick={() => ask(q)} className="rounded-full border border-dashed border-[oklch(0.8_0.1_215/0.5)] px-3 py-1 text-[12.5px] text-white/85 transition hover:bg-[oklch(0.8_0.1_215/0.15)]">
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-const TINT = { you: "oklch(0.78 0.13 232 / 0.55)", him: "oklch(0.74 0.17 300 / 0.55)", next: "rgb(255 255 255 / 0.25)" };
-
 /**
- * ── THE TRANSCRIPT ────────────────────────────────────────────
- * A window hanging in the room (drag it by its top) that draws the
- * interview as a graph: every question is a node on the line of the
- * conversation, his answer hangs from it, and from the last answer
- * hang the questions he could be asked next (press one to ask it).
+ * ── THE TRANSCRIPT: TIME AND SPACE ────────────────────────────
+ * An overlay over the room, like a hologram: every turn of the
+ * interview is a pane hanging in space. The one in front is the turn
+ * you are reading; older turns hang behind it, each further back and
+ * higher, drifting to one side then the other. The wheel, the arrow
+ * keys, a swipe or the rail of time at the bottom move through them.
+ * From the last turn you can ask what comes next.
  */
 export function Transcript() {
   const open = useInterview((s) => s.transcript);
   const toggle = useInterview((s) => s.toggleTranscript);
-  const turns = useSession((s) => s.turns);
   const running = useSession((s) => s.running);
-  const voice = useVoiceLog((s) => s.log);
-  const drag = useDragControls();
-  const scroller = useRef<HTMLDivElement>(null);
+  const turns = useTurns();
+  const [chosen, setChosen] = useState<number | null>(null);
+  const wheel = useRef(0);
+  const touch = useRef<number | null>(null);
+  const last = turns.length - 1;
+  /** the turn in front: the one chosen, or the latest */
+  const focus = Math.min(chosen ?? last, last);
 
-  const list = useMemo(() => exchanges(turns, voice), [turns, voice]);
-  const next = useMemo(() => {
-    const asked = new Set(list.map((e) => e.you.trim().toLowerCase()));
-    return world.agent.suggestions.filter((s) => !asked.has(s.toLowerCase())).slice(0, NEXT);
-  }, [list]);
-
-  // the newest node stays in view
-  const answer = list.at(-1)?.him;
-  useEffect(() => {
-    if (open) scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
-  }, [open, list.length, answer]);
-
-  const ask = (text: string) => {
-    if (running) return;
-    play("confirm", { volume: 0.35 });
-    void converse(text);
+  const move = (by: number) => setChosen(Math.max(0, Math.min(last, focus + by)));
+  const close = () => {
+    play("close", { volume: 0.4 });
+    setChosen(null);
+    toggle();
   };
 
-  const suggestions = next.map((s, i) => (
-    <Branch key={s} tint={TINT.next} last={i === next.length - 1}>
-      <Node kind="next" text={s} onClick={() => ask(s)} />
-    </Branch>
-  ));
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowUp" || e.key === "ArrowLeft") move(-1);
+      else if (e.key === "ArrowDown" || e.key === "ArrowRight") move(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const ask = (q: string) => {
+    if (running) return;
+    play("confirm", { volume: 0.35 });
+    setChosen(null);
+    toggle();
+    void converse(q);
+  };
+
+  const start = turns[0]?.at ?? 0;
 
   return (
     <AnimatePresence>
       {open && (
-        <motion.aside
+        <motion.div
+          role="dialog"
+          aria-modal="true"
           aria-label={copy.transcript}
-          drag
-          dragControls={drag}
-          dragListener={false}
-          dragMomentum={false}
-          dragElastic={0.08}
-          initial={{ opacity: 0, scale: 0.6, x: 60, filter: "blur(10px)" }}
-          animate={{ opacity: 1, scale: 1, x: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, scale: 0.7, x: 60, filter: "blur(8px)", transition: { duration: 0.22 } }}
-          transition={{ type: "spring", stiffness: 210, damping: 22 }}
-          className="fixed top-[76px] right-3 z-30 w-[min(400px,calc(100vw-1.5rem))] origin-top-right"
+          className="tx fixed inset-0 z-50 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.25 } }}
+          onWheel={(e) => {
+            // inside a pane that scrolls, the wheel reads it; elsewhere it moves through time
+            if ((e.target as HTMLElement).closest("[data-scrolls]")) return;
+            wheel.current += e.deltaY;
+            if (Math.abs(wheel.current) < 60) return;
+            move(wheel.current > 0 ? 1 : -1);
+            wheel.current = 0;
+          }}
+          onTouchStart={(e) => (touch.current = e.touches[0].clientY)}
+          onTouchEnd={(e) => {
+            if (touch.current === null) return;
+            const dy = e.changedTouches[0].clientY - touch.current;
+            touch.current = null;
+            if (Math.abs(dy) > 50 && !(e.target as HTMLElement).closest("[data-scrolls]")) move(dy > 0 ? -1 : 1);
+          }}
         >
-          <div className="air air-float flex max-h-[min(62dvh,600px)] flex-col" style={{ ["--air-tint" as string]: "oklch(0.74 0.17 300)", ["--float-s" as string]: "9s", background: "linear-gradient(160deg, oklch(0.2 0.035 285 / 0.93), oklch(0.12 0.03 280 / 0.96))" }}>
-            <div className="flex cursor-grab touch-none items-center gap-2 px-4 pt-3 pb-2 active:cursor-grabbing" onPointerDown={(e) => drag.start(e)}>
-              <span className="air-dot" />
-              <p className="air-label flex-1">{copy.transcript}</p>
-              <p className="air-label text-white/30">{list.length}</p>
-              <button type="button" aria-label="Close" onPointerDown={(e) => e.stopPropagation()} onClick={toggle} className="-mr-1 grid size-6 place-items-center rounded-md text-white/45 transition hover:bg-white/10 hover:text-white">
-                <X className="size-3.5" />
-              </button>
-            </div>
-            <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
-              {/* the root: where the interview starts */}
-              <div className="flex items-center gap-2 pb-1">
-                <span className="size-2.5 rounded-full border border-white/50" />
-                <span className="air-label">{copy.transcriptStart}</span>
-              </div>
-              {list.length === 0 && (
-                <>
-                  <p className="pb-1 pl-7 text-[12.5px] text-white/55">{copy.transcriptEmpty}</p>
-                  {suggestions}
-                </>
-              )}
-              {list.map((e, i) => {
-                const lastOne = i === list.length - 1;
-                return (
-                  <Branch key={e.id} tint={TINT.you} last={lastOne}>
-                    <Node kind="you" label={e.spoken ? copy.panes.heard : copy.panes.you} text={e.you} />
-                    <Branch tint={TINT.him} last>
-                      {e.him ? (
-                        <Node kind="him" label={copy.panes.words} text={e.him} />
-                      ) : (
-                        <p className="node animate-pulse px-3 py-2 text-[12px] text-white/50" data-kind="him">
-                          …
-                        </p>
-                      )}
-                      {lastOne && e.him && !running && suggestions}
-                    </Branch>
-                  </Branch>
-                );
-              })}
-            </div>
+          <button type="button" aria-label="Close" className="absolute inset-0 cursor-default" onClick={close} tabIndex={-1} />
+          <div className="tx-floor" aria-hidden />
+          <div className="tx-scan" aria-hidden />
+
+          <header className="pointer-events-none absolute inset-x-4 top-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
+            <span className="air-dot" style={{ ["--air-tint" as string]: "oklch(0.86 0.1 215)" }} />
+            <p className="font-display text-[11px] tracking-[0.34em] text-[oklch(0.9_0.08_215)] [text-shadow:0_0_14px_oklch(0.8_0.12_215)]">{copy.transcript.toUpperCase()}</p>
+            <p className="hidden font-mono text-[10px] tracking-[0.25em] text-white/40 uppercase sm:block">{copy.transcriptHint}</p>
+            <button type="button" aria-label="Close" onClick={close} className="tx-key pointer-events-auto ml-auto grid size-10 place-items-center rounded-full">
+              <X className="size-4" />
+            </button>
+          </header>
+
+          {/* space: the turns, the one in front and the older ones behind it */}
+          <div className="pointer-events-none absolute inset-0 grid place-items-center" style={{ perspective: 1300, perspectiveOrigin: "50% 38%" }}>
+            {turns.length === 0 && <p className="font-mono text-[11px] tracking-[0.25em] text-white/50 uppercase">{copy.transcriptEmpty}</p>}
+            {turns.map((turn, i) => {
+              const back = focus - i;
+              const gone = back < 0;
+              const side = i % 2 ? 1 : -1;
+              return (
+                <motion.div
+                  key={turn.id}
+                  data-scrolls={back === 0 ? "" : undefined}
+                  className={cn("absolute w-[min(540px,calc(100vw-2rem))]", back === 0 ? "pointer-events-auto" : gone || back > 3 ? "pointer-events-none" : "pointer-events-auto cursor-pointer")}
+                  style={{ zIndex: 100 - Math.abs(back), transformStyle: "preserve-3d" }}
+                  initial={{ opacity: 0, z: -900, y: -140 }}
+                  animate={{
+                    z: gone ? 420 : -back * DEPTH,
+                    y: gone ? 160 : -back * RISE - 20,
+                    x: gone || back === 0 ? 0 : side * Math.min(back, 3) * DRIFT,
+                    rotateY: gone || back === 0 ? 0 : -side * 9,
+                    rotateX: back === 0 ? 0 : 4,
+                    opacity: gone ? 0 : Math.max(0, 1 - back * 0.3),
+                    filter: back > 0 ? `blur(${Math.min(back, 3) * 0.8}px)` : "blur(0px)",
+                  }}
+                  transition={{ type: "spring", stiffness: 170, damping: 24, mass: 0.9 }}
+                  onClick={back > 0 ? () => setChosen(i) : undefined}
+                >
+                  <TurnCard turn={turn} n={i + 1} start={start} front={back === 0} last={i === last} ask={ask} />
+                </motion.div>
+              );
+            })}
           </div>
-        </motion.aside>
+
+          {/* time: one mark per turn */}
+          {turns.length > 0 && (
+            <footer className="pointer-events-none absolute inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3 px-4">
+              <button type="button" aria-label="Older" disabled={focus === 0} onClick={() => move(-1)} className="tx-key pointer-events-auto grid size-9 shrink-0 place-items-center rounded-full disabled:opacity-30">
+                <ChevronUp className="size-4" />
+              </button>
+              <div className="tx-rail pointer-events-auto flex max-w-[min(640px,70vw)] items-center gap-1 overflow-x-auto px-3 py-2">
+                {turns.map((t, i) => (
+                  <button key={t.id} type="button" aria-label={`T${i + 1}: ${t.you}`} aria-current={i === focus} title={t.you} onClick={() => setChosen(i)} className="group flex shrink-0 flex-col items-center gap-1 px-1.5">
+                    <span className={cn("block h-3 w-px bg-[oklch(0.8_0.1_215/0.5)] transition-all", i === focus && "h-5 w-0.5 bg-[oklch(0.9_0.1_215)] shadow-[0_0_10px_oklch(0.85_0.12_215)]")} />
+                    <span className={cn("font-mono text-[9px] tracking-wider transition-colors", i === focus ? "text-white" : "text-white/40 group-hover:text-white/80")}>{since(t.at - start).slice(1)}</span>
+                  </button>
+                ))}
+              </div>
+              <button type="button" aria-label="Newer" disabled={focus === last} onClick={() => move(1)} className="tx-key pointer-events-auto grid size-9 shrink-0 place-items-center rounded-full disabled:opacity-30">
+                <ChevronDown className="size-4" />
+              </button>
+            </footer>
+          )}
+        </motion.div>
       )}
     </AnimatePresence>
   );

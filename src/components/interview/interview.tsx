@@ -11,9 +11,10 @@ import { useWorldStore } from "@/store/world-store";
 import { AirInput } from "./air-input";
 import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
-import { ReplySpace } from "./reply-space";
 import { TopBar } from "./top-bar";
 import { Transcript } from "./transcript";
+import { TurnCanvas } from "./turn-canvas";
+import { followTurns } from "./use-turns";
 import { followVoice } from "./voice-log";
 
 const OfficeStage = dynamic(() => import("./office-stage"), { ssr: false });
@@ -58,10 +59,11 @@ function Arrival() {
  * The owner's avatar at a desk in an office, facing the stranger.
  * Everything else is glass hanging in the air: a bar at the top (the
  * way out, the TEXT / AUDIO switch, the transcript), the input at the
- * bottom (a pane to type on, or a microphone to hold), every part of
- * a reply in its own window around his face, and the transcript drawn
- * as a graph. The same agent as the record answers, through the same
- * link.
+ * bottom (a pane to type on, or a microphone to hold), the turn in
+ * progress laid out around his face (`turn-canvas`), the turn before
+ * kept small in a corner, and the transcript: a hologram of every
+ * turn hanging in space. The same agent as the record answers,
+ * through the same link.
  */
 export function Interview() {
   const mode = useInterview((s) => s.mode);
@@ -76,9 +78,11 @@ export function Interview() {
     // sound needs a gesture; no music in an interview
     window.addEventListener("pointerdown", preloadSounds, { once: true });
     window.addEventListener("keydown", preloadSounds, { once: true });
-    const unfollow = followVoice();
+    const unfollowVoice = followVoice();
+    const unfollowTurns = followTurns();
     return () => {
-      unfollow();
+      unfollowVoice();
+      unfollowTurns();
       window.removeEventListener("pointerdown", preloadSounds);
       window.removeEventListener("keydown", preloadSounds);
     };
@@ -89,7 +93,7 @@ export function Interview() {
       <OfficeStage />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgb(0_0_0/0.35)_100%)]" aria-hidden />
       <Arrival />
-      <ReplySpace />
+      <TurnCanvas />
       <TopBar />
       <Transcript />
       <AnimatePresence mode="wait">{mode === "text" ? <AirInput key="text" /> : <MicButton key="audio" />}</AnimatePresence>

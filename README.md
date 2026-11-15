@@ -10,7 +10,7 @@ are shown live as a run trace.
 
 [`/interview`](https://portfolio.codeonym.work/interview) is the same agent face to face: his avatar at a desk in an
 office, as in a real interview, answering by text or voice (it blinks, breathes, looks at you, and its jaw follows the voice),
-every part of a reply in its own floating window (they fade out a few seconds after the next question), and a transcript drawn as a graph of questions, answers and what to ask next. The avatar (from a photo of the owner seated, in a stylized CG look) and his chair are Hyper3D Rodin models; the office around him (the desk, what is on it, the shelves, the plants) is a Hyper3D WorldGen scene made from one Unsplash photo of an office.
+the turn in progress laid out in floating windows around him (his words, what he shows, what to ask next), the turn before kept small in a corner, and a transcript that opens as a hologram of every turn hanging in space. The avatar (from a photo of the owner seated, in a stylized CG look) and his chair are Hyper3D Rodin models; the office around him (the desk, what is on it, the shelves, the plants) is a Hyper3D WorldGen scene made from one Unsplash photo of an office.
 
 Without the agent (no key, offline, rate-limited) a local index takes over, **⌘K** runs every command by hand, and
 [`/record`](https://portfolio.codeonym.work/record) and `/llms.txt` serve the same record as plain text.
