@@ -214,7 +214,7 @@ export const systemCommands: SystemCommand[] = [
       }
       const tab = window.open(href, "_blank");
       if (!tab) {
-        return `The browser blocked the new tab. Call show_contact_card so the visitor can open the ${label} with a click.`;
+        return `The browser blocked the new tab. Call show_business_card so the visitor can open the ${label} from the card.`;
       }
       tab.opener = null;
       return `Opened the ${label} in a new tab.`;

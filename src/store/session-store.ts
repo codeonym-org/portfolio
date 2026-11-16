@@ -11,7 +11,6 @@ import type { CaseFile } from "@/record/case-file";
  */
 
 export type Card =
-  | { type: "contact"; links?: string[] }
   | { type: "skills"; ids: string[]; title?: string }
   | { type: "map" }
   | { type: "case"; file: CaseFile };

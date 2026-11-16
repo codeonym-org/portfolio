@@ -8,7 +8,7 @@ he would in an interview. Its rules:
   console says so at all times.
 - It answers only from the record and the interview file
   (`src/config/interview.config.ts`). A question with no answer on file gets
-  "I'd rather answer that myself" and the contact card, never a guess.
+  "I'd rather answer that myself" and his business card, never a guess.
 - It never settles anything binding (salary, start date, offer, contract): the
   real Ayoub confirms it.
 - The local index, used when the model is unreachable, does not speak as him.

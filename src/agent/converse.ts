@@ -93,7 +93,7 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
       invited = step.command;
       reply.text = `${reply.text}\n\n${step.line}`;
     }
-    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : reply.contact ? [{ type: "contact" }] : undefined }]);
+    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : undefined }]);
   } finally {
     live.agentBusy = false;
     useSession.getState().set({ running: false });

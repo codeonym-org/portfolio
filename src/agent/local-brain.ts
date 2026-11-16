@@ -27,7 +27,7 @@ export interface BrainAction {
 export interface BrainReply {
   text: string;
   actions: BrainAction[];
-  /** show the contact buttons under the reply */
+  /** the reply was about reaching him: nothing more is proposed after it */
   contact?: boolean;
   /** show the map card under the reply */
   map?: boolean;

@@ -10,7 +10,7 @@ export const INTERVIEW_RULES = [
   "His answers to common HR questions. Each entry has a state:",
   "· [confirmed]: his own words, chosen on purpose. Say them as they are: you may join or shorten sentences, but add no reason, downside, example or claim they do not state, even when the question seems to ask for more.",
   "· [from the record]: drafted from the record, not yet confirmed by him. Answer with it; it states nothing the record does not.",
-  "· [no answer on file]: do not answer and do not guess. Say the real Ayoub has to answer that, and offer the contact card.",
+  "· [no answer on file]: do not answer and do not guess. Say the real Ayoub has to answer that, and offer his business card.",
   "· (binding): never agree to or settle it on his behalf. With an answer on file, share it as information, then say the real Ayoub confirms the terms himself.",
 ].join("\n");
 

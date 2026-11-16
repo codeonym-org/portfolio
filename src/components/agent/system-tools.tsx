@@ -32,27 +32,12 @@ function CommandTool({ command }: { command: SystemCommand }) {
   return null;
 }
 
-const linksSchema = z.object({
-  links: z
-    .array(z.enum(["email", "phone", "linkedin", "github", "cv"]))
-    .optional()
-    .describe("Which channels to show; omit for all."),
-});
-
 const skillsSchema = z.object({
   ids: z.array(z.string()).min(1).max(12).describe("Skill ids from the dossier, strongest first."),
   title: z.string().optional().describe("Short caption, e.g. 'AGENT STACK'"),
 });
 
 function PresentationTools() {
-  useFrontendTool({
-    name: "show_contact_card",
-    description:
-      "Draw a contact card under your reply with clickable email / phone / LinkedIn / GitHub / CV buttons. Use when the visitor wants to reach, hire or follow him.",
-    parameters: linksSchema,
-    handler: async ({ links }) =>
-      `Contact card shown (${links?.join(", ") || "all channels"}). The visitor sees the buttons — do not list the links or address in text; reply with one short line.`,
-  });
   useFrontendTool({
     name: "show_map",
     description:

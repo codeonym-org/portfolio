@@ -32,7 +32,7 @@ export function buildTurns(session: readonly SessionTurn[], voice: readonly Voic
     if (t.role !== "visitor") continue;
     const at = t.at ?? 0;
     const answer = session[i + 1]?.role === "system" ? session[i + 1] : undefined;
-    const cards = (answer?.cards ?? []).filter((c) => c.type !== "case");
+    const cards = (answer?.cards ?? []).filter((c) => c.type === "skills" || c.type === "map");
     if (!t.voice) {
       out.push({ id: t.id, you: t.text, him: answer?.text ?? "", cards, spoken: false, at });
       continue;
