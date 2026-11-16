@@ -16,14 +16,16 @@ import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "t
  */
 
 /** where the head is in the mesh, and how much bigger head space is */
-export const HEAD = { origin: [-0.019, 0.515, -0.18] as const, scale: 1.876 };
-export const JAW = { stomion: 0.0105, hinge: [0, 0.15, 0] as const, angle: 0.045 };
+export const HEAD = { origin: [-0.027, 0.389, -0.306] as const, scale: 1.446 };
+/** the line where the lips meet, half the width of the mouth, the hinge, and how far the jaw opens */
+export const JAW = { stomion: 0.024, width: 0.092, hinge: [0, 0.15, 0.08] as const, angle: 0.045 };
 /** each eye's centre, the half width and half height of its opening, and how far forward the face reaches there (the glasses are further) */
-export const EYES = { left: [-0.1257, 0.2927], right: [0.137, 0.2908], rx: 0.064, ry: 0.0244, face: [0.515, 0.54] } as const;
+export const EYES = { left: [-0.13, 0.295], right: [0.127, 0.285], rx: 0.05, ry: 0.025, face: [0.53, 0.555] } as const;
 
 export const headUniforms = { uJaw: { value: 0 }, uBlink: { value: 0 } };
 
 const S = JAW.stomion.toFixed(3);
+const W = JAW.width.toFixed(3);
 const v3 = (v: readonly number[]) => `vec3(${v.map((n) => n.toFixed(4)).join(", ")})`;
 
 const VERTEX_HEAD = /* glsl */ `
@@ -42,7 +44,7 @@ float jawWeight(vec3 p) {
   float halfWidth = mix(0.008, 0.045, smoothstep(0.12, 0.24, ax));
   float below = 1.0 - smoothstep(${S} - halfWidth, ${S} + halfWidth, p.y);
   // the lips part as a lens: fully in the middle, not at all at the corners; lower down, the whole jaw turns
-  float lens = sqrt(max(0.0, 1.0 - pow(ax / 0.125, 2.0)));
+  float lens = sqrt(max(0.0, 1.0 - pow(ax / ${W}, 2.0)));
   float lip = mix(lens, 1.0, smoothstep(0.0, 0.06, ${S} - p.y));
   float front = smoothstep(0.26, 0.38, p.z);
   float side = 1.0 - smoothstep(0.26, 0.4, ax);
@@ -100,8 +102,8 @@ export function rigHead(material: MeshStandardMaterial) {
           transformed = HEAD_O + (JAW_HINGE + jawTurn(lidded - JAW_HINGE, uJaw * jw)) / HEAD_K;
           vJaw = jw;
           vRest = hp;
-          vLens = sqrt(max(0.0, 1.0 - pow(abs(hp.x) / 0.125, 2.0)));
-          vMouth = (1.0 - smoothstep(0.1, 0.125, abs(hp.x))) * smoothstep(0.45, 0.55, hp.z) * smoothstep(-0.2, -0.1, hp.y);`,
+          vLens = sqrt(max(0.0, 1.0 - pow(abs(hp.x) / ${W}, 2.0)));
+          vMouth = (1.0 - smoothstep(${W} * 0.8, ${W}, abs(hp.x))) * smoothstep(0.45, 0.55, hp.z) * smoothstep(-0.2, -0.1, hp.y);`,
         );
     shader.fragmentShader =
       FRAGMENT_HEAD +
@@ -123,6 +125,6 @@ export function rigHead(material: MeshStandardMaterial) {
           #include <opaque_fragment>`,
         );
   };
-  material.customProgramCacheKey = () => "avatar-head-7";
+  material.customProgramCacheKey = () => "avatar-head-8";
   material.needsUpdate = true;
 }

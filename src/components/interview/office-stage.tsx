@@ -40,7 +40,7 @@ const DRACO = "/draco/";
 /** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
 const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const, chin: 0.04 };
 /** his head around its bone, in model units: for the windows that keep clear of his face */
-const FACE = { centre: new Vector3(0, 0.2, 0.08), half: new Vector3(0.2, 0.27, 0.2) };
+const FACE = { centre: new Vector3(0, 0.28, 0.06), half: new Vector3(0.26, 0.34, 0.3) };
 
 const X = new Vector3(1, 0, 0);
 const Y = new Vector3(0, 1, 0);
