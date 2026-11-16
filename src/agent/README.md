@@ -86,12 +86,21 @@ hold V ─► MediaRecorder ─► runtime `transcribe` (OpenRouter STT, STT_MOD
   loop.
 - The reply is spoken sentence by sentence while it streams. The first chunk
   may break at a comma, so the first audio arrives sooner.
+- In the interview, the text agent's replies to typed questions are spoken too,
+  through the same chunker and speaker (not its runs for delegated tasks: the
+  voice tells those). A switch in the interview sets his replies to text only.
+- Before saying anything, the page asks whether the browser lets this tab play
+  sound (`voice/sound-permission.ts`: the browser's autoplay policy where it has
+  one, otherwise whether the stranger has pressed or typed on the page). If not,
+  the reply stays in text and the stranger is told once; a refused play is
+  caught the same way. Any press or key afterwards lets him speak again.
 
 | File | Role |
 | --- | --- |
 | `voice/protocol.ts` | wire shapes between the agents (task event, task/report messages) |
 | `voice/task-queue.ts` | sequential background task queue |
 | `voice/speech-chunker.ts` | streamed text → speakable sentences |
+| `voice/sound-permission.ts` | whether the browser lets the tab play sound |
 | `server/voice-agent.ts` | the voice `createAgent` + `delegate_task` |
 | `server/audio.ts` | OpenRouter STT (`TranscriptionService`) + TTS |
 | `../app/api/voice/speech` | TTS route (mp3 stream) |

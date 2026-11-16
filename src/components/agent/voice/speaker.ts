@@ -28,6 +28,8 @@ export class SpeechPlayer {
       onSpeaking: (speaking: boolean) => void;
       onLine?: (text: string) => void;
       onError?: (err: unknown) => void;
+      /** the browser refused to play: nothing more is said until the next press */
+      onBlocked?: () => void;
     },
   ) {}
 
@@ -156,6 +158,11 @@ export class SpeechPlayer {
           el.addEventListener("error", done);
         });
       } catch (err) {
+        if (err instanceof DOMException && err.name === "NotAllowedError") {
+          this.stop();
+          this.opts.onBlocked?.();
+          return;
+        }
         this.opts.onError?.(err);
       } finally {
         URL.revokeObjectURL(url);

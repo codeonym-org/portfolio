@@ -9,7 +9,7 @@ assemble a **case file**, a set of evidence picked for your question that you ca
 are shown live as a run trace.
 
 [`/interview`](https://portfolio.codeonym.work/interview) is the same agent face to face: his avatar at a desk in an
-office, as in a real interview, answering by text or voice (it blinks, breathes, looks at you, and its jaw follows the voice),
+office, as in a real interview: you ask by text or by voice, and he answers aloud (or in text only, if you choose; or when the browser does not yet let the tab play sound) (it blinks, breathes, looks at you, and its jaw follows the voice),
 the turn in progress laid out in floating windows around him (his words, what he shows), the turn before kept small in a corner, a transcript that opens as a space-time grid in 3D (every turn a dated knot on one thread, each bending the grid under it), the history of your conversations along time behind it, and his business card: dark metal with the brand mark carved in it, his contact details on the back, saved as a vCard. The avatar (from a photo of the owner seated, in a stylized CG look) and his chair are Hyper3D Rodin models; the office around him (the desk, what is on it, the shelves, the plants) is a Hyper3D WorldGen scene made from one Unsplash photo of an office.
 
 Conversations are kept for seven days from their first message, in your own browser (`localStorage`) and in the

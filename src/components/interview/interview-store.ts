@@ -2,11 +2,14 @@ import { create } from "zustand";
 
 /**
  * ── THE INTERVIEW ─────────────────────────────────────────────
- * How the stranger answers (text or voice), and where the avatar's
+ * How the stranger asks (text or voice), how he answers (aloud or in
+ * text only), and where the avatar's
  * face is on screen: the floating windows keep clear of it.
  */
 
 export type InterviewMode = "text" | "audio";
+/** how he answers: aloud (his words shown too), or in text only */
+export type Replies = "voice" | "text";
 export type SpaceLevel = "turns" | "time";
 
 export interface Rect {
@@ -17,6 +20,23 @@ export interface Rect {
 }
 
 const MODE_KEY = "interview-mode";
+const REPLIES_KEY = "interview-replies";
+
+function remember(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // a private window: the choice lasts the visit
+  }
+}
+
+function savedReplies(): Replies {
+  try {
+    return window.localStorage.getItem(REPLIES_KEY) === "text" ? "text" : "voice";
+  } catch {
+    return "voice";
+  }
+}
 
 function savedMode(): InterviewMode {
   try {
@@ -28,6 +48,7 @@ function savedMode(): InterviewMode {
 
 interface InterviewState {
   mode: InterviewMode;
+  replies: Replies;
   /** the avatar's head and beard, in CSS pixels; null until the scene has framed it */
   face: Rect | null;
   /** the avatar has loaded */
@@ -42,13 +63,15 @@ interface InterviewState {
   toggleHistory: () => void;
   setLevel: (level: SpaceLevel) => void;
   setMode: (mode: InterviewMode) => void;
+  setReplies: (replies: Replies) => void;
   set: (patch: Partial<Pick<InterviewState, "face" | "present">>) => void;
-  /** read the saved mode, once on mount */
+  /** read the saved choices, once on mount */
   restore: () => void;
 }
 
 export const useInterview = create<InterviewState>((set) => ({
   mode: "text",
+  replies: "voice",
   face: null,
   present: false,
   transcript: false,
@@ -57,15 +80,15 @@ export const useInterview = create<InterviewState>((set) => ({
   toggleHistory: () => set((s) => (s.transcript && s.level === "time" ? { transcript: false, level: "turns" } : { transcript: true, level: "time" })),
   setLevel: (level) => set({ level }),
   setMode: (mode) => {
-    try {
-      window.localStorage.setItem(MODE_KEY, mode);
-    } catch {
-      // a private window: the mode lasts the visit
-    }
+    remember(MODE_KEY, mode);
     set({ mode });
   },
+  setReplies: (replies) => {
+    remember(REPLIES_KEY, replies);
+    set({ replies });
+  },
   set: (patch) => set(patch),
-  restore: () => set({ mode: savedMode() }),
+  restore: () => set({ mode: savedMode(), replies: savedReplies() }),
 }));
 
 /** the jaw, 0 shut … 1 open; forced open by `?mouth=1` to check the rig */

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { useAgentContext } from "@copilotkit/react-core/v2";
+import { useVoiceStore, voiceControl } from "@/components/agent/voice/voice-store";
 import { CvModal } from "@/components/interface/inspect";
 import { world } from "@/config/world.config";
 import { preloadSounds } from "@/lib/audio";
@@ -29,11 +30,16 @@ const copy = world.interview;
 /** tells the replica where it is: no Monolith here, only its face and the windows around it */
 function RoomContext() {
   const mode = useInterview((s) => s.mode);
+  const replies = useInterview((s) => s.replies);
   useAgentContext({
     description: "Where the stranger is",
     value: {
       page: "the interview (/interview): your avatar sits behind a desk in an office (a laptop and your papers on it), facing the stranger as in a real job interview. There is no Monolith and no shards here; everything you open or show appears as a floating window beside your face.",
       answering: mode === "audio" ? "by voice" : "by text",
+      yourReplies:
+        replies === "voice"
+          ? "spoken aloud by a synthesized voice, and shown as text: write plain sentences a voice can say (no lists, no markdown, no links)"
+          : "shown as text only",
     },
   });
   return null;
@@ -60,8 +66,10 @@ function Arrival() {
 /**
  * ── THE INTERVIEW ─────────────────────────────────────────────
  * The owner's avatar at a desk in an office, facing the stranger.
+ * He answers aloud (his words shown too) unless the stranger sets his
+ * replies to text only, and only when the tab may play sound.
  * Everything else is glass hanging in the air: a bar at the top (the
- * way out, the TEXT / AUDIO switch, the transcript), the input at the
+ * way out, how he answers, the TEXT / AUDIO switch, the transcript), the input at the
  * bottom (a pane to type on, or a microphone to hold), the turn in
  * progress laid out around his face (`turn-canvas`), the turn before
  * kept small in a corner, and the transcript: every turn on one
@@ -83,6 +91,17 @@ export function Interview() {
     // sound needs a gesture; no music in an interview
     window.addEventListener("pointerdown", preloadSounds, { once: true });
     window.addEventListener("keydown", preloadSounds, { once: true });
+    // he answers aloud unless the stranger chose text only; any press or key lets the tab play his voice
+    const speak = (replies: string) => useVoiceStore.getState().set({ spoken: replies === "voice", speakTyped: true });
+    speak(useInterview.getState().replies);
+    const stopReplies = useInterview.subscribe((s, prev) => {
+      if (s.replies === prev.replies) return;
+      speak(s.replies);
+      if (s.replies === "text") voiceControl.hush();
+    });
+    const unlock = () => voiceControl.unlock();
+    window.addEventListener("pointerdown", unlock, true);
+    window.addEventListener("keydown", unlock, true);
     const unfollowVoice = followVoice();
     const unfollowTurns = followTurns();
     // a conversation left in progress comes back: say so
@@ -92,6 +111,11 @@ export function Interview() {
     return () => {
       unfollowVoice();
       unfollowTurns();
+      stopReplies();
+      useVoiceStore.getState().set({ spoken: true, speakTyped: false });
+      voiceControl.hush();
+      window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("keydown", unlock, true);
       window.removeEventListener("pointerdown", preloadSounds);
       window.removeEventListener("keydown", preloadSounds);
     };
