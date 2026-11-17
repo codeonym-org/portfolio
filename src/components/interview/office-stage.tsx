@@ -5,7 +5,14 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
 import {
+  AdditiveAnimationBlendMode,
+  AnimationAction,
+  AnimationClip,
+  AnimationMixer,
+  AnimationUtils,
   Bone,
+  LoopOnce,
+  LoopRepeat,
   Box3,
   Group,
   Mesh,
@@ -27,10 +34,12 @@ import { Office, prepare } from "./office-world";
  * A bright office. He sits behind a desk (a laptop and his
  * papers on it) facing the stranger, who sits where the camera is,
  * like the panel in a real interview. He is one Rodin model made from
- * a photo of him seated, with a small rig (hips, spine, neck, head).
- * All his movement is by hand: breathing, a slow sway, his gaze
- * following the stranger, glances at the laptop, leaning in to
- * listen, nods as he speaks, blinks, and the jaw with his voice.
+ * a photo of him seated, rigged by Rodin (a full humanoid skeleton)
+ * with a few of its clips: an idle, a calmer idle while he listens,
+ * the movement of a man talking, and now and then a gesture. On top of
+ * them, by hand: his gaze following the stranger, glances at the
+ * laptop, leaning in to listen, nods as he speaks, blinks, and the jaw
+ * with his voice.
  * The room and its furniture are in office-world.
  */
 
@@ -39,8 +48,12 @@ const DRACO = "/draco/";
 
 /** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
 const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const, chin: 0.04 };
-/** his head around its bone, in model units: for the windows that keep clear of his face */
-const FACE = { centre: new Vector3(0, 0.28, 0.06), half: new Vector3(0.26, 0.34, 0.3) };
+/** the model's feet are at 0; the room was laid out for the bust with its middle at 0 */
+const ORIGIN_DROP = 0.949;
+/** his face in the model, in model units: for the windows that keep clear of his face */
+const FACE = { centre: new Vector3(-0.03, 1.559, -0.14), half: new Vector3(0.26, 0.34, 0.3) };
+/** the face centre, carried by the head bone (set once the model is loaded) */
+const faceInHead = new Vector3();
 
 const X = new Vector3(1, 0, 0);
 const Y = new Vector3(0, 1, 0);
@@ -57,12 +70,40 @@ function turn(bone: Object3D, world: Quaternion) {
 const euler = (pitch: number, yaw: number, roll: number) =>
   new Quaternion().setFromAxisAngle(Y, yaw).multiply(new Quaternion().setFromAxisAngle(X, pitch)).multiply(new Quaternion().setFromAxisAngle(Z, roll));
 
+/**
+ * His clips, from Rodin's humanoid set, all made for a man standing. He
+ * sits with his arms on the desk, so each clip plays as a change from its
+ * own first frame, added to the pose he was made in: the clip's motion
+ * without its stance. His hands are joined on the desk in the mesh, so
+ * only the trunk, the neck and the head take a clip; the arms ride along.
+ */
+const CLIPS = {
+  idle: "human_000093",
+  calm: "human_000025",
+  talk: "human_000055",
+  point: "human_000041",
+  salute: "human_000052",
+  stretch: "human_000000",
+  wrist: "human_000063",
+} as const;
+type Clip = keyof typeof CLIPS;
+/** how much of each clip he plays: a seated man moves less than a standing one */
+const WEIGHT: Record<Clip, number> = { idle: 1, calm: 0.7, talk: 0.6, point: 0.6, salute: 0.6, stretch: 0.5, wrist: 0.6 };
+const TRUNK = /^(Spine|Spine1|Spine2|Neck|Head)\.quaternion$/;
+
+function seated(clip: AnimationClip) {
+  const c = clip.clone();
+  c.tracks = c.tracks.filter((t) => TRUNK.test(t.name));
+  AnimationUtils.makeClipAdditive(c, 0);
+  return c;
+}
+
 function Avatar() {
   const gltf = useGLTF(MODELS.avatar, DRACO);
   const group = useRef<Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
-  /** a life: when he next blinks, where he looks when nobody moves */
-  const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0 });
+  /** a life: when he next blinks, where he looks when nobody moves, when he next moves his arms */
+  const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0, gestureAt: 14, greeted: false, wasSpeaking: false });
   const bones = useMemo(() => {
     const find = (name: string) => gltf.scene.getObjectByName(name) as Bone | undefined;
     return { head: find("Head"), neck: find("Neck"), chest: find("Spine2"), spine: find("Spine1") };
@@ -70,13 +111,57 @@ function Avatar() {
   /** where each of those bones rests: every frame starts from there */
   const rest = useMemo(() => new Map(Object.values(bones).filter((b): b is Bone => !!b).map((b) => [b, b.quaternion.clone()])), [bones]);
   const motion = useRef({ yaw: 0, pitch: 0, roll: 0, lean: 0 });
+  const mixer = useMemo(() => new AnimationMixer(gltf.scene), [gltf.scene]);
+  const actions = useMemo(() => {
+    const out = {} as Partial<Record<Clip, AnimationAction>>;
+    for (const [key, name] of Object.entries(CLIPS) as [Clip, string][]) {
+      const clip = gltf.animations.find((a) => a.name === name);
+      if (!clip) continue;
+      const action = mixer.clipAction(seated(clip));
+      action.blendMode = AdditiveAnimationBlendMode;
+      action.setEffectiveWeight(0);
+      out[key] = action;
+    }
+    return out;
+  }, [gltf.animations, mixer]);
+
+  useEffect(() => {
+    // the loops run always, faded in or out; the gestures play once when asked
+    for (const key of ["idle", "calm", "talk"] as const) {
+      const a = actions[key];
+      if (!a) continue;
+      a.setLoop(LoopRepeat, Infinity).play();
+      a.setEffectiveWeight(key === "idle" ? WEIGHT.idle : 0);
+    }
+    for (const key of ["point", "salute", "stretch", "wrist"] as const) actions[key]?.setLoop(LoopOnce, 1);
+    return () => void mixer.stopAllAction();
+  }, [actions, mixer]);
+
+  /** one gesture, faded in and out over its clip */
+  const gesture = (key: "point" | "salute" | "stretch" | "wrist") => {
+    const a = actions[key];
+    if (!a || a.isRunning()) return;
+    a.reset().setEffectiveWeight(WEIGHT[key]).fadeIn(0.5).play();
+    const d = a.getClip().duration;
+    window.setTimeout(() => a.fadeOut(0.6), Math.max(0, d - 0.6) * 1000);
+  };
 
   useEffect(() => {
     prepare(gltf.scene);
-    const body = gltf.scene.getObjectByName("body") as Mesh | undefined;
+    const body = gltf.scene.getObjectByProperty("type", "SkinnedMesh") as Mesh | undefined;
     const material = body?.material as MeshStandardMaterial | undefined;
     if (body) body.frustumCulled = false;
-    if (material) rigHead(material);
+    if (material) {
+      // nothing on him is metal, and the generated roughness is too glossy for wool and skin under the room's lights
+      material.metalnessMap = null;
+      material.metalness = 0;
+      material.roughness = 1.15;
+      rigHead(material);
+    }
+    if (bones.head) {
+      gltf.scene.updateMatrixWorld(true);
+      faceInHead.copy(bones.head.worldToLocal(gltf.scene.localToWorld(FACE.centre.clone())));
+    }
     useInterview.getState().set({ present: true });
     useWorldStore.getState().setReady();
     const params = new URLSearchParams(window.location.search);
@@ -92,19 +177,42 @@ function Avatar() {
     return () => {
       window.removeEventListener("pointermove", onMove);
     };
-  }, [gltf, life]);
+  }, [gltf, life, bones]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     const L = life.current;
     rest.forEach((q, b) => b.quaternion.copy(q));
-    gltf.scene.updateMatrixWorld(true);
 
     const phase = useVoiceStore.getState().phase;
     const level = voiceLive.level;
     const speaking = phase === "speaking";
     const listening = phase === "listening" || phase === "decoding";
     const thinking = phase === "thinking";
+
+    // ── his body: the idle always; his hands talk while he speaks; calmer while he listens ──
+    const fade = (key: "calm" | "talk", target: number) => {
+      const a = actions[key];
+      if (!a) return;
+      const w = a.getEffectiveWeight();
+      a.setEffectiveWeight(w + (target - w) * Math.min(1, dt * 2));
+    };
+    fade("talk", speaking ? WEIGHT.talk : 0);
+    fade("calm", listening || thinking ? WEIGHT.calm : 0);
+    if (!L.greeted && t > 1.2) {
+      L.greeted = true;
+      gesture("salute");
+    }
+    // a pointed word when he starts an answer, now and then
+    if (speaking && !L.wasSpeaking && Math.random() < 0.4) gesture("point");
+    L.wasSpeaking = speaking;
+    // nobody sits still for long: a stretch, a look at his watch
+    if (t > L.gestureAt) {
+      L.gestureAt = t + 18 + Math.random() * 16;
+      if (!speaking && !listening) gesture(thinking ? "wrist" : Math.random() < 0.5 ? "stretch" : "wrist");
+    }
+    mixer.update(dt);
+    gltf.scene.updateMatrixWorld(true);
 
     // ── blinks: every 2–6 s, sometimes twice; a blink takes 150 ms ──
     if (Number.isFinite(L.nextBlink)) {
@@ -161,7 +269,10 @@ function Avatar() {
 
   return (
     <group ref={group} scale={SEAT.scale} position={SEAT.position}>
-      <primitive object={gltf.scene} />
+      {/* the model stands at its feet; the room was laid out for its middle */}
+      <group position={[0, -ORIGIN_DROP, 0]}>
+        <primitive object={gltf.scene} />
+      </group>
     </group>
   );
 }
@@ -190,7 +301,7 @@ function Framing() {
     if (++tick.current % 6) return;
     head.current ??= scene.getObjectByName("Head") ?? null;
     if (!head.current) return;
-    head.current.getWorldPosition(corner).addScaledVector(FACE.centre, SEAT.scale);
+    head.current.localToWorld(corner.copy(faceInHead));
     box.setFromCenterAndSize(corner, size3.copy(FACE.half).multiplyScalar(SEAT.scale * 2));
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (let i = 0; i < 8; i++) {

@@ -17,6 +17,12 @@ import type { MeshStandardMaterial, WebGLProgramParametersWithUniforms } from "t
 
 /** where the head is in the mesh, and how much bigger head space is */
 export const HEAD = { origin: [-0.027, 0.389, -0.306] as const, scale: 1.446 };
+/**
+ * Head space was measured on the bust with its middle at 0 and the head
+ * turned straight (a yaw about the neck). The rigged model stands at its
+ * feet and its head is as generated: each vertex is first carried there.
+ */
+export const SOURCE = { drop: 0.949, pivot: [-0.03, 0.33, -0.2] as const, yaw: (7.9 * Math.PI) / 180 };
 /** the line where the lips meet, half the width of the mouth, the hinge, and how far the jaw opens */
 export const JAW = { stomion: 0.024, width: 0.092, hinge: [0, 0.15, 0.08] as const, angle: 0.045 };
 /** each eye's centre, the half width and half height of its opening, and how far forward the face reaches there (the glasses are further) */
@@ -38,6 +44,17 @@ varying vec3 vRest;
 const vec3 JAW_HINGE = ${v3(JAW.hinge)};
 const vec3 HEAD_O = ${v3(HEAD.origin)};
 const float HEAD_K = ${HEAD.scale.toFixed(3)};
+const vec3 SRC_PIVOT = ${v3(SOURCE.pivot)};
+const float SRC_DROP = ${SOURCE.drop.toFixed(4)};
+const float SRC_YAW = ${SOURCE.yaw.toFixed(5)};
+vec3 yawBy(vec3 v, float a) {
+  float c = cos(a), s = sin(a);
+  return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c);
+}
+// the rigged model's point, in the space the head was measured in
+vec3 toMeasured(vec3 p) {
+  return SRC_PIVOT + yawBy(p - vec3(0.0, SRC_DROP, 0.0) - SRC_PIVOT, SRC_YAW);
+}
 float jawWeight(vec3 p) {
   float ax = abs(p.x);
   // a sharp seam between the lips, a softer one past the corners, so the cheeks stretch instead of tearing
@@ -88,18 +105,19 @@ export function rigHead(material: MeshStandardMaterial) {
         .replace(
           "#include <beginnormal_vertex>",
           `#include <beginnormal_vertex>
-          vec3 hp = (position - HEAD_O) * HEAD_K;
+          vec3 hp = (toMeasured(position) - HEAD_O) * HEAD_K;
           float jw = jawWeight(hp);
           vec3 lidded = hp + vec3(0.0, lidShift(hp, vec2(${EYES.left.join(", ")})) + lidShift(hp, vec2(${EYES.right.join(", ")})), 0.0);
-          objectNormal = jawTurn(objectNormal, uJaw * jw);
+          objectNormal = yawBy(jawTurn(yawBy(objectNormal, SRC_YAW), uJaw * jw), -SRC_YAW);
           #ifdef USE_TANGENT
-          objectTangent = jawTurn(objectTangent, uJaw * jw);
+          objectTangent = yawBy(jawTurn(yawBy(objectTangent, SRC_YAW), uJaw * jw), -SRC_YAW);
           #endif`,
         )
         .replace(
           "#include <begin_vertex>",
           `#include <begin_vertex>
-          transformed = HEAD_O + (JAW_HINGE + jawTurn(lidded - JAW_HINGE, uJaw * jw)) / HEAD_K;
+          vec3 moved = (JAW_HINGE + jawTurn(lidded - JAW_HINGE, uJaw * jw) - hp) / HEAD_K;
+          transformed = position + yawBy(moved, -SRC_YAW);
           vJaw = jw;
           vRest = hp;
           vLens = sqrt(max(0.0, 1.0 - pow(abs(hp.x) / ${W}, 2.0)));
@@ -125,6 +143,6 @@ export function rigHead(material: MeshStandardMaterial) {
           #include <opaque_fragment>`,
         );
   };
-  material.customProgramCacheKey = () => "avatar-head-8";
+  material.customProgramCacheKey = () => "avatar-head-9";
   material.needsUpdate = true;
 }
