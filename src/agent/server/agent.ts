@@ -7,8 +7,9 @@ import { world } from "@/config/world.config";
 import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
 import { handedToTheOwner } from "../interview-grounding";
-import { historyWindow } from "./middleware";
+import { historyWindow, promptCache } from "./middleware";
 import { createChatModel, reasoningEffort } from "./model";
+import { cachesPrompt } from "../prompt-cache";
 import { backendTools } from "./tools";
 
 /**
@@ -127,6 +128,7 @@ function build(modelId: string) {
           return "The connection flickered. Ask me again in a moment.";
         },
       }),
+      ...(cachesPrompt(modelId) ? [promptCache(SYSTEM_PROMPT)] : []),
     ],
     checkpointer,
   });

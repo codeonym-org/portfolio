@@ -175,12 +175,12 @@ can name one or two. Without the token the view says GitHub did not answer and l
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | yes | OpenRouter key; without it the route answers 503 |
-| `MODEL_ID` | no | OpenRouter model id for both agents, default `anthropic/claude-haiku-5.5` (~1 s to the first token, every tool call right in the 2026-11 run, ~$0.0004 a turn) |
+| `MODEL_ID` | no | OpenRouter model id for both agents, default `anthropic/claude-haiku-5.5` (~1 s to the first token, every tool call right in the 2026-11 run). On Claude models the fixed system prompt and the latest question are marked for Claude's prompt cache (`src/agent/prompt-cache.ts`): repeated calls read the ~15k-token prompt at a tenth of the input price |
 | `MODEL_PROVIDERS` | no | OpenRouter providers to try first, comma-separated; falls back to the others. Default for Claude models: `claude-on-aws,anthropic,google-vertex` (the fastest measured, same price) |
 | `MODEL_REASONING` | no | `low`, `medium` or `high`; unset sends no reasoning setting at all (Haiku answers straight). The voice agent uses at most `low`. Set it if you switch to a model that always thinks, such as gpt-oss |
 | `STT_MODEL_ID` | no | OpenRouter speech-to-text model, default `mistralai/voxtral-mini-transcribe-3-0` (0.5–0.7 s, English, French and Arabic, ~$0.0003 per utterance) |
-| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `elevenlabs/eleven-flash-v2.5` (0.4–0.7 s to first byte, mp3, multilingual) |
-| `TTS_VOICE` | no | voice id for the TTS model, default `JBFqnCBsd6RMkjVDRZzb` (ElevenLabs "George"); any ElevenLabs voice id |
+| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `x-ai/grok-voice-tts-1.0` (0.4–0.6 s to first byte, streamed mp3, 20+ languages, $15 per 1M characters) |
+| `TTS_VOICE` | no | voice of the TTS model, default `rex` (male; Grok also has `leo` and `sal`, and `eve`, `ara`) |
 | `EDGE_CONFIG` | no | Vercel Edge Config connection string. When set, the `MODEL_ID` **item** in Edge Config overrides the env var. |
 | `SITE_URL` | no | sent to OpenRouter as `HTTP-Referer` |
 | `GITHUB_TOKEN` | no | fine-grained, public repositories only, no permissions: live project data (anonymous without it) and "My GitHub" (needs it) |

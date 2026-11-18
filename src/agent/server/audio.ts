@@ -20,16 +20,19 @@ import { OPENROUTER_URL, openRouterHeaders } from "./model";
  *    all three right: 0.5–0.7 s for a short clip (gpt-4o-mini-transcribe,
  *    before it: 0.8–1.2 s, and it misheard the English), 2.2 % word
  *    error (Artificial Analysis), ~$0.0003 per utterance, webm accepted
- *  · TTS `elevenlabs/eleven-flash-v2.5` — 0.4–0.7 s to the first byte
- *    (Voxtral TTS, before it: 0.5–1.4 s), mp3, multilingual incl. Arabic,
- *    ~$0.008 for a 200-character reply. Each has one provider on
- *    OpenRouter, so there is no routing to choose.
+ *  · TTS `x-ai/grok-voice-tts-1.0`, voice `rex` (a deep male voice):
+ *    0.4–0.6 s to the first byte, streamed mp3, 20+ languages incl.
+ *    Arabic, $15 per 1M characters (~$0.004 for a 290-character reply).
+ *    ElevenLabs Flash was as fast at $40; Fish Drama-3's $10 ends on
+ *    2026-11-30 ($50 after); Gemini 3.8 Flash Lite is a little cheaper
+ *    but 1.3–2.2 s, not streamed and PCM only.
+ *    Each has one provider on OpenRouter: no routing to choose.
  */
 
 export const DEFAULT_STT_MODEL_ID = "mistralai/voxtral-mini-transcribe-3-0";
-export const DEFAULT_TTS_MODEL_ID = "elevenlabs/eleven-flash-v2.5";
-/** ElevenLabs "George": a warm, calm British male; any ElevenLabs voice id works */
-export const DEFAULT_TTS_VOICE = "JBFqnCBsd6RMkjVDRZzb";
+export const DEFAULT_TTS_MODEL_ID = "x-ai/grok-voice-tts-1.0";
+/** a deep, calm male voice (Grok's voices: rex, leo, sal are male; eve, ara female) */
+export const DEFAULT_TTS_VOICE = "rex";
 
 export const sttModelId = () => process.env.STT_MODEL_ID?.trim() || DEFAULT_STT_MODEL_ID;
 export const ttsModelId = () => process.env.TTS_MODEL_ID?.trim() || DEFAULT_TTS_MODEL_ID;
