@@ -38,6 +38,8 @@ export interface SystemSnapshot {
     caseFile: CaseFile | null;
     /** true when the one-minute brief is brought forward */
     briefOpen: boolean;
+    /** true when my live GitHub activity is brought forward */
+    githubOpen: boolean;
     cvOpen: boolean;
     mapOpen: boolean;
     paletteOpen: boolean;
@@ -117,6 +119,7 @@ export function getSystemSnapshot(): SystemSnapshot {
       openSector: s.sector,
       caseFile: s.caseFile,
       briefOpen: s.brief,
+      githubOpen: s.github,
       cvOpen: s.cvOpen,
       mapOpen: s.mapOpen,
       paletteOpen: s.paletteOpen,

@@ -132,7 +132,7 @@ export function Rig() {
     // the opening shot: start close and low, settle back as the body seals
     if (s.ready) intro.current = Math.min(1, intro.current + dt / 3.2);
     const ease = 1 - Math.pow(1 - intro.current, 3);
-    const focused = !!(s.sector || s.caseFile || s.brief);
+    const focused = !!(s.sector || s.caseFile || s.brief || s.github);
     // the System's words take the bottom of the screen: the Monolith is framed in what is left above them
     const free = Math.max(160, size.height - TOP_BAR - view.clear);
     const reading = !focused && view.clear > 0;

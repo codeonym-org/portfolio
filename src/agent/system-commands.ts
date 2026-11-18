@@ -13,6 +13,8 @@ import { live, pulse, useWorldStore, type Quality } from "@/store/world-store";
 import { CHANNELS, channelTarget, snapshotFileName } from "./automation";
 import { useSession } from "@/store/session-store";
 import { MAX_DECLINED, OFFER_GAP_MS, proposalKey } from "./next-step";
+import { describeActivity } from "@/github/activity";
+import { loadActivity } from "@/github/load-activity";
 
 /**
  * ── AGENT BRIDGE · WRITE SIDE ─────────────────────────────────
@@ -78,6 +80,19 @@ export const systemCommands: SystemCommand[] = [
     handler: () => {
       store().openBrief();
       return "The brief is open: identity, current role, organisations, projects, signature skills, contact and CV. The stranger can read it — do not recite it; one line on what to look at first.";
+    },
+  }),
+  define({
+    name: "open_github",
+    description:
+      "Open my GitHub activity, live: the contribution calendar of the last twelve months, commits, pull requests, issues, streaks, my busiest days, my contributions year by year, the languages I write and the public repositories I committed most to. Use when the stranger asks about my GitHub, my contributions, how active I am, how much I code, my streaks or open-source work. Returns the numbers, so you can name one or two.",
+    parameters: z.object({}),
+    handler: async () => {
+      store().openGithub();
+      const activity = await loadActivity();
+      if (!activity) return "My GitHub view is open, but GitHub did not answer just now, so it shows a link to my profile. Say so in one line; give no numbers.";
+      return `${describeActivity(activity)}
+The view is open in front of the stranger with all of this drawn. Do not recite it: one or two lines on what stands out for their question.`;
     },
   }),
   define({
@@ -279,7 +294,7 @@ export const systemCommands: SystemCommand[] = [
     parameters: z.object({
       message: z.string().min(8).max(170).describe("What you offer, in the first person, one or two short sentences ending with a question, in the stranger's language. Only facts from the record."),
       action: z
-        .enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map", "open_interview"])
+        .enum(["open_brief", "open_github", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map", "open_interview"])
         .describe("What accepting does. open_interview (home page only) takes them to my interview room."),
       sector: SECTOR.optional().describe("For open_sector."),
       kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
@@ -303,6 +318,7 @@ export const systemCommands: SystemCommand[] = [
         (action === "open_sector" && s.sector === sector) ||
         (action === "inspect_entity" && s.inspect?.kind === kind && s.inspect?.id === id) ||
         (action === "open_brief" && s.brief) ||
+        (action === "open_github" && s.github) ||
         (action === "open_cv" && s.cvOpen) ||
         (action === "open_map" && s.mapOpen);
       if (open) return "Not shown: that is already open in front of the stranger. Answer normally, with no invitation.";

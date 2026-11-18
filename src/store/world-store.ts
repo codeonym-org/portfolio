@@ -89,6 +89,8 @@ interface WorldState {
   caseFile: CaseFile | null;
   /** the one-minute brief, brought forward instead of a sector or a case */
   brief: boolean;
+  /** my GitHub activity, brought forward like the brief */
+  github: boolean;
   inspect: InspectTarget | null;
   /**
    * the project on display in the sky (its id): set when one is opened,
@@ -125,6 +127,7 @@ interface WorldState {
   openSector: (sector: SectorId) => void;
   setCase: (file: CaseFile | null) => void;
   openBrief: () => void;
+  openGithub: () => void;
   /** close the sector window and the case, back to the open sky */
   closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
@@ -162,6 +165,7 @@ export const useWorldStore = create<WorldState>()(
       inspect: null,
       chosen: null,
       brief: false,
+      github: false,
       cvOpen: false,
       cardOpen: false,
       mapOpen: false,
@@ -184,19 +188,23 @@ export const useWorldStore = create<WorldState>()(
 
       openSector: (sector) => {
         if (get().sector === sector && !get().caseFile) return;
-        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
+        set({ sector, caseFile: null, brief: false, github: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
         pulse(`sector:${sector}`);
         if (!get().visited.includes(sector)) set({ visited: [...get().visited, sector] });
       },
       setCase: (caseFile) => {
-        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
+        set(caseFile ? { caseFile, sector: null, brief: false, github: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
         caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
       openBrief: () => {
-        set({ brief: true, briefRead: true, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
+        set({ brief: true, briefRead: true, github: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
         pulse("sector:status");
       },
-      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null, chosen: null }),
+      openGithub: () => {
+        set({ github: true, brief: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
+        pulse("sector:projects");
+      },
+      closeFocus: () => set({ sector: null, caseFile: null, brief: false, github: false, inspect: null, chosen: null }),
 
       setInspect: (inspect) => {
         set(inspect?.kind === "quest" ? { inspect, chosen: inspect.id } : { inspect });

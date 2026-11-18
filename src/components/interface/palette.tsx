@@ -40,6 +40,7 @@ const ACTIONS: { label: string; sub: string; search: string; name: string; args?
   { label: "Copy the email address", sub: 'copy_contact(channel: "email")', search: "email copy contact", name: "copy_contact", args: { channel: "email" } },
   { label: "Save a picture of the Monolith", sub: "capture_snapshot()", search: "snapshot screenshot picture photo", name: "capture_snapshot" },
   { label: "The one-minute brief", sub: "open_brief()", search: "brief summary overview short quick recruiter hiring tldr", name: "open_brief" },
+  { label: "My GitHub, live", sub: "open_github()", search: "github contributions commits activity streak calendar open source code languages", name: "open_github" },
   { label: "The holographic map", sub: "open_map()", search: "map globe hologram where location based city oujda morocco time zone", name: "open_map" },
   { label: "The interview — talk to my avatar", sub: "open_interview()", search: "interview avatar face talk voice hr", name: "open_interview" },
   { label: "Back to orbit", sub: "close_windows()", search: "close home orbit reset view", name: "close_windows" },

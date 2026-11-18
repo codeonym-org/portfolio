@@ -27,7 +27,7 @@ export function SystemDialog() {
   const answer = useWorldStore((s) => s.answer);
   const ignore = useWorldStore((s) => s.ignore);
   const proposal = prompt?.id === "offer";
-  const focused = useWorldStore((s) => !!s.sector || !!s.caseFile || s.brief);
+  const focused = useWorldStore((s) => !!s.sector || !!s.caseFile || s.brief || s.github);
   const acceptButton = useRef<HTMLButtonElement>(null);
 
   const reply = useCallback(

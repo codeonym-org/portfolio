@@ -36,6 +36,7 @@ export function laidShown(l: Laid): string {
   if (l.kind === "sector") return `${kinds.sector} · ${sectorById[l.sector].name}`;
   if (l.kind === "case") return `${kinds.case} · ${l.file.title}`;
   if (l.kind === "brief") return world.agent.brief;
+  if (l.kind === "github") return `${kinds.github} · ${world.github.title}`;
   const k = l.target.kind === "quest" ? kinds.project : l.target.kind === "item" ? kinds.document : kinds.skill;
   return `${k} · ${inspected(l.target.kind, l.target.id)}`;
 }

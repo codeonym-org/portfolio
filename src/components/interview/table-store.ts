@@ -25,13 +25,14 @@ export type Laid =
   | { id: string; at: number; kind: "sector"; sector: SectorId }
   | { id: string; at: number; kind: "case"; file: CaseFile }
   | { id: string; at: number; kind: "brief" }
+  | { id: string; at: number; kind: "github" }
   | { id: string; at: number; kind: "inspect"; target: InspectTarget };
 
 type Bare<T> = T extends unknown ? Omit<T, "id" | "at"> : never;
 export type Shown = Bare<Laid>;
 
 const idOf = (s: Shown): string =>
-  s.kind === "sector" ? `sector:${s.sector}` : s.kind === "case" ? `case:${s.file.title}` : s.kind === "brief" ? "brief" : `inspect:${s.target.kind}:${s.target.id}`;
+  s.kind === "sector" ? `sector:${s.sector}` : s.kind === "case" ? `case:${s.file.title}` : s.kind === "brief" || s.kind === "github" ? s.kind : `inspect:${s.target.kind}:${s.target.id}`;
 
 interface TableState {
   /** oldest first */
@@ -75,7 +76,7 @@ export const useTable = create<TableState>((set, get) => ({
     delete trails[id];
     set({ laid: get().laid.filter((l) => l.id !== id), trails });
     const w = useWorldStore.getState();
-    const front = [w.sector && `sector:${w.sector}`, w.caseFile && `case:${w.caseFile.title}`, w.brief && "brief"].filter(Boolean);
+    const front = [w.sector && `sector:${w.sector}`, w.caseFile && `case:${w.caseFile.title}`, w.brief && "brief", w.github && "github"].filter(Boolean);
     if (front.includes(id)) w.closeFocus();
     else if (w.inspect && id === `inspect:${w.inspect.kind}:${w.inspect.id}`) w.setInspect(null);
   },
@@ -89,6 +90,7 @@ export function followTable() {
     if (w.sector && w.sector !== before?.sector) lay({ kind: "sector", sector: w.sector });
     if (w.caseFile && w.caseFile !== before?.caseFile) lay({ kind: "case", file: w.caseFile });
     if (w.brief && !before?.brief) lay({ kind: "brief" });
+    if (w.github && !before?.github) lay({ kind: "github" });
     if (w.inspect && (w.inspect.kind !== before?.inspect?.kind || w.inspect.id !== before?.inspect?.id)) lay({ kind: "inspect", target: w.inspect });
   };
   clear();

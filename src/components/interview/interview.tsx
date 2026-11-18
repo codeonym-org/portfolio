@@ -40,7 +40,7 @@ function RoomContext() {
   // oldest first, as the stranger sees them on the rail; with what the stranger opened from each, in place
   const onTable = laid.map((l) => {
     const what =
-      l.kind === "sector" ? `the ${l.sector} section` : l.kind === "case" ? `the case file "${l.file.title}"` : l.kind === "brief" ? "the one-minute brief" : `the ${l.target.kind === "quest" ? "project" : l.target.kind} ${l.target.id}`;
+      l.kind === "sector" ? `the ${l.sector} section` : l.kind === "case" ? `the case file "${l.file.title}"` : l.kind === "brief" ? "the one-minute brief" : l.kind === "github" ? "your live GitHub activity" : `the ${l.target.kind === "quest" ? "project" : l.target.kind} ${l.target.id}`;
     const trail = trails[l.id] ?? [];
     return trail.length ? `${what}, where the stranger then opened ${trail.map((t) => `${t.kind === "quest" ? "project" : t.kind} ${t.id}`).join(" → ")} (now in front)` : what;
   });

@@ -88,6 +88,10 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: "The record in one minute. Every line opens its full entry.", actions: [{ name: "open_brief", args: {} }] };
   }
 
+  if (has(text, "github", "contribution", "commits", "streak", "open source", "open-source")) {
+    return { text: "My GitHub, live: the year's calendar, streaks and languages.", actions: [{ name: "open_github", args: {} }] };
+  }
+
   if (has(text, "hire", "fit", "why him", "why you", "why should", "convince", "recruit", "embauch", "strongest", "case")) {
     return {
       text: "The local index cannot argue. This is the case the record makes on its own.",

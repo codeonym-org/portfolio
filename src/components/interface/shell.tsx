@@ -106,7 +106,7 @@ export function Shell() {
         else if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);
-        else if (s.sector || s.caseFile || s.brief) s.closeFocus();
+        else if (s.sector || s.caseFile || s.brief || s.github) s.closeFocus();
         return;
       }
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen || s.mapOpen) return;

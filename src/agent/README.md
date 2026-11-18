@@ -163,6 +163,13 @@ numbered and timed, with the answer, what it showed and the steps it took, an in
 page with every way to reach the owner (CV, `/contact.vcf`, the room, the record) and his business card at actual size.
 Arabic questions and answers are set right to left (IBM Plex Sans Arabic). A question still being answered is left out.
 
+"My GitHub" (`open_github`, the palette, a chip on the home console, the Contact section) brings forward the owner's
+GitHub activity, live: the year's contribution calendar, commits, pull requests, issues, streaks, the week, the years,
+the languages and the public repositories committed to most (`components/interface/github-activity.tsx`). The server
+reads it from GitHub's GraphQL API with `GITHUB_TOKEN`, once an hour (`github/activity-live.ts`, `/api/github/activity`);
+a private repository is counted at most, never named (`github/activity.ts`). The tool returns the numbers, so the agent
+can name one or two. Without the token the view says GitHub did not answer and links to the profile.
+
 ## Environment
 
 | Variable | Required | Purpose |
@@ -174,6 +181,7 @@ Arabic questions and answers are set right to left (IBM Plex Sans Arabic). A que
 | `TTS_VOICE` | no | voice id for the TTS model, default `gb_oliver_confident` (Voxtral voices: `en_paul_*`, `gb_oliver_*`, `gb_jane_*`, `fr_marie_*`) |
 | `EDGE_CONFIG` | no | Vercel Edge Config connection string. When set, the `MODEL_ID` **item** in Edge Config overrides the env var. |
 | `SITE_URL` | no | sent to OpenRouter as `HTTP-Referer` |
+| `GITHUB_TOKEN` | no | fine-grained, public repositories only, no permissions: live project data (anonymous without it) and "My GitHub" (needs it) |
 | `LANGSMITH_TRACING` | no | `true` traces every agent run to LangSmith (LangChain reads the `LANGSMITH_*` vars itself) |
 | `LANGSMITH_API_KEY` | with tracing | LangSmith API key |
 | `LANGSMITH_PROJECT` | no | LangSmith project the traces land in |

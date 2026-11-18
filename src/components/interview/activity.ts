@@ -41,6 +41,7 @@ const WORDS: Record<string, [now: string, done: string, takesArg?: boolean]> = {
   open_sector: ["Opening", "Opened", true],
   inspect_entity: ["Looking at", "Looked at", true],
   open_brief: ["Opening the one-minute brief", "Opened the one-minute brief"],
+  open_github: ["Reading my GitHub", "Opened my GitHub"],
   open_map: ["Opening the map", "Opened the map"],
   close_windows: ["Clearing the table", "Cleared the table"],
   assemble_case: ["Assembling a case file", "Assembled a case file"],

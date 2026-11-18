@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { BadgeCheck, BriefcaseBusiness, FileText, FolderGit2, Mail, MapPin, Scale, Sparkles, Timer, UserRound, Wrench, type LucideIcon } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, FileText, FolderGit2, GitGraph, Mail, MapPin, Scale, Sparkles, Timer, UserRound, Wrench, type LucideIcon } from "lucide-react";
 import { executeSystemCommand } from "@/agent/system-commands";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { BriefPanel } from "@/components/interface/brief-panel";
+import { GithubActivity } from "@/components/interface/github-activity";
 import { Cards } from "@/components/interface/cards";
 import { CasePanel } from "@/components/interface/case-panel";
 import type { SectorId } from "@/config/types";
@@ -37,11 +38,12 @@ const SECTOR_ICON: Record<SectorId, LucideIcon> = {
   inventory: FileText,
   contact: Mail,
 };
-const KIND_ICON: Record<"skills" | "map" | "case" | "brief" | "project" | "document" | "skill", LucideIcon> = {
+const KIND_ICON: Record<"skills" | "map" | "case" | "brief" | "github" | "project" | "document" | "skill", LucideIcon> = {
   skills: BadgeCheck,
   map: MapPin,
   case: Scale,
   brief: Timer,
+  github: GitGraph,
   project: FolderGit2,
   document: FileText,
   skill: Sparkles,
@@ -167,6 +169,7 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
       items.push({ ...base, kind: kinds.sector, icon: SECTOR_ICON[l.sector], title: sectorById[l.sector].name, body: <Body /> });
     } else if (l.kind === "case") items.push({ ...base, kind: kinds.case, icon: KIND_ICON.case, title: l.file.title, body: <CasePanel file={l.file} /> });
     else if (l.kind === "brief") items.push({ ...base, kind: kinds.brief, icon: KIND_ICON.brief, title: world.agent.brief, body: <BriefPanel /> });
+    else if (l.kind === "github") items.push({ ...base, kind: kinds.github, icon: KIND_ICON.github, title: world.github.title, body: <GithubActivity /> });
     else {
       const k = l.target.kind === "quest" ? "project" : l.target.kind === "item" ? "document" : "skill";
       items.push({ ...base, kind: kinds[k], icon: KIND_ICON[k], title: inspected(l.target.kind, l.target.id), body: <EntryExhibit target={l.target} /> });

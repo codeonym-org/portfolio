@@ -505,6 +505,9 @@ function ContactExhibit() {
         <button type="button" className="talk-btn talk-btn--go ex-btn" onClick={() => setCardOpen(true)}>
           <IdCard className="size-3.5" /> {copy.myCard}
         </button>
+        <button type="button" className="talk-btn ex-btn" onClick={() => useWorldStore.getState().openGithub()}>
+          <GithubMark className="size-3.5" /> {world.github.open}
+        </button>
         <button
           type="button"
           className="talk-btn ex-btn"
