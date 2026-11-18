@@ -109,8 +109,12 @@ export const world = {
     traceLabel: "RUN TRACE",
     traceIdle: "idle — nothing running",
     paletteHint: "Search the record or run a command…",
-    plain: "plain record",
-    interview: "interview",
+    plain: "Plain record",
+    card: "Card",
+    cardLabel: "His business card: every way to reach him",
+    interview: "Interview me",
+    interviewSub: "Talk to my avatar, live",
+    interviewLabel: "The interview: talk to my avatar, face to face",
   },
 
   /** what the System asks in its dialog */

@@ -237,6 +237,179 @@
     box-shadow: 0 0 24px -6px oklch(0.62 0.22 295 / 70%);
   }
 
+  /* ── the header of the record (interface/top-bar.tsx) ── */
+  .hdr-brand__dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: oklch(1 0 0 / 30%);
+  }
+  .hdr-bar {
+    display: flex;
+    align-items: center;
+    height: 2.75rem;
+    padding: 0 0.25rem;
+    gap: 0.125rem;
+    background: oklch(0.16 0.02 285 / 55%);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 5%);
+  }
+  .hdr-bar__sep {
+    width: 1px;
+    height: 1.25rem;
+    margin: 0 0.25rem;
+    background: var(--hair);
+  }
+  .hdr-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.125rem;
+    padding: 0 0.7rem;
+    border-radius: 3px;
+    font-size: 12px;
+    color: oklch(0.82 0.02 290);
+    transition:
+      background 0.2s,
+      color 0.2s;
+    outline: none;
+  }
+  .hdr-tool--icon {
+    width: 2.125rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .hdr-tool:hover,
+  .hdr-tool[data-on="true"] {
+    background: oklch(1 0 0 / 7%);
+    color: white;
+  }
+  @media (max-width: 1023px) {
+    .hdr-tool {
+      width: 2.125rem;
+      padding: 0;
+      justify-content: center;
+    }
+  }
+  @media (max-width: 639px) {
+    .hdr-bar__sep {
+      display: none;
+    }
+  }
+  .hdr-tool:focus-visible {
+    box-shadow: 0 0 0 1px var(--arcane-hot);
+  }
+  .hdr-tool:active {
+    transform: scale(0.96);
+  }
+
+  /* the way in: lit, a light running round its edge */
+  .hdr-cta {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    height: 2.75rem;
+    padding: 0 0.95rem 0 0.4rem;
+    border-radius: 4px;
+    background:
+      linear-gradient(135deg, oklch(0.5 0.2 295 / 55%), oklch(0.42 0.14 250 / 45%)),
+      oklch(0.14 0.03 285 / 80%);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 14%),
+      0 0 0 1px oklch(0.74 0.17 300 / 35%),
+      0 8px 28px -10px oklch(0.62 0.22 295 / 75%);
+    backdrop-filter: blur(14px);
+    outline: none;
+    transition:
+      box-shadow 0.3s,
+      transform 0.2s;
+  }
+  .hdr-cta::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: 5px;
+    padding: 1px;
+    background: conic-gradient(from var(--cta-a), transparent 0 62%, oklch(0.82 0.15 300) 78%, oklch(0.88 0.11 215) 86%, transparent 94%);
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    animation: cta-run 5s linear infinite;
+  }
+  /* a sheen crosses it on hover */
+  .hdr-cta::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(105deg, transparent 35%, oklch(1 0 0 / 14%) 50%, transparent 65%) no-repeat;
+    background-size: 250% 100%;
+    background-position: 130% 0;
+    transition: background-position 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .hdr-cta:hover {
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 18%),
+      0 0 0 1px oklch(0.8 0.15 300 / 60%),
+      0 10px 34px -8px oklch(0.62 0.22 295 / 95%);
+  }
+  .hdr-cta:hover::after {
+    background-position: -30% 0;
+  }
+  .hdr-cta:focus-visible {
+    box-shadow:
+      0 0 0 2px oklch(0.9 0.1 300),
+      0 8px 28px -10px oklch(0.62 0.22 295 / 75%);
+  }
+  .hdr-cta:active {
+    transform: scale(0.98);
+  }
+  .hdr-cta__face {
+    position: relative;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+  }
+  .hdr-cta__face img {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: cover;
+    box-shadow:
+      0 0 0 1.5px oklch(1 0 0 / 70%),
+      0 2px 8px oklch(0 0 0 / 50%);
+  }
+  .hdr-cta__live {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: oklch(0.8 0.19 150);
+    box-shadow: 0 0 0 2px oklch(0.22 0.06 285);
+  }
+  .hdr-cta__live::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: oklch(0.8 0.19 150);
+    animation: cta-live 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hdr-cta::before,
+    .hdr-cta__live::after {
+      animation: none;
+    }
+  }
+
   .kbd {
     display: inline-grid;
     place-items: center;
@@ -3009,5 +3182,28 @@
   .table-body .sm\:text-3xl {
     font-size: 1.5rem;
     line-height: 2rem;
+  }
+}
+
+/* the light running round the way into the interview */
+@property --cta-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes cta-run {
+  to {
+    --cta-a: 360deg;
+  }
+}
+@keyframes cta-live {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
   }
 }
