@@ -1,5 +1,6 @@
 import "server-only";
-import { createMiddleware, HumanMessage, ToolMessage, type BaseMessage } from "langchain";
+import { createMiddleware, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "langchain";
+import { cachedSystemBlocks, markedContent } from "../prompt-cache";
 
 /** keeps the system context plus the last N turns, never splitting a tool-call pair */
 export function historyWindow(size: number) {
@@ -39,3 +40,28 @@ export const appContextNote = createMiddleware({
     return handler({ ...request, systemMessage: request.systemMessage.concat(`\n\nAPP CONTEXT (live)\n${note}`) });
   },
 });
+
+/**
+ * Claude's prompt cache (`../prompt-cache.ts`): the fixed system prompt
+ * and the latest human message marked, for this model call only (the
+ * thread keeps its messages as they were). Last in the middleware list,
+ * so it sees the system text after every note was appended.
+ */
+export function promptCache(fixed: string) {
+  return createMiddleware({
+    name: "PromptCache",
+    wrapModelCall: async (request, handler) => {
+      const system = request.systemMessage;
+      const blocks = cachedSystemBlocks(system?.text ?? "", fixed);
+      const messages = [...request.messages];
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (!HumanMessage.isInstance(m)) continue;
+        const content = markedContent(m.content);
+        if (content) messages[i] = new HumanMessage({ content, id: m.id, name: m.name, additional_kwargs: m.additional_kwargs });
+        break;
+      }
+      return handler({ ...request, messages, ...(blocks.length ? { systemMessage: new SystemMessage({ content: blocks }) } : {}) });
+    },
+  });
+}
