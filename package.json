@@ -1,6 +1,8 @@
 {
   "name": "portfolio",
-  "version": "0.1.0",
+  "version": "9.0.0",
+  "description": "An agentic portfolio: an AI agent that answers as its owner, in the first person, and shows his record as it talks, in a 3D living record and a face-to-face interview room.",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev",
