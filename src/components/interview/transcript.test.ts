@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { blocks, lasted, reference, runs, since, transcript, waited, type ExchangeInput } from "./transcript.ts";
+import { blocks, lasted, reference, rtl, runs, since, transcript, waited, type ExchangeInput } from "./transcript.ts";
 
 const T0 = Date.UTC(2026, 10, 18, 13, 32, 7); // 14:32:07 in Casablanca (GMT+1)
 const ask = (over: Partial<ExchangeInput>): ExchangeInput => ({ you: "Q?", him: "A.", spoken: false, at: T0, answeredAt: T0 + 4200, shown: [], did: [], ...over });
@@ -72,4 +72,36 @@ test("times are said plainly", () => {
   assert.equal(lasted(64 * 60_000), "1 h 04 min");
   assert.equal(waited(400), "under a second");
   assert.equal(reference("ab"), "IV-AB00-0000");
+});
+
+test("Arabic is written right to left, a word of English in it or not", () => {
+  assert.equal(rtl("ما هي خبرتك في LangChain؟"), true);
+  assert.equal(rtl("Tell me about your projects"), false);
+  assert.equal(rtl("I speak Arabic: العربية"), false);
+  assert.equal(rtl("12:30"), false);
+  const t = transcript([ask({ you: "حدثني عن مشاريعك", him: "بكل سرور.\n\n- **AiCA**: مساعد ذكي\n\nIn English too." })], opts);
+  assert.equal(t.exchanges[0].questionRtl, true);
+  assert.equal(t.exchanges[0].answerRtl, true);
+  assert.deepEqual(
+    t.exchanges[0].answer.map((b) => Boolean(b.rtl)),
+    [true, true, false],
+  );
+});
+
+test("everything shown is listed once, with the questions it was shown for", () => {
+  const t = transcript(
+    [
+      ask({ you: "Projects?", shown: ["Section · Projects", "Project · AiCA"] }),
+      ask({ you: "More on AiCA", at: T0 + 60_000, shown: ["Project · AiCA", "The brief"] }),
+    ],
+    opts,
+  );
+  assert.deepEqual(
+    t.shownIndex.map((s) => [s.kind, s.name, s.in.map((q) => q.number).join(",")]),
+    [
+      ["Section", "Projects", "01"],
+      ["Project", "AiCA", "01,02"],
+      ["", "The brief", "02"],
+    ],
+  );
 });

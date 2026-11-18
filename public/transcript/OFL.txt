@@ -1,3 +1,7 @@
+Fonts in this folder, all under the SIL Open Font License 1.1 (text below):
+- IBM Plex Sans, Serif, Mono, Sans Arabic: Copyright 2017-2019 IBM Corp., Reserved Font Name "Plex"
+- Michroma: Copyright 2011 The Michroma Project Authors (https://github.com/googlefonts/Michroma-font)
+
 Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

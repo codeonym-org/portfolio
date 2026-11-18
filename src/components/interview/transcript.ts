@@ -16,10 +16,14 @@ export interface Run {
   href?: string;
 }
 
-export type Block =
+export type Block = (
   | { kind: "p"; runs: Run[] }
   | { kind: "item"; marker: string; runs: Run[] }
-  | { kind: "heading"; runs: Run[] };
+  | { kind: "heading"; runs: Run[] }
+) & {
+  /** written right to left (Arabic): set from its own letters */
+  rtl?: boolean;
+};
 
 /** one exchange as the conversation gathered it */
 export interface ExchangeInput {
@@ -43,7 +47,11 @@ export interface Exchange {
   /** anchor for the contents */
   anchor: string;
   question: string;
+  /** the question is written right to left */
+  questionRtl: boolean;
   answer: Block[];
+  /** most of the answer's paragraphs are written right to left */
+  answerRtl: boolean;
   /** the answer was never written */
   unanswered: boolean;
   spoken: boolean;
@@ -80,7 +88,18 @@ export interface Transcript {
   /** words in my answers */
   words: number;
   exchanges: Exchange[];
+  /** everything I showed, once each, in the order first shown, with the questions it was shown for */
+  shownIndex: Shown[];
   filename: string;
+}
+
+export interface Shown {
+  /** "Projects", the part after the kind */
+  name: string;
+  /** "Section", the part before the name; "" when there is none */
+  kind: string;
+  /** the questions it was shown for */
+  in: { number: string; anchor: string }[];
 }
 
 export interface TranscriptOptions {
@@ -146,6 +165,19 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+// ── the direction of writing ──
+
+const RTL_LETTER = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/gu;
+const LTR_LETTER = /[A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF]/g;
+
+/** written right to left: more Arabic (or Hebrew) letters than Latin ones */
+export function rtl(text: string): boolean {
+  const r = text.match(RTL_LETTER)?.length ?? 0;
+  return r > 0 && r >= (text.match(LTR_LETTER)?.length ?? 0);
+}
+
+const plain = (b: Block) => b.runs.map((r) => r.text).join("");
+
 // ── the answers' Markdown: the same small set the conversation draws ──
 
 const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\)|\*[^*\s][^*]*\*|_[^_\s][^_]*_)/g;
@@ -196,7 +228,7 @@ export function blocks(text: string): Block[] {
     } else para.push(line);
   }
   flush();
-  return out;
+  return out.map((b) => (rtl(plain(b)) ? { ...b, rtl: true } : b));
 }
 
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -218,12 +250,15 @@ export function transcript(input: readonly ExchangeInput[], o: TranscriptOptions
     const n = i + 1;
     const newDay = i > 0 && dayKey(e.at, tz) !== dayKey(list[i - 1].at, tz);
     const answer = blocks(e.him.trim());
+    const question = e.you.trim().replace(/\s+/g, " ");
     return {
       n,
       number: pad(n),
       anchor: `q-${n}`,
-      question: e.you.trim().replace(/\s+/g, " "),
+      question,
+      questionRtl: rtl(question),
       answer,
+      answerRtl: answer.filter((b) => b.rtl).length * 2 > answer.length,
       unanswered: !answer.length,
       spoken: e.spoken,
       clock: clock(e.at),
@@ -234,6 +269,15 @@ export function transcript(input: readonly ExchangeInput[], o: TranscriptOptions
       ...(newDay ? { day: longDay(e.at) } : {}),
     };
   });
+
+  const index = new Map<string, Shown>();
+  for (const e of exchanges)
+    for (const label of e.shown) {
+      const cut = label.indexOf(" · ");
+      const entry = index.get(label) ?? { kind: cut < 0 ? "" : label.slice(0, cut), name: cut < 0 ? label : label.slice(cut + 3), in: [] };
+      entry.in.push({ number: e.number, anchor: e.anchor });
+      index.set(label, entry);
+    }
 
   const stamp = parts(first, tz, { year: "numeric", month: "2-digit", day: "2-digit" }).split("/").reverse().join("-");
   const zoneName = tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -251,6 +295,7 @@ export function transcript(input: readonly ExchangeInput[], o: TranscriptOptions
     spoken: list.filter((e) => e.spoken).length,
     words: list.reduce((sum, e) => sum + words(e.him), 0),
     exchanges,
+    shownIndex: [...index.values()],
     filename: `${slug(o.name)}-interview-transcript-${stamp}-${short(first).replace(":", "")}.pdf`,
   };
 }

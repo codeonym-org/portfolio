@@ -159,8 +159,9 @@ In the interview room the stranger can take the conversation away as a designed 
 card at the end of the conversation, or by asking for it (the room's own frontend tool, `download_transcript`, which
 the voice reaches through its text twin). The browser makes the file (`components/interview/transcript*.ts(x)`, with
 `@react-pdf/renderer` loaded only then): a cover with the facts and the contents, then every question answered so far,
-numbered and timed, with the answer, what it showed and the steps it took, and the ways to reach the owner. A question
-still being answered is left out.
+numbered and timed, with the answer, what it showed and the steps it took, an index of everything shown, and a last
+page with every way to reach the owner (CV, `/contact.vcf`, the room, the record) and his business card at actual size.
+Arabic questions and answers are set right to left (IBM Plex Sans Arabic). A question still being answered is left out.
 
 ## Environment
 
