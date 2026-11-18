@@ -38,23 +38,23 @@ export function TranscriptBarButton() {
   const state = useTranscriptFile((s) => s.state);
   const none = useTurns().length === 0;
   return (
-    <button
-      type="button"
-      aria-label={said(state)}
-      title={none ? copy.empty : said(state)}
-      aria-busy={state === "making"}
-      aria-disabled={none}
-      onClick={take}
-      className={cn(
-        // only where the bar has room beside the mode switch; elsewhere the conversation panel carries it
-        "air pointer-events-auto hidden h-11 items-center gap-2 !rounded-full px-3.5 transition xl:flex 2xl:px-4",
-        none ? "text-white/35" : state === "idle" ? "text-white/75 hover:text-white" : "text-white",
-      )}
-      style={{ ["--air-tint" as string]: state === "failed" ? "oklch(0.72 0.18 30)" : "oklch(0.82 0.13 85)" }}
-    >
-      <StateIcon state={state} className="size-4" />
-      <span className="hidden font-display text-[10px] tracking-[0.3em] 2xl:inline">{copy.open}</span>
-    </button>
+    <>
+      <span className="hud-sep !hidden sm:!block" aria-hidden />
+      <button
+        type="button"
+        aria-label={said(state)}
+        title={none ? copy.empty : said(state)}
+        aria-busy={state === "making"}
+        aria-disabled={none}
+        aria-pressed={state === "making" || state === "done"}
+        onClick={take}
+        className="hud-btn !hidden sm:!inline-flex"
+        style={{ ["--tone" as string]: state === "failed" ? "oklch(0.72 0.18 30)" : "oklch(0.86 0.12 85)" }}
+      >
+        <StateIcon state={state} />
+        <span className="hud-label hidden xl:inline">{copy.open}</span>
+      </button>
+    </>
   );
 }
 
@@ -70,24 +70,34 @@ export function TranscriptIconButton() {
   );
 }
 
-/** at the end of the conversation: take it away */
+/**
+ * at the end of the conversation: take it away. The file itself, small: a
+ * page with the cover's dark band and its lines, beside what it holds;
+ * the whole card is the button.
+ */
 export function TranscriptKeep({ count }: { count: number }) {
   const state = useTranscriptFile((s) => s.state);
   return (
-    <div className="talk-keep">
-      <span className="talk-keep__doc" aria-hidden>
-        <span />
-        <span />
-        <span />
+    <button type="button" className="talk-keep" onClick={take} aria-busy={state === "making"} aria-label={said(state)} data-state={state}>
+      <span className="talk-keep__page" aria-hidden>
+        <span className="talk-keep__band">
+          <span />
+          <span />
+        </span>
+        <span className="talk-keep__lines">
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="talk-keep__title">{copy.keep}</p>
-        <p className="talk-keep__sub">{copy.keepSub(count)}</p>
-      </div>
-      <button type="button" className="talk-btn talk-btn--go talk-keep__go" onClick={take} aria-busy={state === "making"} aria-label={said(state)}>
-        <StateIcon state={state} className="size-3.5" />
-        <span>{state === "idle" ? copy.action : state === "making" ? copy.making : state === "done" ? copy.done : copy.failed}</span>
-      </button>
-    </div>
+      <span className="min-w-0 flex-1">
+        <span className="talk-keep__title">{copy.keep}</span>
+        <span className="talk-keep__sub">{state === "idle" ? copy.keepSub(count) : said(state)}</span>
+      </span>
+      <span className="talk-keep__go" aria-hidden>
+        <StateIcon state={state} className="size-4" />
+      </span>
+    </button>
   );
 }

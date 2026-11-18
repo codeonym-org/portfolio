@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CornerDownLeft, Square } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import { converse } from "@/agent/converse";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -56,7 +56,7 @@ export function AirInput() {
   return (
     <motion.form
       initial={{ opacity: 0, y: 60, scaleX: 0.3, rotateX: 50 }}
-      animate={{ opacity: 1, y: focus ? -6 : 0, scaleX: 1, rotateX: focus ? 0 : 9 }}
+      animate={{ opacity: 1, y: focus ? -4 : 0, scaleX: 1, rotateX: focus ? 0 : 5 }}
       exit={{ opacity: 0, y: 40, scaleX: 0.5, rotateX: 40, transition: { duration: 0.22 } }}
       transition={{ type: "spring", stiffness: 200, damping: 22 }}
       style={{ transformPerspective: 900, transformOrigin: "50% 100%", x: "-50%" }}
@@ -83,71 +83,65 @@ export function AirInput() {
         )}
       </AnimatePresence>
 
-      <div className="air air-float air-input px-4 pt-2.5 pb-3 sm:px-5" data-focus={focus} onClick={() => field.current?.focus()}>
-        <div className="mb-1.5 flex items-center gap-2">
-          <span className="air-dot" />
-          <p className="air-label flex-1">{copy.input}</p>
-          <p className="air-label hidden text-white/30 sm:block">{copy.send}</p>
-        </div>
-        <div className="flex items-end gap-3">
-          <div className="relative max-h-[7.5em] min-w-0 flex-1 overflow-y-auto text-[17px] leading-[1.5]">
-            {/* what is seen */}
-            <div aria-hidden className="min-h-[1.5em] break-words whitespace-pre-wrap text-white">
-              {chars.slice(0, at).map((c, i) => (
-                <span key={i} className="air-key">
-                  {c}
-                </span>
-              ))}
-              <span className="air-caret" />
-              {chars.slice(at).map((c, i) => (
-                <span key={at + i}>{c}</span>
-              ))}
-              {!value && <span className="text-white/35">{copy.placeholder}</span>}
-              {"​"}
-            </div>
-            {/* what takes the keys */}
-            <textarea
-              ref={field}
-              value={value}
-              rows={1}
-              maxLength={1200}
-              aria-label={copy.placeholder}
-              enterKeyHint="send"
-              autoCapitalize="sentences"
-              spellCheck={false}
-              onChange={(e) => {
-                setValue(e.target.value);
-                setCaret(e.target.selectionStart);
-              }}
-              onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
-              onFocus={() => setFocus(true)}
-              onBlur={() => setFocus(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  send();
-                }
-              }}
-              className="absolute inset-0 h-full w-full resize-none overflow-hidden bg-transparent break-words whitespace-pre-wrap text-transparent caret-transparent outline-none selection:bg-system/30"
-            />
+      <div className="ask air-input" data-focus={focus} onClick={() => field.current?.focus()}>
+        <div className="relative max-h-[7.5em] min-w-0 flex-1 self-center overflow-y-auto py-[7px] text-[16px] leading-[1.5]">
+          {/* what is seen */}
+          <div aria-hidden className="min-h-[1.5em] break-words whitespace-pre-wrap text-white">
+            {chars.slice(0, at).map((c, i) => (
+              <span key={i} className="air-key">
+                {c}
+              </span>
+            ))}
+            <span className="air-caret" />
+            {chars.slice(at).map((c, i) => (
+              <span key={at + i}>{c}</span>
+            ))}
+            {!value && <span className="text-white/38">{copy.placeholder}</span>}
+            {"\u200b"}
           </div>
-          {running ? (
-            <button type="button" aria-label="Stop" onClick={() => stop?.()} className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/10 text-white transition hover:bg-white/20">
-              <Square className="size-3.5 fill-current" />
-            </button>
-          ) : (
-            <motion.button
-              type="submit"
-              aria-label="Send"
-              disabled={!value.trim()}
-              whileTap={{ scale: 0.9 }}
-              animate={{ scale: value.trim() ? 1 : 0.9 }}
-              className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[oklch(0.74_0.17_300)] to-[oklch(0.62_0.16_250)] text-white shadow-[0_6px_20px_oklch(0.62_0.22_295/0.45)] transition-[filter,opacity] enabled:hover:brightness-110 disabled:opacity-30 disabled:shadow-none"
-            >
-              <CornerDownLeft className="size-4" />
-            </motion.button>
-          )}
+          {/* what takes the keys */}
+          <textarea
+            ref={field}
+            value={value}
+            rows={1}
+            maxLength={1200}
+            aria-label={copy.placeholder}
+            enterKeyHint="send"
+            autoCapitalize="sentences"
+            spellCheck={false}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setCaret(e.target.selectionStart);
+            }}
+            onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+            onFocus={() => setFocus(true)}
+            onBlur={() => setFocus(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            className="absolute inset-0 h-full w-full resize-none overflow-hidden bg-transparent py-[7px] break-words whitespace-pre-wrap text-transparent caret-transparent outline-none selection:bg-system/30"
+          />
         </div>
+        <AnimatePresence initial={false}>
+          {value.trim() && !running && (
+            <motion.span key="hint" className="ask-hint hidden sm:flex" initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 6 }} transition={{ duration: 0.18 }}>
+              <span className="hud-kbd">↵</span>
+              {copy.sendShort}
+            </motion.span>
+          )}
+        </AnimatePresence>
+        {running ? (
+          <button type="button" aria-label="Stop" title="Stop" onClick={() => stop?.()} className="ask-send ask-send--stop">
+            <Square className="size-3 fill-current" />
+          </button>
+        ) : (
+          <motion.button type="submit" aria-label={copy.send} title={copy.send} disabled={!value.trim()} whileTap={{ scale: 0.9 }} className="ask-send">
+            <ArrowUp className="size-[18px]" strokeWidth={2.4} />
+          </motion.button>
+        )}
       </div>
     </motion.form>
   );

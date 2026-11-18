@@ -239,7 +239,6 @@ function Stage({ close }: { close: () => void }) {
     }
   };
 
-  const key = "air pointer-events-auto flex h-10 items-center gap-2 !rounded-full px-4 font-display text-[9.5px] tracking-[0.26em] text-white/75 uppercase transition hover:text-white outline-none focus-visible:ring-1 focus-visible:ring-white/60";
 
   return (
     <motion.div
@@ -284,29 +283,27 @@ function Stage({ close }: { close: () => void }) {
         </motion.div>
       </div>
 
-      <motion.div
-        className="pointer-events-none relative flex max-w-full flex-wrap items-center justify-center gap-2"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0, transition: { delay: 0.55 } }}
-        exit={{ opacity: 0 }}
-      >
-        <button ref={first} type="button" onClick={flip} aria-pressed={flipped} className={key} style={{ ["--air-tint" as string]: "oklch(0.74 0.17 300)" }}>
-          <RotateCw className={cn("size-3.5 transition-transform duration-500", flipped && "rotate-180")} />
-          {copy.flip}
+      <motion.div className="hud pointer-events-auto relative !h-auto max-w-full flex-wrap justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.55 } }} exit={{ opacity: 0 }}>
+        <button ref={first} type="button" onClick={flip} aria-pressed={flipped} className="hud-btn" style={{ ["--tone" as string]: "oklch(0.8 0.14 300)" }}>
+          <RotateCw className={cn("transition-transform duration-500", flipped && "rotate-180")} />
+          <span className="hud-label">{copy.flip}</span>
         </button>
-        <button type="button" onClick={save} className={key} style={{ ["--air-tint" as string]: "oklch(0.8 0.14 160)" }}>
-          <Download className="size-3.5" />
-          {copy.save}
+        <button type="button" onClick={save} className="hud-btn">
+          <Download />
+          <span className="hud-label">{copy.save}</span>
         </button>
-        <button type="button" onClick={copyEmail} className={key}>
-          {copied ? <Check className="size-3.5 text-[oklch(0.85_0.16_160)]" /> : <Copy className="size-3.5" />}
-          <span aria-live="polite">{copied ? copy.copied : copy.copy}</span>
+        <button type="button" onClick={copyEmail} className="hud-btn">
+          {copied ? <Check className="text-[oklch(0.85_0.16_160)]" /> : <Copy />}
+          <span className="hud-label" aria-live="polite">
+            {copied ? copy.copied : copy.copy}
+          </span>
         </button>
-        <button type="button" onClick={close} aria-label={copy.close} className={cn(key, "!px-3")} style={{ ["--air-tint" as string]: "oklch(0.7 0.19 40)" }}>
-          <X className="size-4" />
+        <span className="hud-sep" aria-hidden />
+        <button type="button" onClick={close} aria-label={copy.close} title={copy.close} className="hud-btn">
+          <X />
         </button>
       </motion.div>
-      <p className="pointer-events-none relative -mt-3 font-mono text-[9px] tracking-[0.3em] text-white/35 uppercase">{copy.hint}</p>
+      <p className="pointer-events-none relative -mt-3 text-[11.5px] text-white/40">{copy.hint}</p>
     </motion.div>
   );
 }

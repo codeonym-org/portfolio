@@ -177,6 +177,8 @@ export const world = {
     exit: "Exit",
     exitLabel: "Leave the interview, back to the record",
     modes: { text: "TEXT", audio: "AUDIO" },
+    /** the same two, as the switch shows them */
+    modeNames: { text: "Type", audio: "Speak" },
     switchLabel: "Ask by text or by voice",
     /** how he answers: aloud (and in text), or in text only */
     replies: {
@@ -195,7 +197,7 @@ export const world = {
       failed: "The PDF could not be made",
       empty: "Ask a question first: the transcript is still empty",
       keep: "Take this interview with you",
-      keepSub: (n: number) => `PDF · ${n === 1 ? "1 question" : `${n} questions`}, numbered and timed, with my answers`,
+      keepSub: (n: number) => `PDF · ${n === 1 ? "1 question" : `${n} questions`}, timed · with my card`,
       action: "Download PDF",
     },
     /** the transcript and the history: a book of diaries, one for each conversation (`interview/diary-book.tsx`) */
@@ -241,7 +243,6 @@ export const world = {
     talk: {
       label: "The conversation",
       name: "Ayoub",
-      initials: "AB",
       badge: "AI Agent Engineer",
       status: {
         waiting: "Waiting for your first question",
@@ -316,12 +317,15 @@ export const world = {
       },
     },
     card: { open: "Card", label: "My business card", hint: "Press the card to turn it", flip: "Turn", save: "Save contact", copy: "Copy email", copied: "Copied", close: "Close" },
-    input: "Your question",
     send: "Enter to send",
+    sendShort: "to send",
     placeholder: "Ask me anything…",
     hold: "Hold to talk",
-    phases: { idle: "hold to talk", listening: "listening", decoding: "hearing you", thinking: "thinking", speaking: "speaking" },
-    noVoice: "This browser cannot record your voice. Switch to TEXT at the top.",
+    holdSub: "Release when you are done",
+    phaseTitles: { listening: "Listening…", decoding: "Hearing you…", thinking: "Thinking…", speaking: "Speaking" },
+    phaseSubs: { listening: "Release to send", decoding: "Turning your words into text", thinking: "Working on my answer", speaking: "Hold to interrupt me" },
+    noVoiceShort: "No microphone here",
+    noVoice: "This browser cannot record your voice. Switch to Type at the top.",
   },
 
   /** the holographic map (`interface/holo-map.tsx`) */

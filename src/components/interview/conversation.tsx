@@ -294,12 +294,13 @@ export function Conversation(p: ConversationProps) {
     >
       <header className="talk-head">
         <span className="talk-avatar" data-tone={status.tone} aria-hidden>
-          {copy.initials}
+          {/* eslint-disable-next-line @next/next/no-img-element -- 38 px, the same file the page already loads */}
+          <img src="/brand/avatar.webp" alt="" width={38} height={38} draggable={false} />
         </span>
         <div className="min-w-0 flex-1">
           <p className="talk-name">
             {copy.name}
-            <span className="talk-badge">{copy.badge}</span>
+            <span className="talk-role">{copy.badge}</span>
           </p>
           <p className="talk-status" data-tone={status.tone} aria-live="polite">
             {status.text}
@@ -311,15 +312,20 @@ export function Conversation(p: ConversationProps) {
             <span>{p.table.count}</span>
           </button>
         )}
-        <button type="button" className="talk-icon" title={copy.diary} aria-label={copy.diary} onClick={p.onDiary}>
-          <BookOpen className="size-4" />
-        </button>
-        <TranscriptIconButton />
-        {wide && (
-          <button type="button" className="talk-icon" title={folded ? copy.unfold : copy.fold} aria-label={folded ? copy.unfold : copy.fold} aria-expanded={!folded} onClick={() => setFolded(!folded)}>
-            <ChevronDown className={cn("size-4 transition-transform", folded && "rotate-180")} />
+        <div className="talk-tools">
+          <button type="button" className="talk-icon" title={copy.diary} aria-label={copy.diary} onClick={p.onDiary}>
+            <BookOpen className="size-4" />
           </button>
-        )}
+          <TranscriptIconButton />
+          {wide && (
+            <>
+              <span className="talk-tools__sep" aria-hidden />
+              <button type="button" className="talk-icon" title={folded ? copy.unfold : copy.fold} aria-label={folded ? copy.unfold : copy.fold} aria-expanded={!folded} onClick={() => setFolded(!folded)}>
+                <ChevronDown className={cn("size-4 transition-transform duration-300", folded && "rotate-180")} />
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {!folded && (
