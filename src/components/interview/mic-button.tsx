@@ -59,7 +59,7 @@ export function MicButton() {
       exit={{ opacity: 0, y: 40, scale: 0.7, transition: { duration: 0.22 } }}
       transition={{ type: "spring", stiffness: 220, damping: 20 }}
       style={{ x: "-50%" }}
-      className="mic fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-30 flex flex-col items-center gap-2"
+      className="mic fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[var(--dock-x,50%)] z-30 flex flex-col items-center gap-2"
       data-live={live}
       data-listening={listening}
     >

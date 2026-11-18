@@ -17,7 +17,7 @@ import { DiaryBook } from "./diary-book";
 import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
 import { TopBar } from "./top-bar";
-import { TurnCanvas } from "./turn-canvas";
+import { TurnCanvas, useStage } from "./turn-canvas";
 import { followTurns } from "./use-turns";
 import { followVoice } from "./voice-log";
 
@@ -27,14 +27,22 @@ const HoloMap = dynamic(() => import("@/components/interface/holo-map"), { ssr: 
 
 const copy = world.interview;
 
-/** tells the replica where it is: no Monolith here, only its face and the windows around it */
+/** tells the replica where it is and what the stranger sees: no Monolith here, his face, the conversation and the table */
 function RoomContext() {
   const mode = useInterview((s) => s.mode);
   const replies = useInterview((s) => s.replies);
+  const sector = useWorldStore((s) => s.sector);
+  const caseFile = useWorldStore((s) => s.caseFile);
+  const brief = useWorldStore((s) => s.brief);
+  const inspect = useWorldStore((s) => s.inspect);
+  const onTable = [sector && `the ${sector} section`, caseFile && `the case file "${caseFile.title}"`, brief && "the one-minute brief", inspect && `the ${inspect.kind === "quest" ? "project" : inspect.kind} ${inspect.id}`].filter(Boolean);
   useAgentContext({
     description: "Where the stranger is",
     value: {
-      page: "the interview (/interview): your avatar sits behind a desk in an office (a laptop and your papers on it), facing the stranger as in a real job interview. There is no Monolith and no shards here; everything you open or show appears as a floating window beside your face.",
+      page: "the interview (/interview): your avatar sits behind a desk in an office (a laptop and your papers on it), facing the stranger as in a real job interview. There is no Monolith and no shards here.",
+      screen:
+        "The conversation is a panel on your left: every question, the steps you take for it (each tool call, in plain words), and your answer as you write it; the stranger can scroll back through it, so do not repeat what you already said. Everything you open or show lands on the table, a panel on your right, one thing at a time behind tabs, the newest in front: open what helps the answer, and say in a few words what you put there rather than describing it all. On a phone the table is a sheet that slides up over the conversation.",
+      onTheTable: onTable.length ? onTable : "nothing",
       answering: mode === "audio" ? "by voice" : "by text",
       yourReplies:
         replies === "voice"
@@ -70,9 +78,9 @@ function Arrival() {
  * replies to text only, and only when the tab may play sound.
  * Everything else is glass hanging in the air: a bar at the top (the
  * way out, how he answers, the TEXT / AUDIO switch, the transcript), the input at the
- * bottom (a pane to type on, or a microphone to hold), the turn in
- * progress laid out around his face (`turn-canvas`), the turn before
- * kept small in a corner, and the transcript: an old leather book of
+ * bottom (a pane to type on, or a microphone to hold), the conversation
+ * in a panel on his left and what he shows on a table on his right
+ * (`turn-canvas`, placed by `stage.ts`), and the transcript: an old leather book of
  * diaries, one for each conversation kept in this browser, written by
  * hand, whose pages turn (`diary-book.tsx`). The same agent
  * as the record answers, through the same link. A conversation left
@@ -80,6 +88,7 @@ function Arrival() {
  */
 export function Interview() {
   const mode = useInterview((s) => s.mode);
+  const stage = useStage(mode);
   const ready = useWorldStore((s) => s.ready);
   const mapOpen = useWorldStore((s) => s.mapOpen);
 
@@ -122,11 +131,15 @@ export function Interview() {
   }, []);
 
   return (
-    <main className="interview-room relative h-dvh w-full overflow-hidden" aria-label={copy.title}>
+    <main
+      className="interview-room relative h-dvh w-full overflow-hidden"
+      aria-label={copy.title}
+      style={stage ? { ["--dock-x" as string]: `${stage.dock.x}px`, ["--dock-w" as string]: `${stage.dock.w}px` } : undefined}
+    >
       <OfficeStage />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgb(0_0_0/0.35)_100%)]" aria-hidden />
       <Arrival />
-      <TurnCanvas />
+      {stage && <TurnCanvas stage={stage} />}
       <TopBar />
       <DiaryBook />
       <BusinessCard />

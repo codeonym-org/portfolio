@@ -708,22 +708,25 @@ function Book() {
       </div>
 
       <footer className="pointer-events-none absolute inset-x-0 bottom-[max(0.9rem,env(safe-area-inset-bottom))] z-[30] flex flex-col items-center gap-2 px-4">
-        <div className="pointer-events-auto flex items-center gap-2">
-          <button type="button" aria-label={copy.prev} title={copy.prev} disabled={turned <= 0} onClick={() => step(-1)} className="db-key grid size-10 place-items-center rounded-full disabled:opacity-30">
+        <nav aria-label={copy.label} className="db-key db-bar pointer-events-auto">
+          <button type="button" aria-label={copy.prev} title={copy.prev} disabled={turned <= 0} onClick={() => step(-1)}>
             <ChevronLeft className="size-4" />
           </button>
-          <button type="button" onClick={() => goPage(0)} className="db-key flex h-10 items-center gap-2 rounded-full px-4">
-            <List className="size-4" />
+          <i className="db-bar__sep" aria-hidden />
+          <button type="button" onClick={() => goPage(0)}>
+            <List className="size-3.5" />
             <span className="font-[family-name:var(--font-fell)] text-[15px] italic">{copy.toContents}</span>
           </button>
-          <span className="db-key flex h-10 min-w-[4.5rem] items-center justify-center rounded-full px-3 font-[family-name:var(--font-fell)] text-[15px]" aria-live="polite">
+          <i className="db-bar__sep" aria-hidden />
+          <span className="min-w-[4.5rem] px-2 font-[family-name:var(--font-fell)] text-[15px] tabular-nums" aria-live="polite">
             {turned === 0 ? "—" : `${Math.min(pageNow + 1, pages.length)} / ${pages.length}`}
           </span>
-          <button type="button" aria-label={copy.next} title={copy.next} disabled={turned >= total} onClick={() => step(1)} className="db-key grid size-10 place-items-center rounded-full disabled:opacity-30">
+          <i className="db-bar__sep" aria-hidden />
+          <button type="button" aria-label={copy.next} title={copy.next} disabled={turned >= total} onClick={() => step(1)}>
             <ChevronRight className="size-4" />
           </button>
-        </div>
-        <p className="hidden font-[family-name:var(--font-fell)] text-[13px] text-[#e9dcc0]/55 italic sm:block">{copy.hint}</p>
+        </nav>
+        <p className="hidden font-[family-name:var(--font-fell)] text-[12.5px] tracking-wide text-[#e9dcc0]/40 italic sm:block">{copy.hint}</p>
       </footer>
     </motion.div>
   );

@@ -1,30 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { Check, LoaderCircle, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { executeSystemCommand } from "@/agent/system-commands";
-import type { TaskRecord } from "@/agent/voice/task-queue";
-import { Markdown } from "@/components/agent/markdown";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { BriefPanel } from "@/components/interface/brief-panel";
 import { Cards } from "@/components/interface/cards";
 import { CasePanel } from "@/components/interface/case-panel";
-import { useReveal } from "@/components/interface/console";
 import { InspectBody } from "@/components/interface/inspect";
 import { ArsenalPanel, ChroniclePanel, GatePanel, ShadowsPanel, StatusPanel, VaultPanel } from "@/components/interface/sector-panels";
+import { findItem } from "@/config/inventory.config";
+import { quests } from "@/config/quests.config";
+import { findSkill } from "@/config/skills.config";
 import type { SectorId } from "@/config/types";
 import { sectorById, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
-import { cn } from "@/lib/utils";
-import { useSession, type TraceStep } from "@/store/session-store";
+import { useSession } from "@/store/session-store";
 import { useWorldStore, type SystemPrompt } from "@/store/world-store";
-import { AirWindow } from "./air-window";
-import { useInterview } from "./interview-store";
-import { TurnPreview } from "./turn-preview";
+import { describe, stepsFor } from "./activity";
+import { Conversation, type ShownRef, type Tone } from "./conversation";
+import { useInterview, type InterviewMode } from "./interview-store";
+import { DOCK_HEIGHT, stage, type Stage } from "./stage";
+import { Table, type Exhibit } from "./table";
+import { nextQuestions, type InterviewTurn } from "./turns";
 import { useTurns } from "./use-turns";
 
 const copy = world.interview;
+const kinds = copy.table.kinds;
 
 const SECTOR_BODY: Record<SectorId, () => ReactNode> = {
   status: StatusPanel,
@@ -35,104 +37,30 @@ const SECTOR_BODY: Record<SectorId, () => ReactNode> = {
   contact: GatePanel,
 };
 
-const TINT = {
-  you: "oklch(0.78 0.13 232)",
-  him: "oklch(0.74 0.17 300)",
-  shown: "oklch(0.8 0.12 160)",
-  event: "oklch(0.8 0.14 80)",
-  ask: "oklch(0.7 0.19 40)",
-  next: "oklch(0.75 0.02 260)",
+const NONE: never[] = [];
+
+const viewport = {
+  subscribe: (then: () => void) => {
+    window.addEventListener("resize", then);
+    return () => window.removeEventListener("resize", then);
+  },
+  read: () => `${window.innerWidth}x${window.innerHeight}`,
+  server: () => "",
 };
 
-/** a finished tool call or task stays this long, then leaves */
-const SETTLED_MS = 2600;
-/** what one turn may put on the canvas */
-const KEEP = { cards: 2, events: 5 };
-/** how far the windows stand from his face */
-const BESIDE = 28;
-
-function Words({ id, text, live }: { id: string; text: string; live: boolean }) {
-  const { visible, done } = useReveal(text, id);
-  return (
-    <div className="oracle max-h-[min(46dvh,420px)] overflow-y-auto overscroll-contain pr-1 text-[15px]" aria-live="polite">
-      <Markdown text={visible} />
-      {(!done || live) && <span className="caret" aria-hidden />}
-    </div>
-  );
+/** where the panels and the input stand, for this screen and where his face is; null before the first paint */
+export function useStage(mode: InterviewMode): Stage | null {
+  const size = useSyncExternalStore(viewport.subscribe, viewport.read, viewport.server);
+  const face = useInterview((s) => s.face);
+  return useMemo(() => {
+    if (!size) return null;
+    const [w, h] = size.split("x").map(Number);
+    return stage(w, h, face, DOCK_HEIGHT[mode]);
+  }, [size, face, mode]);
 }
 
-function Thinking() {
-  return (
-    <div className="flex h-6 items-center gap-1.5" aria-label={copy.phases.thinking}>
-      {[0, 1, 2].map((i) => (
-        <motion.span key={i} className="size-1.5 rounded-full bg-white/70" animate={{ opacity: [0.2, 1, 0.2], y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.16 }} />
-      ))}
-    </div>
-  );
-}
-
-/** runs `then` once, `after` ms after `settled` becomes true */
-function useSettled(settled: boolean, then: () => void, after = SETTLED_MS) {
-  // the canvas re-renders while a reply streams: the timer must not restart with it
-  const latest = useRef(then);
-  useEffect(() => {
-    latest.current = then;
-  });
-  useEffect(() => {
-    if (!settled) return;
-    const timer = window.setTimeout(() => latest.current(), after);
-    return () => window.clearTimeout(timer);
-  }, [settled, after]);
-}
-
-function Status({ status }: { status: "running" | "done" | "failed" | "queued" }) {
-  if (status === "running" || status === "queued") return <LoaderCircle className="size-3.5 shrink-0 animate-spin text-system" />;
-  if (status === "failed") return <X className="size-3.5 shrink-0 text-ember" />;
-  return <Check className="size-3.5 shrink-0 text-emerald-300" />;
-}
-
-/** an event of the turn: a small chip in the row under the top bar, gone a moment after it settles */
-function Chip({ children, settled, leave, after }: { children: ReactNode; settled: boolean; leave: () => void; after?: number }) {
-  useSettled(settled, leave, after);
-  return (
-    <motion.div
-      layout="position"
-      initial={{ opacity: 0, y: -14, scale: 0.8 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-      transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="air pointer-events-auto flex max-w-full items-center gap-2 !rounded-full px-3 py-1.5 font-mono text-[11px] text-white/85"
-      style={{ ["--air-tint" as string]: TINT.event }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function ToolChip({ step, leave }: { step: TraceStep; leave: () => void }) {
-  return (
-    <Chip settled={step.status !== "running"} leave={leave}>
-      <Status status={step.status} />
-      <span className="truncate">
-        {step.name}
-        <span className="text-white/40">({step.args})</span>
-      </span>
-      {step.ms !== undefined && <span className="shrink-0 text-white/35">{step.ms} ms</span>}
-    </Chip>
-  );
-}
-
-function TaskChip({ task, leave }: { task: TaskRecord; leave: () => void }) {
-  const over = task.status === "done" || task.status === "failed";
-  return (
-    <Chip settled={over} leave={leave}>
-      <Status status={task.status === "done" || task.status === "failed" ? task.status : "running"} />
-      <span className="truncate font-sans text-[12px]">{task.task}</span>
-    </Chip>
-  );
-}
-
-function QuestionBody({ prompt }: { prompt: SystemPrompt }) {
+/** his question to the stranger, with its two answers */
+function Ask({ prompt }: { prompt: SystemPrompt }) {
   const reply = (accepted: boolean) => {
     const command = useWorldStore.getState().prompt?.command;
     play(accepted ? "confirm" : "close", { volume: 0.5 });
@@ -140,205 +68,231 @@ function QuestionBody({ prompt }: { prompt: SystemPrompt }) {
     if (accepted && command) void executeSystemCommand(command.name, command.args);
   };
   return (
-    <div className="space-y-3">
-      <p className="text-[14px] leading-relaxed text-white/85">{prompt.body}</p>
-      <div className="flex gap-2">
-        <button type="button" data-active="true" onClick={() => reply(true)} className="hud-chip px-4 py-1.5 text-sm">
+    <motion.div className="talk-ask" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+      {prompt.heading && <p className="talk-ask__head">{prompt.heading}</p>}
+      <p className="talk-ask__body">{prompt.body}</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => reply(true)} className="talk-btn talk-btn--go">
           {prompt.accept}
         </button>
-        <button type="button" onClick={() => reply(false)} className="hud-chip px-4 py-1.5 text-sm">
+        <button type="button" onClick={() => reply(false)} className="talk-btn">
           {prompt.decline}
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
+/** a note from the room ("your conversation is resumed"): a moment under the top bar */
+function Note({ id, children, leave }: { id: string; children: ReactNode; leave: (id: string) => void }) {
+  // the room re-renders while a reply streams: the note's time must not start again with it
+  const latest = useRef(leave);
+  useEffect(() => {
+    latest.current = leave;
+  });
+  useEffect(() => {
+    const timer = window.setTimeout(() => latest.current(id), 6000);
+    return () => window.clearTimeout(timer);
+  }, [id]);
+  return (
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+      className="stage-note pointer-events-auto"
+      role="status"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** the name of what is inspected */
+function inspected(kind: "skill" | "item" | "quest", id: string): string {
+  if (kind === "skill") return findSkill(id)?.name ?? id;
+  if (kind === "item") return findItem(id)?.name ?? id;
+  return quests.find((q) => q.id === id)?.name ?? id;
+}
+
 /**
- * ── THE TURN ON THE CANVAS ────────────────────────────────────
- * Only the turn in progress is on the canvas, and everything has its
- * place, so nothing collides: the question at the bottom centre,
- * above the input; his words on his left; what
- * he shows and opens on his right; what he is doing (tool calls,
- * tasks, notes) as a row of chips under the top bar. Every window
- * can be moved by its top and put away with its cross. When the next
- * question is asked, this turn's question and answer fly into the
- * small preview of the turn before (bottom left; above the question
- * on a phone), and the rest leaves. The transcript keeps every turn.
+ * ── THE TURN IN THE ROOM ──────────────────────────────────────
+ * Three places, always the same (`stage.ts`): the conversation on his
+ * left, what he shows on his right, the input under him. Everything a
+ * reply brings goes to one of them, so nothing collides and nothing
+ * covers his face: his words and the steps he takes into the
+ * conversation, what he shows and opens onto the table (the newest in
+ * front), his questions to the stranger under his answer. Notes from
+ * the room pass under the top bar. Escape puts away what is on the
+ * table.
  */
-export function TurnCanvas() {
+export function TurnCanvas({ stage: s }: { stage: Stage }) {
   const turns = useTurns();
   const active = turns.at(-1);
-  const before = turns.at(-2);
-  const face = useInterview((s) => s.face);
-  const mode = useInterview((s) => s.mode);
-  const openTranscript = useInterview((s) => s.toggleTranscript);
-  const running = useSession((s) => s.running);
-  const trace = useSession((s) => s.trace);
-  const notice = useSession((s) => s.notice);
-  const tasks = useVoiceStore((s) => s.tasks);
-  const phase = useVoiceStore((s) => s.phase);
-  const sector = useWorldStore((s) => s.sector);
-  const caseFile = useWorldStore((s) => s.caseFile);
-  const brief = useWorldStore((s) => s.brief);
-  const inspect = useWorldStore((s) => s.inspect);
-  const prompt = useWorldStore((s) => s.prompt);
-  const toasts = useWorldStore((s) => s.toasts);
+  const running = useSession((st) => st.running);
+  const trace = useSession((st) => st.trace);
+  const notice = useSession((st) => st.notice);
+  const tasks = useVoiceStore((st) => st.tasks);
+  const phase = useVoiceStore((st) => st.phase);
+  const sector = useWorldStore((st) => st.sector);
+  const caseFile = useWorldStore((st) => st.caseFile);
+  const brief = useWorldStore((st) => st.brief);
+  const inspect = useWorldStore((st) => st.inspect);
+  const prompt = useWorldStore((st) => st.prompt);
+  const toasts = useWorldStore((st) => st.toasts);
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
-  const [viewport, setViewport] = useState({ w: 0, h: 0 });
+  const [selected, setSelected] = useState<string | null>(null);
+  const [sheet, setSheet] = useState(false);
+  /** when each thing on the table first came, and in which turn */
+  const [seen, setSeen] = useState<{ order: readonly string[]; turn: Readonly<Record<string, string | null>> }>({ order: [], turn: {} });
 
-  const hide = useCallback((id: string) => setHidden((h) => new Set(h).add(id)), []);
-  const shown = (id: string) => !hidden.has(id);
+  const hide = (id: string) => setHidden((h) => new Set(h).add(id));
 
-  useEffect(() => {
-    const sync = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
-    sync();
-    window.addEventListener("resize", sync);
-    return () => window.removeEventListener("resize", sync);
-  }, []);
-
+  // ── the table ──
   const world$ = useWorldStore.getState();
-  const records: { id: string; title: string; body: ReactNode; close: () => void }[] = [];
+  const items: Exhibit[] = [];
+  active?.cards.forEach((card, n) => {
+    const id = `card:${active.id}:${n}`;
+    if (hidden.has(id)) return;
+    const title = card.type === "skills" ? (card.title ?? copy.diary.shownWhat.skills) : card.type === "map" ? copy.diary.shownWhat.map : card.file.title;
+    items.push({ id, kind: kinds[card.type === "skills" ? "skills" : card.type === "map" ? "map" : "case"], title, body: <Cards cards={[card]} />, close: () => hide(id) });
+  });
   if (sector) {
     const def = sectorById[sector];
     const Body = SECTOR_BODY[sector];
-    records.push({ id: `record:sector:${sector}`, title: `${def.name} · ${def.section}`, body: <Body />, close: world$.closeFocus });
+    items.push({ id: `sector:${sector}`, kind: kinds.sector, title: def.name, body: <Body />, close: world$.closeFocus });
   }
-  if (caseFile) records.push({ id: `record:case:${caseFile.title}`, title: caseFile.title, body: <CasePanel file={caseFile} />, close: world$.closeFocus });
-  if (brief) records.push({ id: "record:brief", title: "The record in one minute", body: <BriefPanel />, close: world$.closeFocus });
-  if (inspect) records.push({ id: `record:inspect:${inspect.kind}:${inspect.id}`, title: inspect.kind === "quest" ? "Project" : inspect.kind === "item" ? "Document" : "Skill", body: <InspectBody target={inspect} />, close: () => world$.setInspect(null) });
+  if (caseFile) items.push({ id: `case:${caseFile.title}`, kind: kinds.case, title: caseFile.title, body: <CasePanel file={caseFile} />, close: world$.closeFocus });
+  if (brief) items.push({ id: "brief", kind: kinds.brief, title: world.agent.brief, body: <BriefPanel />, close: world$.closeFocus });
+  if (inspect)
+    items.push({
+      id: `inspect:${inspect.kind}:${inspect.id}`,
+      kind: inspect.kind === "quest" ? kinds.project : inspect.kind === "item" ? kinds.document : kinds.skill,
+      title: inspected(inspect.kind, inspect.id),
+      body: <InspectBody target={inspect} />,
+      close: () => world$.setInspect(null),
+    });
 
-  // Escape puts everything on the canvas away
+  // what is new on the table comes to the front (and, on a phone, brings the sheet up)
+  const fresh = items.filter((i) => !(i.id in seen.turn));
+  if (fresh.length) {
+    setSeen({ order: [...seen.order, ...fresh.map((f) => f.id)], turn: { ...seen.turn, ...Object.fromEntries(fresh.map((f) => [f.id, active?.id ?? null])) } });
+    setSelected(fresh.at(-1)!.id);
+    if (!s.wide) setSheet(true);
+  }
+  const rank = (id: string) => {
+    const at = seen.order.indexOf(id);
+    return at < 0 ? Infinity : at;
+  };
+  items.sort((a, b) => rank(a.id) - rank(b.id));
+
+  // what each turn showed, for its chips: rebuilt only when the table changes
+  const shownKey = items.map((i) => [i.id, i.title, seen.turn[i.id] ?? ""].join("\u0001")).join("\u0002");
+  const shownBy = useMemo(() => {
+    const by = new Map<string, ShownRef[]>();
+    if (!shownKey) return by;
+    for (const row of shownKey.split("\u0002")) {
+      const [id, title, turn] = row.split("\u0001");
+      if (!turn) continue;
+      by.set(turn, [...(by.get(turn) ?? []), { id, title }]);
+    }
+    return by;
+  }, [shownKey]);
+  const shownOf = useCallback((t: InterviewTurn) => shownBy.get(t.id) ?? NONE, [shownBy]);
+
+  const show = (id: string) => {
+    setSelected(id);
+    setSheet(true);
+  };
+
+  // ── the conversation ──
+  const live = !!active && (active.spoken ? phase === "decoding" || phase === "thinking" || phase === "speaking" : running);
+  const stepsOf = useCallback(
+    (t: InterviewTurn) => {
+      const at = turns.indexOf(t);
+      return at < 0 ? NONE : stepsFor(trace, t.at, turns[at + 1]?.at);
+    },
+    [trace, turns],
+  );
+
+  let tone: Tone;
+  let said: string;
+  const working = active ? stepsOf(active).findLast((st) => st.status === "running") : undefined;
+  if (phase === "listening") [tone, said] = ["listening", copy.talk.status.listening];
+  else if (phase === "decoding") [tone, said] = ["listening", copy.talk.status.hearing];
+  else if (phase === "speaking") [tone, said] = ["speaking", copy.talk.status.speaking];
+  else if (live && working) [tone, said] = ["working", describe(working)];
+  else if (live && active?.him) [tone, said] = ["answering", copy.talk.status.answering];
+  else if (live || phase === "thinking") [tone, said] = ["thinking", copy.talk.status.thinking];
+  else if (!turns.length) [tone, said] = ["waiting", copy.talk.status.waiting];
+  else [tone, said] = ["ready", copy.talk.status.ready];
+
+  const suggestions = useMemo(() => nextQuestions(turns, world.agent.suggestions, turns.length ? 3 : 4), [turns]);
+
+  // Escape puts away everything on the table, and his question
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      const s = useWorldStore.getState();
-      if (s.mapOpen || s.cvOpen || s.cardOpen || useInterview.getState().transcript) return;
-      if (active) setHidden((h) => new Set([...h, `q:${active.id}`, `a:${active.id}`, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
-      if (s.sector || s.caseFile || s.brief) s.closeFocus();
-      if (s.inspect) s.setInspect(null);
-      if (s.prompt) s.ignore();
+      const w = useWorldStore.getState();
+      if (w.mapOpen || w.cvOpen || w.cardOpen || useInterview.getState().transcript) return;
+      if (active) setHidden((h) => new Set([...h, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
+      if (w.sector || w.caseFile || w.brief) w.closeFocus();
+      if (w.inspect) w.setInspect(null);
+      if (w.prompt) w.ignore();
+      setSheet(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
 
-  if (!viewport.w) return null;
-
-  const live = !!active && (active.spoken ? phase === "decoding" || phase === "thinking" || phase === "speaking" : running);
-  const wide = viewport.w >= 900 && viewport.w / viewport.h >= 0.85;
-  const head = face ?? { x: viewport.w / 2 - 110, y: viewport.h * 0.2, w: 220, h: 240 };
-  /** the room the input takes at the bottom */
-  const floor = mode === "text" ? 128 : 236;
-
-  const events = [
-    ...trace.filter((s) => s.name !== "agent.run" && s.name !== "local_index.route").slice(-KEEP.events).map((step) => ({ id: `tool:${step.id}`, node: <ToolChip step={step} leave={() => hide(`tool:${step.id}`)} /> })),
-    ...tasks.map((task) => ({ id: `task:${task.id}`, node: <TaskChip task={task} leave={() => hide(`task:${task.id}`)} /> })),
-    ...toasts.map((toast) => ({
-      id: `toast:${toast.id}`,
-      node: (
-        <Chip settled after={6000} leave={() => { hide(`toast:${toast.id}`); useWorldStore.getState().dismissToast(toast.id); }}>
-          <span className="truncate font-sans text-[12px]">
-            <b>{toast.heading}</b> {toast.body}
-          </span>
-        </Chip>
+  // ── notes from the room ──
+  const leave = (id: string) => {
+    hide(id);
+    if (id.startsWith("toast:")) useWorldStore.getState().dismissToast(Number(id.slice(6)));
+  };
+  const notes = [
+    ...toasts.map((t) => ({
+      id: `toast:${t.id}`,
+      body: (
+        <>
+          <b className="font-semibold text-white">{t.heading}</b> {t.body}
+        </>
       ),
     })),
-    ...(notice ? [{ id: `notice:${notice}`, node: <Chip settled after={6000} leave={() => hide(`notice:${notice}`)}><span className="truncate font-sans text-[12px]">{notice}</span></Chip> }] : []),
-  ].filter((e) => shown(e.id));
+    ...(notice ? [{ id: `notice:${notice}`, body: <>{notice}</> }] : []),
+  ].filter((n) => !hidden.has(n.id));
 
-  /** his side: his words */
-  const his: ReactNode[] = [];
-  if (active && shown(`a:${active.id}`) && (active.him || live)) {
-    his.push(
-      <AirWindow key={`a:${active.id}`} layoutId={`a:${active.id}`} label={copy.panes.words} tint={TINT.him} movable={wide} onClose={() => hide(`a:${active.id}`)}>
-        {active.him ? <Words id={active.id} text={active.him} live={live} /> : <Thinking />}
-      </AirWindow>,
-    );
-  }
-
-  /** the other side: what he shows, what he opens, what he asks */
-  const theirs: ReactNode[] = [];
-  active?.cards.slice(-KEEP.cards).forEach((card, n) => {
-    const id = `card:${active.id}:${n}`;
-    if (!shown(id)) return;
-    theirs.push(
-      <AirWindow key={id} label={`${copy.panes.card} · ${card.type}`} tint={TINT.shown} movable={wide} onClose={() => hide(id)}>
-        <Cards cards={[card]} />
-      </AirWindow>,
-    );
-  });
-  for (const r of records) {
-    theirs.push(
-      <AirWindow key={r.id} label={`${copy.panes.record} · ${r.title}`} tint={TINT.shown} movable={wide} onClose={r.close}>
-        <div className="max-h-[min(44dvh,440px)] overflow-y-auto overscroll-contain pr-1">{r.body}</div>
-      </AirWindow>,
-    );
-  }
-  if (prompt) {
-    theirs.push(
-      <AirWindow key={`ask:${prompt.id}`} label={prompt.heading || copy.panes.question} tint={TINT.ask} movable={wide} onClose={() => useWorldStore.getState().ignore()}>
-        <QuestionBody prompt={prompt} />
-      </AirWindow>,
-    );
-  }
-
-  const column = "pointer-events-none fixed flex flex-col gap-3";
-  const top = 78;
-  const bottom = floor + 72;
+  const ask = prompt ? <Ask key={prompt.id} prompt={prompt} /> : null;
 
   return (
-    <LayoutGroup>
-      <div className="pointer-events-none fixed inset-0 z-20" role="region" aria-label="The reply">
-        {/* what he is doing */}
-        <div className="pointer-events-none fixed top-[66px] left-1/2 flex w-[min(760px,calc(100vw-1.5rem))] -translate-x-1/2 flex-wrap justify-center gap-2">
-          <AnimatePresence mode="popLayout">
-            {events.map((e) => (
-              <div key={e.id} className="max-w-full">
-                {e.node}
-              </div>
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {wide ? (
-          <>
-            <div className={cn(column, "items-end justify-center")} style={{ top, bottom, right: viewport.w - head.x + BESIDE, width: Math.min(400, head.x - BESIDE - 16) }}>
-              <AnimatePresence mode="popLayout">{his}</AnimatePresence>
-            </div>
-            <div className={cn(column, "items-start justify-center")} style={{ top, bottom, left: head.x + head.w + BESIDE, width: Math.min(440, viewport.w - head.x - head.w - BESIDE - 16) }}>
-              <AnimatePresence mode="popLayout">{theirs}</AnimatePresence>
-            </div>
-          </>
-        ) : (
-          // a phone: one column under his face, his words first
-          <div
-            className={cn(column, "inset-x-3 justify-start overflow-y-auto overscroll-contain pb-6 [mask-image:linear-gradient(180deg,#000_calc(100%-28px),transparent)]")}
-            style={{ top: head.y + head.h + 24, bottom: bottom + (before ? 66 : 8), pointerEvents: "auto" }}
-          >
-            <AnimatePresence mode="popLayout">{[...his, ...theirs]}</AnimatePresence>
-          </div>
-        )}
-
-        {/* the question, at the bottom centre; on a phone the turn before sits just above it */}
-        <div className="pointer-events-none fixed left-1/2 flex w-[min(520px,calc(100vw-1.5rem))] -translate-x-1/2 flex-col items-center gap-2" style={{ bottom: floor }}>
-          <AnimatePresence mode="popLayout">
-            {!wide && before && <TurnPreview key={`pre:${before.id}`} turn={before} compact onOpen={openTranscript} />}
-            {active && shown(`q:${active.id}`) && (
-              <AirWindow key={`q:${active.id}`} layoutId={`q:${active.id}`} label={active.spoken ? copy.panes.heard : copy.panes.you} tint={TINT.you} small movable={wide} onClose={() => hide(`q:${active.id}`)} className="!w-auto max-w-full min-w-[min(260px,100%)]">
-                <p className="text-[14.5px] leading-snug text-white/90">{active.you}</p>
-              </AirWindow>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* the turn before, small, in the corner */}
-        {wide && (
-          <div className="pointer-events-none fixed bottom-5 left-4">
-            <AnimatePresence mode="popLayout">{before && <TurnPreview key={`pre:${before.id}`} turn={before} onOpen={openTranscript} />}</AnimatePresence>
-          </div>
-        )}
+    <div className="pointer-events-none fixed inset-0 z-20" data-stage={s.wide ? "wide" : "sheet"}>
+      <div className="pointer-events-none fixed top-[66px] left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={{ width: s.dock.w }}>
+        <AnimatePresence>
+          {notes.map((n) => (
+            <Note key={n.id} id={n.id} leave={leave}>
+              {n.body}
+            </Note>
+          ))}
+        </AnimatePresence>
       </div>
-    </LayoutGroup>
+
+      <Conversation
+        place={s.talk}
+        wide={s.wide}
+        turns={turns}
+        live={live}
+        status={{ tone, text: said }}
+        stepsOf={stepsOf}
+        tasks={live ? tasks : NONE}
+        shownOf={shownOf}
+        onShow={show}
+        ask={ask}
+        suggestions={prompt ? NONE : suggestions}
+        table={s.wide ? null : { count: items.length, open: () => setSheet(true) }}
+        onDiary={() => useInterview.getState().toggleTranscript()}
+      />
+
+      <Table place={s.table} wide={s.wide} items={items} selected={selected} onSelect={setSelected} open={sheet} onDismiss={() => setSheet(false)} />
+    </div>
   );
 }

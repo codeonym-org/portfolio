@@ -64,7 +64,7 @@ export function AirInput() {
         e.preventDefault();
         send();
       }}
-      className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-30 w-[min(620px,calc(100vw-1.5rem))]"
+      className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-[var(--dock-x,50%)] z-30 w-[min(620px,var(--dock-w,calc(100vw-1.5rem)))] transition-[left,width] duration-300"
     >
       {/* the words just sent, leaving the glass */}
       <AnimatePresence>

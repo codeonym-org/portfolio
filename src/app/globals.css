@@ -1137,6 +1137,671 @@
   }
 }
 
+/* ── the interview's three places (/interview): the conversation, the table, notes ──
+   one surface for all of them: smoked glass, a hairline edge; colour only where it means something
+   (blue: the stranger; violet: him; green: what he shows; amber: what he asks) */
+@layer components {
+  .stage-panel {
+    --you: oklch(0.8 0.11 232);
+    --him: oklch(0.8 0.12 300);
+    --shown: oklch(0.84 0.11 162);
+    --asks: oklch(0.78 0.15 55);
+    border-radius: 22px;
+    color: rgb(255 255 255 / 0.9);
+    background: linear-gradient(180deg, rgb(22 21 30 / 0.84), rgb(11 11 17 / 0.9));
+    border: 1px solid rgb(255 255 255 / 0.09);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 0.36),
+      0 2px 8px rgb(0 0 0 / 0.25),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+    overflow: hidden;
+  }
+
+  /* on a phone the table slides over the conversation: nothing of it shows through */
+  .stage-table[data-wide="false"] {
+    background: linear-gradient(180deg, rgb(22 21 30), rgb(12 12 18));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow:
+      0 -20px 60px rgb(0 0 0 / 0.45),
+      inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+
+  /* the head: who answers, and what he is doing */
+  .talk-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 10px 12px 14px;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .talk-avatar {
+    --tone: oklch(0.8 0.15 155);
+    position: relative;
+    display: grid;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: white;
+    background: linear-gradient(140deg, oklch(0.5 0.12 290), oklch(0.42 0.1 235));
+    box-shadow:
+      0 0 0 2px rgb(14 14 20),
+      0 0 0 3.5px var(--tone);
+    transition: box-shadow 0.3s ease;
+  }
+  .talk-avatar::after {
+    content: "";
+    position: absolute;
+    inset: -3.5px;
+    border-radius: inherit;
+    border: 1.5px solid var(--tone);
+    opacity: 0;
+  }
+  .talk-avatar[data-tone="listening"],
+  .talk-status[data-tone="listening"] {
+    --tone: oklch(0.7 0.2 18);
+  }
+  .talk-avatar[data-tone="thinking"],
+  .talk-avatar[data-tone="working"],
+  .talk-status[data-tone="thinking"],
+  .talk-status[data-tone="working"] {
+    --tone: oklch(0.8 0.12 232);
+  }
+  .talk-avatar[data-tone="answering"],
+  .talk-avatar[data-tone="speaking"],
+  .talk-status[data-tone="answering"],
+  .talk-status[data-tone="speaking"] {
+    --tone: oklch(0.76 0.16 300);
+  }
+  .talk-avatar:not([data-tone="ready"]):not([data-tone="waiting"])::after {
+    animation: talk-ring 1.6s ease-out infinite;
+  }
+  .talk-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: white;
+  }
+  .talk-badge {
+    padding: 2px 6px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 6px;
+    font-family: var(--font-geist-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.55);
+  }
+  .talk-status {
+    --tone: oklch(0.8 0.15 155);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: rgb(255 255 255 / 0.55);
+  }
+  .talk-status::before {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--tone);
+    box-shadow: 0 0 8px var(--tone);
+  }
+  .talk-icon {
+    display: inline-flex;
+    flex: none;
+    height: 32px;
+    min-width: 32px;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 10px;
+    color: rgb(255 255 255 / 0.55);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  .talk-icon:hover {
+    color: white;
+    background: rgb(255 255 255 / 0.08);
+  }
+  .talk-icon--count {
+    padding: 0 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--shown);
+    background: oklch(0.84 0.11 162 / 0.1);
+  }
+
+  /* the log */
+  .talk-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14px);
+    mask-image: linear-gradient(to bottom, transparent, #000 14px);
+  }
+  .talk-log {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 16px 14px;
+  }
+  .talk-turn {
+    padding: 14px 0 12px;
+    transition: opacity 0.3s ease;
+  }
+  .talk-turn + .talk-turn {
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .talk-turn[data-active="false"] {
+    opacity: 0.62;
+  }
+  .talk-turn[data-active="false"]:hover,
+  .talk-turn[data-active="false"]:focus-within {
+    opacity: 1;
+  }
+  .talk-who {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-geist-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .talk-who time {
+    margin-left: auto;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 0.3);
+  }
+  .talk-who--you {
+    color: var(--you);
+  }
+  .talk-who--him {
+    color: var(--him);
+  }
+  .talk-q {
+    margin-top: 6px;
+    padding-left: 10px;
+    border-left: 2px solid oklch(0.8 0.11 232 / 0.55);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: rgb(255 255 255 / 0.94);
+    overflow-wrap: anywhere;
+  }
+
+  /* the steps he took */
+  .talk-steps {
+    margin-top: 10px;
+  }
+  .talk-steps__sum {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border: 1px solid rgb(255 255 255 / 0.07);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.03);
+    font-family: var(--font-geist-mono);
+    font-size: 10.5px;
+    color: rgb(255 255 255 / 0.48);
+    transition: color 0.2s ease;
+  }
+  .talk-steps__sum:hover {
+    color: rgb(255 255 255 / 0.8);
+  }
+  .talk-steps__list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+  }
+  .talk-steps__list::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    bottom: 9px;
+    left: 5.5px;
+    width: 1px;
+    background: rgb(255 255 255 / 0.1);
+  }
+  .talk-steps__list li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 2px 0;
+    font-size: 12.5px;
+    color: rgb(255 255 255 / 0.75);
+    animation: talk-in 0.28s ease both;
+  }
+  .talk-steps__list li svg {
+    background: rgb(16 16 22);
+    border-radius: 9999px;
+  }
+  .talk-steps__said {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .talk-steps__call {
+    max-width: 11rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+    color: rgb(255 255 255 / 0.32);
+  }
+
+  /* his answer */
+  .talk-a {
+    margin-top: 12px;
+  }
+  .talk-words {
+    margin-top: 6px;
+    font-size: 14.5px;
+    line-height: 1.62;
+    color: rgb(255 255 255 / 0.85);
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+  .talk-words > * + * {
+    margin-top: 0.6em;
+  }
+  .talk-words li + li {
+    margin-top: 0.25em;
+  }
+  .talk-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 3px;
+    vertical-align: -0.17em;
+    border-radius: 2px;
+    background: var(--him);
+    box-shadow: 0 0 8px var(--him);
+    animation: talk-blink 1s steps(1) infinite;
+  }
+  .talk-dots {
+    display: inline-flex;
+    gap: 5px;
+    height: 26px;
+    align-items: center;
+  }
+  .talk-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--him);
+    animation: talk-dot 1.1s ease-in-out infinite;
+  }
+  .talk-dots i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .talk-dots i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .talk-none {
+    margin-top: 4px;
+    color: rgb(255 255 255 / 0.3);
+  }
+
+  /* what the answer put on the table */
+  .talk-shown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .talk-shown__chip {
+    display: inline-flex;
+    max-width: 100%;
+    height: 26px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border: 1px solid oklch(0.84 0.11 162 / 0.25);
+    border-radius: 9999px;
+    background: oklch(0.84 0.11 162 / 0.08);
+    font-size: 11.5px;
+    color: oklch(0.9 0.07 162);
+    transition: background 0.2s ease;
+  }
+  .talk-shown__chip:hover {
+    background: oklch(0.84 0.11 162 / 0.18);
+  }
+
+  /* his question to the stranger */
+  .talk-ask {
+    margin-top: 12px;
+    padding: 12px 12px 12px 14px;
+    border: 1px solid oklch(0.78 0.15 55 / 0.3);
+    border-radius: 14px;
+    background: oklch(0.78 0.15 55 / 0.07);
+  }
+  .talk-ask__head {
+    font-family: var(--font-geist-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--asks);
+  }
+  .talk-ask__body {
+    margin: 4px 0 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.86);
+  }
+  .talk-btn {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.06);
+    font-size: 13px;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.85);
+    transition:
+      background 0.2s ease,
+      filter 0.2s ease;
+  }
+  .talk-btn:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+  .talk-btn--go {
+    border-color: transparent;
+    background: linear-gradient(135deg, oklch(0.72 0.16 300), oklch(0.6 0.15 252));
+    color: white;
+    box-shadow: 0 6px 18px oklch(0.6 0.2 290 / 0.35);
+  }
+  .talk-btn--go:hover {
+    background: linear-gradient(135deg, oklch(0.72 0.16 300), oklch(0.6 0.15 252));
+    filter: brightness(1.1);
+  }
+
+  /* what to ask next */
+  .talk-next {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed rgb(255 255 255 / 0.08);
+  }
+  .talk-empty .talk-next {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .talk-next__label {
+    font-family: var(--font-geist-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.36);
+  }
+  .talk-next__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .talk-next__chip {
+    padding: 6px 11px;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.03);
+    font-size: 12.5px;
+    line-height: 1.3;
+    text-align: left;
+    color: rgb(255 255 255 / 0.75);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .talk-next__chip:hover {
+    color: white;
+    border-color: oklch(0.8 0.11 232 / 0.4);
+    background: oklch(0.8 0.11 232 / 0.1);
+  }
+  .talk-empty {
+    padding: 14px 0 4px;
+  }
+  .talk-empty > p {
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgb(255 255 255 / 0.72);
+  }
+  .talk-earlier {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 0 4px;
+    font-size: 11.5px;
+    color: rgb(255 255 255 / 0.42);
+    transition: color 0.2s ease;
+  }
+  .talk-earlier:hover {
+    color: rgb(255 255 255 / 0.8);
+  }
+  .talk-latest {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    translate: -50% 0;
+    display: inline-flex;
+    height: 30px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 9999px;
+    background: rgb(28 28 40 / 0.92);
+    font-size: 12px;
+    color: rgb(255 255 255 / 0.85);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  }
+
+  /* the table */
+  .table-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 10px 8px 16px;
+  }
+  .table-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: var(--shown);
+    box-shadow: 0 0 10px var(--shown);
+  }
+  .table-label {
+    flex: 1;
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.55);
+  }
+  .table-count {
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.06);
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+    color: rgb(255 255 255 / 0.45);
+  }
+  .table-tabs {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    padding: 0 12px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .table-tab {
+    display: flex;
+    flex: none;
+    max-width: 230px;
+    align-items: center;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.03);
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .table-tab:hover {
+    background: rgb(255 255 255 / 0.06);
+  }
+  .table-tab[data-on="true"] {
+    border-color: oklch(0.84 0.11 162 / 0.4);
+    background: oklch(0.84 0.11 162 / 0.1);
+  }
+  .table-tab__pick {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px 4px 6px 11px;
+    text-align: left;
+    outline: none;
+  }
+  .table-tab__pick:focus-visible {
+    border-radius: 11px;
+    box-shadow: inset 0 0 0 1px var(--shown);
+  }
+  .table-tab__kind {
+    font-family: var(--font-geist-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.42);
+  }
+  .table-tab[data-on="true"] .table-tab__kind {
+    color: var(--shown);
+  }
+  .table-tab__title {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12.5px;
+    color: rgb(255 255 255 / 0.88);
+  }
+  .table-tab__close {
+    display: grid;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-right: 5px;
+    place-items: center;
+    border-radius: 7px;
+    color: rgb(255 255 255 / 0.35);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  .table-tab__close:hover {
+    color: white;
+    background: rgb(255 255 255 / 0.1);
+  }
+  .table-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+  }
+
+  /* a note from the room, under the top bar */
+  .stage-note {
+    max-width: 100%;
+    padding: 8px 14px;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 14px;
+    background: rgb(18 18 26 / 0.84);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-size: 12.5px;
+    line-height: 1.45;
+    text-align: center;
+    color: rgb(255 255 255 / 0.8);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.3);
+  }
+}
+
+@keyframes talk-ring {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+@keyframes talk-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes talk-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes talk-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talk-avatar::after,
+  .talk-steps__list li,
+  .talk-caret,
+  .talk-dots i {
+    animation: none;
+  }
+}
+
 /* ── his business card (/interview): dark brushed metal, the mark carved into it ── */
 @layer components {
   .bc-room {
@@ -1280,21 +1945,69 @@
    every size is in --fs, a 56th of a page's width (see interview/diary.ts) */
 @layer components {
   .db-room {
-    background: radial-gradient(ellipse 80% 70% at 50% 45%, rgb(46 30 16 / 0.78), rgb(8 5 3 / 0.95));
+    background:
+      radial-gradient(ellipse 55% 45% at 50% 42%, rgb(255 196 120 / 0.1), transparent 70%),
+      radial-gradient(ellipse 85% 75% at 50% 45%, rgb(38 25 14 / 0.82), rgb(6 4 3 / 0.96));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     touch-action: pan-y;
     user-select: none;
   }
   .db-key {
-    color: #f1e4c6;
-    border: 1px solid rgb(233 220 192 / 0.3);
-    background: rgb(30 20 12 / 0.75);
-    transition: background 0.2s ease;
+    color: #efe1c2;
+    border: 1px solid rgb(214 178 110 / 0.28);
+    background: linear-gradient(180deg, rgb(40 27 16 / 0.82), rgb(20 13 8 / 0.88));
+    box-shadow:
+      0 10px 30px rgb(0 0 0 / 0.45),
+      inset 0 1px 0 rgb(255 230 180 / 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
   }
   .db-key:enabled:hover,
   a.db-key:hover {
-    background: rgb(70 46 26 / 0.85);
+    color: #fff4dc;
+    background: linear-gradient(180deg, rgb(66 44 25 / 0.9), rgb(34 22 13 / 0.92));
+  }
+  /* one capsule of controls under the book */
+  .db-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 9999px;
+  }
+  .db-bar > button,
+  .db-bar > span {
+    display: flex;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    color: rgb(239 225 194 / 0.82);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  .db-bar > button {
+    min-width: 36px;
+    padding: 0 0.7rem;
+  }
+  .db-bar > button:enabled:hover {
+    color: #fff4dc;
+    background: rgb(214 178 110 / 0.12);
+  }
+  .db-bar > button:disabled {
+    opacity: 0.3;
+  }
+  .db-bar__sep {
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+    background: rgb(214 178 110 / 0.25);
   }
 
   .db-book {
@@ -1309,6 +2022,19 @@
     font-size: var(--fs);
     perspective: calc(var(--pw) * 4.2);
     transition: transform 0.8s cubic-bezier(0.3, 0.1, 0.2, 1);
+  }
+  /* the shadow the book casts on the desk under it */
+  .db-book::before {
+    content: "";
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    bottom: calc(var(--fs) * -2.2);
+    height: calc(var(--fs) * 3);
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.55), transparent 70%);
+    filter: blur(calc(var(--fs) * 0.5));
+    pointer-events: none;
   }
 
   /* the boards: leather, a little larger than the pages */
@@ -1388,7 +2114,9 @@
     width: calc(var(--fs) * 4.4);
     z-index: 3;
     pointer-events: none;
-    background: linear-gradient(to right, transparent, rgb(60 35 15 / 0.22) 40%, rgb(30 15 5 / 0.45) 50%, rgb(60 35 15 / 0.22) 60%, transparent);
+    background:
+      linear-gradient(to right, transparent 49.4%, rgb(20 10 4 / 0.5) 50%, transparent 50.6%),
+      linear-gradient(to right, transparent, rgb(60 35 15 / 0.16) 30%, rgb(30 15 5 / 0.42) 48%, rgb(255 240 210 / 0.08) 52%, rgb(60 35 15 / 0.28) 56%, rgb(60 35 15 / 0.12) 72%, transparent);
   }
 
   /* the turning leaf: strips hinged one on the other */
@@ -1470,7 +2198,7 @@
     left: 0;
     right: 0;
     height: calc(var(--lh) * 15);
-    background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh) - 1px), rgb(70 105 150 / 0.28) calc(var(--lh) - 1px) var(--lh));
+    background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh) - 1px), rgb(70 105 150 / 0.17) calc(var(--lh) - 1px) var(--lh));
   }
   .db-paper--ruled::after {
     content: "";
@@ -1479,8 +2207,8 @@
     bottom: 0;
     left: 13.5%;
     width: 1px;
-    background: rgb(185 60 50 / 0.4);
-    box-shadow: 3px 0 0 rgb(185 60 50 / 0.22);
+    background: rgb(185 60 50 / 0.3);
+    box-shadow: 3px 0 0 rgb(185 60 50 / 0.14);
   }
 
   .db-running {
@@ -1494,7 +2222,10 @@
     font-style: italic;
     font-size: 0.62em;
     line-height: 1;
-    color: rgb(60 40 20 / 0.6);
+    letter-spacing: 0.04em;
+    padding-bottom: 0.45em;
+    border-bottom: 1px solid rgb(60 40 20 / 0.18);
+    color: rgb(60 40 20 / 0.62);
   }
   .db-folio {
     position: absolute;
@@ -1659,11 +2390,13 @@
     top: calc(var(--fs) * -0.6);
     right: 1.5%;
     z-index: 3;
-    width: calc(var(--fs) * 0.95);
-    height: calc(100% + var(--fs) * 2.6);
-    background: linear-gradient(90deg, #5e1010, #b4291f 45%, #e05a48 52%, #8a1a14);
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - var(--fs) * 0.7), 0 100%);
-    filter: drop-shadow(0.1em 0.15em 0.15em rgb(0 0 0 / 0.4));
+    width: calc(var(--fs) * 0.5);
+    height: calc(100% + var(--fs) * 2.8);
+    background:
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px),
+      linear-gradient(90deg, #3d0910, #7d1420 30%, #b8323c 48%, #e0767a 52%, #8e1a25 62%, #4a0c13);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - var(--fs) * 0.55), 0 100%);
+    filter: drop-shadow(0.06em 0.12em 0.1em rgb(30 10 0 / 0.45));
     pointer-events: none;
   }
   .db-ribbon--recto {
@@ -2019,8 +2752,9 @@
 
   .db-endpaper {
     background:
-      radial-gradient(ellipse 80% 75% at 50% 50%, transparent 60%, rgb(20 15 10 / 0.35)),
-      url("/diary/marble.webp") center / cover;
+      linear-gradient(115deg, rgb(255 235 200 / 0.08), transparent 45%, rgb(0 0 0 / 0.28)),
+      radial-gradient(ellipse 80% 75% at 50% 50%, transparent 55%, rgb(5 8 15 / 0.45)),
+      url("/diary/endpaper.svg") center / calc(var(--fs) * 3.2);
   }
   .db-bookplate {
     position: absolute;
@@ -2034,10 +2768,12 @@
     width: 62%;
     padding: 1.1em 0.8em;
     background: url("/diary/paper.webp") center / calc(var(--fs) * 10);
-    border: 0.08em solid #6b4a22;
-    outline: 0.04em solid #6b4a22;
-    outline-offset: -0.35em;
-    box-shadow: 0 0.2em 0.6em rgb(0 0 0 / 0.45);
+    border: 0.06em solid #7a5a2c;
+    outline: 0.03em solid #7a5a2c;
+    outline-offset: -0.3em;
+    box-shadow:
+      0 0.25em 0.8em rgb(0 0 0 / 0.55),
+      inset 0 0 1.2em rgb(140 100 50 / 0.25);
     text-align: center;
   }
   .db-bookplate span {
