@@ -186,17 +186,17 @@ export interface SystemConfig {
   ambientEvents: AmbientEvent[];
   /** average ms between ambient notifications */
   eventIntervalMs: number;
-  runtimeError: SystemScreenCopy & { retry: string };
-  notFound: SystemScreenCopy & { cta: string };
+  runtimeError: StatusCopy & { retry: string; home: string; ref: string; copy: string; copied: string };
+  notFound: StatusCopy & { home: string; interview: string; plain: string; tried: string; site: string };
 }
 
-/** Copy for a full-viewport System interrupt screen (device gate, crash, 404). */
-export interface SystemScreenCopy {
-  error: string;
-  heading: string;
+/** Copy for the 404 and error pages (`system/status-screen.tsx`). */
+export interface StatusCopy {
+  /** inside the ring */
+  code: string;
+  kicker: string;
   title: string;
   body: string;
-  footer: string;
 }
 
 /* ─────────────────────────── THE RECORD ─────────────────────────── */

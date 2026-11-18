@@ -1,29 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { SystemScreen } from "@/components/system/system-screen";
-import { Button } from "@/components/ui/button";
-import { systemConfig } from "@/config/system.config";
+import { StatusScreen } from "@/components/system/status-screen";
 
-/** Next.js error boundary — catches render/runtime faults below the root layout. */
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  const copy = systemConfig.runtimeError;
-
+/** a fault while a page renders, below the root layout */
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
-
-  return (
-    <SystemScreen copy={copy}>
-      <Button onClick={reset} className="font-heading tracking-[0.2em]">
-        {copy.retry}
-      </Button>
-    </SystemScreen>
-  );
+  return <StatusScreen kind="error" reset={reset} digest={error.digest} />;
 }

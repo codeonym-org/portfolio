@@ -93,15 +93,10 @@ export function isSectorId(value: string): value is SectorId {
 
 export const world = {
   boot: {
-    eyebrow: "THE LIVING RECORD",
+    label: "Loading the record",
     name: "CODEONYM",
     role: "Software Engineer · AI Agent Engineer",
-    lines: [
-      "Locating the Monolith…",
-      "Hanging the record in orbit…",
-      "Linking the sections…",
-      "Starting the System…",
-    ],
+    lines: ["Raising the Monolith…", "Hanging the record in orbit…", "Linking the six sections…", "Waking the agent…"],
   },
 
   hud: {
@@ -174,6 +169,12 @@ export const world = {
   interview: {
     title: "The interview",
     loading: "Coming into the room",
+    /** the way into the room (`system/loader.tsx`) */
+    arrival: {
+      name: "AYOUB",
+      sub: "is coming into the room",
+      lines: ["Setting up the office…", "Bringing my avatar in…", "Taking my seat…", "Warming up my voice…"],
+    },
     exit: "Exit",
     exitLabel: "Leave the interview, back to the record",
     modes: { text: "TEXT", audio: "AUDIO" },

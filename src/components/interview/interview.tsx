@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
 import { useVoiceStore, voiceControl } from "@/components/agent/voice/voice-store";
 import { CvModal } from "@/components/interface/inspect";
+import { Loader } from "@/components/system/loader";
 import { world } from "@/config/world.config";
 import { preloadSounds } from "@/lib/audio";
 import { useHistory } from "@/store/history-store";
@@ -73,21 +74,27 @@ function TranscriptTool() {
   return null;
 }
 
+/** until I am in my seat: my face in the ring, filling with what the room has loaded; the top bar stays over it, so the way out does too */
 function Arrival() {
   const present = useInterview((s) => s.present);
   return (
-    <AnimatePresence>
-      {!present && (
-        <motion.p
-          className="fixed inset-x-0 top-[42%] z-10 text-center font-mono text-[10px] tracking-[0.4em] text-white/45 uppercase"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.25, 0.8, 0.25], transition: { repeat: Infinity, duration: 2.4 } }}
-          exit={{ opacity: 0 }}
-        >
-          {copy.loading}
-        </motion.p>
-      )}
-    </AnimatePresence>
+    <Loader
+      show={!present}
+      className="ldr--room"
+      label={copy.loading}
+      name={copy.arrival.name}
+      sub={copy.arrival.sub}
+      lines={copy.arrival.lines}
+      emblem={
+        <>
+          <span className="ldr__face">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a 3 KB local portrait */}
+            <img src="/brand/avatar.webp" alt="" width={104} height={104} />
+          </span>
+          <i className="ldr__live" aria-hidden />
+        </>
+      }
+    />
   );
 }
 

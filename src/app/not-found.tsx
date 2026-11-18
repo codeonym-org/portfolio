@@ -1,21 +1,9 @@
-import Link from "next/link";
-import { SystemScreen } from "@/components/system/system-screen";
-import { buttonVariants } from "@/components/ui/button";
-import { systemConfig } from "@/config/system.config";
-import { cn } from "@/lib/utils";
+import type { Metadata } from "next";
+import { StatusScreen } from "@/components/system/status-screen";
 
-/** Next.js not-found boundary — any route outside the single-page System. */
+export const metadata: Metadata = { title: "Not on the record — CODEONYM" };
+
+/** any route that is not a page of the site */
 export default function NotFound() {
-  const copy = systemConfig.notFound;
-
-  return (
-    <SystemScreen copy={copy}>
-      <Link
-        href="/"
-        className={cn(buttonVariants(), "font-heading tracking-[0.2em]")}
-      >
-        {copy.cta}
-      </Link>
-    </SystemScreen>
-  );
+  return <StatusScreen kind="notFound" />;
 }

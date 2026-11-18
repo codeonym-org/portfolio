@@ -2670,6 +2670,489 @@
     color: rgb(255 255 255 / 0.3);
   }
 
+  /* ── the way in (`system/loader.tsx`) ── */
+  .ldr {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--void);
+    overflow: hidden;
+  }
+  .ldr--room {
+    /* over the input (30), under the top bar (40): the way out stays */
+    z-index: 35;
+    background: radial-gradient(ellipse at 50% 45%, rgb(14 12 24 / 0.86), rgb(5 4 11 / 0.97) 70%);
+    backdrop-filter: blur(10px);
+  }
+  .ldr__aura {
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: min(900px, 160vw);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: radial-gradient(circle, rgb(122 77 255 / 0.16), rgb(63 200 246 / 0.05) 38%, transparent 64%);
+    animation: ldr-breathe 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .ldr__aura::after {
+    /* a faint field of dots, fading out from the middle */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(rgb(255 255 255 / 0.11) 1px, transparent 1.2px) 0 0 / 22px 22px;
+    mask: radial-gradient(circle, black 0%, transparent 58%);
+  }
+  @keyframes ldr-breathe {
+    50% { opacity: 0.7; scale: 0.94; }
+  }
+  .ldr__center {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .ldr__emblem {
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+  .ldr__ring {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    rotate: -90deg;
+  }
+  .ldr__track,
+  .ldr__fill,
+  .ldr__comet-tail {
+    fill: none;
+  }
+  .ldr__track {
+    stroke: rgb(255 255 255 / 0.06);
+    stroke-width: 2;
+  }
+  .ldr__fill {
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgb(157 112 255 / 0.55));
+  }
+  .ldr__comet {
+    transform-origin: 90px 90px;
+    animation: ldr-spin 2.6s linear infinite;
+  }
+  .ldr__comet-tail {
+    stroke: rgb(227 212 255 / 0.22);
+    stroke-width: 1;
+    stroke-linecap: round;
+  }
+  .ldr__comet-head {
+    fill: #e3d4ff;
+    filter: drop-shadow(0 0 4px #b89bff);
+    /* the head leads the tail */
+    transform-origin: 90px 90px;
+    rotate: 57.6deg;
+  }
+  @keyframes ldr-spin {
+    to { rotate: 360deg; }
+  }
+  .ldr__core {
+    position: absolute;
+    inset: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.05), transparent 70%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+  .ldr__mark {
+    width: 84px;
+    height: 84px;
+    animation: ldr-float 4.5s ease-in-out infinite;
+  }
+  @keyframes ldr-float {
+    50% { translate: 0 -3px; }
+  }
+  .ldr__face {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    border-radius: 9999px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12), 0 12px 40px rgb(122 77 255 / 0.3);
+  }
+  .ldr__face img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ldr__face::after {
+    /* a light passing over the face while it waits */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.16) 50%, transparent 65%) 0 0 / 260% 100%;
+    animation: ldr-sheen 2.8s ease-in-out infinite;
+  }
+  @keyframes ldr-sheen {
+    from { background-position: 130% 0; }
+    to { background-position: -130% 0; }
+  }
+  .ldr__live {
+    position: absolute;
+    right: 34px;
+    bottom: 34px;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: oklch(0.78 0.17 150);
+    box-shadow: 0 0 0 3px var(--void), 0 0 12px oklch(0.78 0.17 150 / 0.7);
+    animation: ldr-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes ldr-pulse {
+    50% { opacity: 0.45; }
+  }
+  .ldr__name {
+    margin-top: 30px;
+    padding-left: 0.42em;
+    font-family: var(--font-michroma);
+    font-size: 20px;
+    letter-spacing: 0.42em;
+    color: white;
+    white-space: pre;
+  }
+  .ldr__name span {
+    display: inline-block;
+  }
+  .ldr__sub {
+    margin-top: 10px;
+    font-size: 13px;
+    color: rgb(255 255 255 / 0.5);
+  }
+  .ldr__step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+    height: 30px;
+    padding: 0 14px 0 12px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.035);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+    font-family: var(--font-geist-mono);
+    font-size: 11px;
+  }
+  .ldr__pct {
+    min-width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: white;
+  }
+  .ldr__pct i {
+    font-style: normal;
+    color: rgb(255 255 255 / 0.4);
+  }
+  .ldr__sep {
+    width: 1px;
+    height: 12px;
+    background: rgb(255 255 255 / 0.12);
+  }
+  .ldr__line {
+    display: block;
+    min-width: 200px;
+    text-align: left;
+    color: rgb(255 255 255 / 0.55);
+  }
+  .ldr__line span {
+    display: inline-block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ldr__aura, .ldr__comet, .ldr__mark, .ldr__face::after, .ldr__live { animation: none; }
+  }
+
+  /* ── the 404 and error pages (`system/status-screen.tsx`) ── */
+  .sts {
+    --sts-tone: oklch(0.74 0.17 300);
+    position: relative;
+    display: flex;
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px 96px;
+    overflow: hidden;
+    background: var(--void);
+    color: white;
+    font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  }
+  .sts[data-kind="error"] {
+    --sts-tone: oklch(0.74 0.16 28);
+  }
+  .sts__aura {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    width: min(1000px, 180vw);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: radial-gradient(circle, rgb(122 77 255 / 0.17), rgb(63 200 246 / 0.05) 36%, transparent 62%);
+    pointer-events: none;
+  }
+  .sts[data-kind="error"] .sts__aura {
+    background: radial-gradient(circle, rgb(255 110 90 / 0.1), rgb(122 77 255 / 0.08) 34%, transparent 62%);
+  }
+  .sts__aura::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(rgb(255 255 255 / 0.1) 1px, transparent 1.2px) 0 0 / 24px 24px;
+    mask: radial-gradient(circle, black 0%, transparent 55%);
+  }
+  .sts__body {
+    position: relative;
+    display: flex;
+    max-width: 560px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .sts-ring {
+    width: min(240px, 62vw);
+    height: auto;
+    overflow: visible;
+  }
+  .sts-ring__orbit {
+    fill: none;
+    stroke: rgb(255 255 255 / 0.08);
+    stroke-width: 1;
+    stroke-dasharray: 2 7;
+    transform-origin: 120px 120px;
+    animation: ldr-spin 60s linear infinite;
+  }
+  .sts-ring__arc,
+  .sts-ring__glow {
+    fill: none;
+    stroke-width: 11;
+    stroke-linecap: round;
+  }
+  .sts-ring__glow {
+    opacity: 0.55;
+  }
+  .sts-ring__trail {
+    fill: none;
+    stroke: rgb(207 233 255 / 0.45);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-dasharray: 0.1 6;
+    animation: sts-trail 1.8s linear infinite;
+  }
+  @keyframes sts-trail {
+    to { stroke-dashoffset: -12.2; }
+  }
+  .sts-ring__orb {
+    animation: sts-drift 5s ease-in-out infinite;
+  }
+  @keyframes sts-drift {
+    50% { translate: 3px -5px; }
+  }
+  .sts-ring__orb--dim {
+    animation: sts-flicker 3.2s steps(1, end) infinite;
+  }
+  @keyframes sts-flicker {
+    0%, 100% { opacity: 0.9; }
+    46% { opacity: 0.25; }
+    50% { opacity: 0.8; }
+    53% { opacity: 0.15; }
+    57% { opacity: 0.9; }
+  }
+  .sts-ring__piece--off {
+    transform-origin: 120px 120px;
+    rotate: 3deg;
+    translate: -3px 3px;
+    animation: sts-shift 4s ease-in-out infinite;
+  }
+  @keyframes sts-shift {
+    0%, 86%, 100% { translate: -3px 3px; }
+    90% { translate: -5px 5px; }
+    94% { translate: -2px 2px; }
+  }
+  .sts-ring__spark path {
+    fill: none;
+    stroke: oklch(0.85 0.13 60);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .sts-ring__spark {
+    filter: drop-shadow(0 0 4px oklch(0.8 0.16 50));
+    animation: sts-flicker 2.4s steps(1, end) infinite;
+  }
+  .sts-ring__code {
+    font-family: var(--font-michroma), ui-sans-serif, system-ui, sans-serif;
+    font-size: 34px;
+    letter-spacing: 0.08em;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .sts__kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 26px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    background: color-mix(in oklch, var(--sts-tone) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--sts-tone) 28%, transparent);
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sts-tone);
+  }
+  .sts__kicker i {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .sts__title {
+    margin-top: 18px;
+    font-family: var(--font-instrument), ui-serif, Georgia, serif;
+    font-size: clamp(34px, 7vw, 52px);
+    font-weight: 400;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .sts__text {
+    max-width: 440px;
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    text-wrap: pretty;
+    color: rgb(255 255 255 / 0.6);
+  }
+  .sts__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 30px;
+  }
+  .sts-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+  }
+  .sts-btn:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
+  .sts-btn:active {
+    transform: scale(0.97);
+  }
+  .sts-btn:focus-visible {
+    outline: 2px solid var(--sts-tone);
+    outline-offset: 3px;
+  }
+  .sts-btn--go {
+    background: white;
+    color: #0b0a12;
+    box-shadow: 0 8px 30px rgb(157 112 255 / 0.3);
+  }
+  .sts-btn--go:hover {
+    background: rgb(255 255 255 / 0.9);
+  }
+  .sts-btn--quiet {
+    background: transparent;
+    box-shadow: none;
+    color: rgb(255 255 255 / 0.6);
+  }
+  .sts-btn--quiet:hover {
+    background: rgb(255 255 255 / 0.05);
+    color: white;
+  }
+  .sts-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    margin-top: 26px;
+    padding: 6px 6px 6px 14px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.03);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+    font-size: 12px;
+    color: rgb(255 255 255 / 0.45);
+  }
+  .sts-chip__label {
+    flex: none;
+  }
+  .sts-chip code {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.06);
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: 11.5px;
+    color: rgb(255 255 255 / 0.85);
+  }
+  .sts-chip__copy {
+    display: grid;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: 9999px;
+    color: rgb(255 255 255 / 0.6);
+    transition: background 0.18s, color 0.18s;
+  }
+  .sts-chip__copy:hover {
+    background: rgb(255 255 255 / 0.08);
+    color: white;
+  }
+  .sts__foot {
+    position: absolute;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 12px;
+    color: rgb(255 255 255 / 0.38);
+  }
+  .sts__brand {
+    font-family: var(--font-michroma), ui-sans-serif, system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    color: rgb(255 255 255 / 0.7);
+  }
+  .sts__dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sts-ring__orbit, .sts-ring__trail, .sts-ring__orb, .sts-ring__piece--off, .sts-ring__spark { animation: none; }
+  }
+
   /* ── my GitHub (`interface/github-activity.tsx`): one tone, the calendar's ── */
   .gha {
     --gha: oklch(0.83 0.14 168);
