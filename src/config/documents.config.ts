@@ -11,143 +11,143 @@ import {
   Shield,
   Waypoints,
 } from "lucide-react";
-import type { InventoryCategory, InventoryItem } from "./types";
+import type { DocumentCategory, DocumentItem } from "./types";
 
 /**
  * ── DOCUMENTS ─────────────────────────────────────────────────
- * The CV, links, degrees and interests. `rarity` only drives the
+ * The CV, links, degrees and interests. `emphasis` only drives the
  * tile's colour. Clicking an item opens its description; items with
  * `unlocks` or `link` can be opened from there.
  * (Ids are kept from before: shared case links point at them.)
  */
-export const inventoryCategories: InventoryCategory[] = [
+export const documentCategories: DocumentCategory[] = [
   { id: "artifacts", name: "DOCUMENTS & LINKS", icon: KeyRound },
   { id: "credentials", name: "DEGREES", icon: Medal },
-  { id: "curios", name: "INTERESTS", icon: Gem },
+  { id: "interests", name: "INTERESTS", icon: Gem },
 ];
 
-export const inventoryItems: InventoryItem[] = [
+export const documents: DocumentItem[] = [
   // ── DOCUMENTS & LINKS ───────────────────────────────────────────────
   {
-    id: "hunter-license",
+    id: "cv",
     name: "Curriculum vitae",
     icon: IdCard,
     category: "artifacts",
-    rarity: "legendary",
+    emphasis: "highlight",
     meta: "PDF · KEPT UP TO DATE",
-    lore: "The full CV: experience, projects, skills and education. Open it to read or download the PDF.",
+    about: "The full CV: experience, projects, skills and education. Open it to read or download the PDF.",
     tags: ["cv", "resume", "official-record"],
     unlocks: "cv",
   },
   {
-    id: "guild-crest",
+    id: "employer-opensnz",
     name: "Employer: OpenSNZ-Technology",
     icon: Shield,
     category: "artifacts",
-    rarity: "epic",
+    emphasis: "strong",
     meta: "OPENSNZ-TECHNOLOGY · 2025/09 – PRESENT",
-    lore: "Where he works as a software engineer: agentic AI systems, from prototype to production.",
+    about: "Where he works as a software engineer: agentic AI systems, from prototype to production.",
     tags: ["employer", "employment"],
   },
   {
-    id: "guild-crest-codeonym",
+    id: "github-codeonym",
     name: "codeonym on GitHub",
     icon: Shield,
     category: "artifacts",
-    rarity: "epic",
+    emphasis: "strong",
     meta: "CODEONYM-OSS · CODEONYM-ORG · FOUNDER",
-    lore: "The two organisations he founded: codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
+    about: "The two organisations he founded: codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
     tags: ["organisations", "open-source", "founder"],
     link: "https://github.com/codeonym-oss",
   },
   {
-    id: "summoning-stone",
+    id: "get-in-touch",
     name: "Get in touch",
     icon: Waypoints,
     category: "artifacts",
-    rarity: "rare",
+    emphasis: "standard",
     meta: "EMAIL · PHONE · LINKEDIN · GITHUB",
-    lore: "Opens the contact window, with every way to reach him.",
+    about: "Opens the contact window, with every way to reach him.",
     tags: ["contact"],
     unlocks: "contact",
   },
   {
-    id: "gate-key",
+    id: "site-source",
     name: "Source of this site",
     icon: KeyRound,
     category: "artifacts",
-    rarity: "rare",
+    emphasis: "standard",
     meta: "GITHUB · PUBLIC REPOSITORY",
-    lore: "The code of this portfolio and of its agent, on GitHub.",
+    about: "The code of this portfolio and of its agent, on GitHub.",
     tags: ["source", "github"],
     link: "https://github.com/codeonym-org/portfolio",
   },
 
   // ── DEGREES ─────────────────────────────────────────────
   {
-    id: "master-sigil",
+    id: "masters-degree",
     name: "Master's degree",
     icon: GraduationCap,
     category: "credentials",
-    rarity: "epic",
+    emphasis: "strong",
     meta: "FACULTY OF SCIENCES (FSO), OUJDA · 2023 – 2025",
-    lore: "Specialized Master in Computer Science Engineering: two years of advanced study.",
+    about: "Specialized Master in Computer Science Engineering: two years of advanced study.",
     tags: ["degree", "computer-science"],
   },
   {
-    id: "bachelor-crest",
+    id: "bachelors-degree",
     name: "Bachelor's degree",
     icon: Medal,
     category: "credentials",
-    rarity: "rare",
+    emphasis: "standard",
     meta: "FACULTY OF SCIENCES (FSO), OUJDA · 2019 – 2023",
-    lore: "Bachelor's Degree in Mathematics and Computer Sciences.",
+    about: "Bachelor's Degree in Mathematics and Computer Sciences.",
     tags: ["degree", "mathematics"],
   },
   {
-    id: "bac-scroll",
+    id: "baccalaureate",
     name: "Baccalaureate",
     icon: Scroll,
     category: "credentials",
-    rarity: "common",
+    emphasis: "quiet",
     meta: "ESSAADIYINE HIGH SCHOOL · 2019",
-    lore: "Scientific Baccalaureate in Physical Sciences.",
+    about: "Scientific Baccalaureate in Physical Sciences.",
     tags: ["diploma"],
   },
 
   // ── INTERESTS ──────────────────────────────────────────────────
   {
-    id: "ctf-flag",
+    id: "capture-the-flag",
     name: "Capture the flag",
     icon: Flag,
-    category: "curios",
-    rarity: "rare",
+    category: "interests",
+    emphasis: "standard",
     meta: "SECURITY · HOBBY",
-    lore: "He plays CTF challenges to keep his security instincts sharp.",
+    about: "He plays CTF challenges to keep his security instincts sharp.",
     tags: ["ctf", "security"],
   },
   {
-    id: "legacy-controller",
+    id: "video-games",
     name: "Video games",
     icon: Gamepad2,
-    category: "curios",
-    rarity: "epic",
+    category: "interests",
+    emphasis: "strong",
     meta: "WHERE IT STARTED",
-    lore: "Years of video games came before the code, and the idea that things grow through practice stayed with him.",
+    about: "Years of video games came before the code, and the idea that things grow through practice stayed with him.",
     tags: ["gaming", "origin"],
   },
   {
-    id: "mana-crystal",
+    id: "coffee",
     name: "Coffee",
     icon: Coffee,
-    category: "curios",
-    rarity: "common",
+    category: "interests",
+    emphasis: "quiet",
     meta: "DAILY",
-    lore: "Served hot, every day.",
+    about: "Served hot, every day.",
     tags: ["coffee", "fuel"],
   },
 ];
 
-export function findItem(id: string): InventoryItem | undefined {
-  return inventoryItems.find((item) => item.id === id);
+export function findItem(id: string): DocumentItem | undefined {
+  return documents.find((item) => item.id === id);
 }

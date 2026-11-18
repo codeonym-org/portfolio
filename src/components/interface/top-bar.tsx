@@ -4,7 +4,7 @@ import Link from "next/link";
 import { GithubMark } from "@/components/system/brand-marks";
 import { ArrowRight, FileText, IdCard, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { familyName } from "@/components/interview/vcard";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { toggleImmersion, useCanImmerse, useImmersive } from "@/lib/immersion";
@@ -13,7 +13,7 @@ import { useWorldStore } from "@/store/world-store";
 import { SectionDock, SectionMenu } from "./section-nav";
 
 const hud = world.hud;
-const fullName = `${player.firstName} ${familyName(player.name, player.firstName)}`;
+const fullName = `${owner.firstName} ${familyName(owner.name, owner.firstName)}`;
 
 /**
  * ── THE TOP OF THE RECORD ─────────────────────────────────────
@@ -37,15 +37,15 @@ export function TopBar() {
   return (
     <header className={cn("hdr pointer-events-none fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-3 px-3 pt-3 transition-opacity duration-1000 sm:px-[4vw] sm:pt-5", !ready && "opacity-0")}>
       <div className="flex min-w-0 items-center gap-5">
-      <button type="button" onClick={closeFocus} className="hdr-brand pointer-events-auto flex min-w-0 shrink-0 items-center gap-3 text-left" aria-label={`${player.handle}: back to orbit`}>
+      <button type="button" onClick={closeFocus} className="hdr-brand pointer-events-auto flex min-w-0 shrink-0 items-center gap-3 text-left" aria-label={`${owner.handle}: back to orbit`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB local SVG mark */}
         <img src="/brand/mark-small.svg" alt="" className="size-9 shrink-0" />
         <span className="hidden min-w-0 min-[800px]:block">
-          <span className="block font-display text-[13px] leading-none tracking-[0.34em] text-white">{player.handle.toUpperCase()}</span>
+          <span className="block font-display text-[13px] leading-none tracking-[0.34em] text-white">{owner.handle.toUpperCase()}</span>
           <span className="mt-1.5 flex items-center gap-2 truncate text-[11px] leading-none text-white/55">
             <span className="text-white/80">{fullName}</span>
             <i className="hdr-brand__dot" aria-hidden />
-            <span>{player.title}</span>
+            <span>{owner.title}</span>
           </span>
         </span>
       </button>

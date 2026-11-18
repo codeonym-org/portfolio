@@ -76,7 +76,7 @@ function buildEntries(): Entry[] {
       run: () => useHistory.getState().fresh(),
     },
     ...recordNodes
-      .filter((n) => n.kind !== "player")
+      .filter((n) => n.kind !== "owner")
       .map((n) => ({
         id: n.key,
         label: n.label,
@@ -91,7 +91,7 @@ function buildEntries(): Entry[] {
 
 /**
  * ⌘K — the whole record and every command the agent has, searchable.
- * The same registry the System drives; a query that matches nothing
+ * The same registry the agent drives; a query that matches nothing
  * can be handed to it with Enter.
  */
 export function Palette() {
@@ -151,7 +151,7 @@ export function Palette() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3">
-              <Search className="size-4 shrink-0 text-arcane-hot" />
+              <Search className="size-4 shrink-0 text-violet-hot" />
               <input
                 autoFocus
                 value={query}
@@ -202,7 +202,7 @@ export function Palette() {
               })}
               {!results.length && (
                 <li className="flex items-center gap-2 px-3 py-4 text-sm text-muted-foreground">
-                  <CornerDownLeft className="size-4 text-arcane-hot" /> Nothing by that name in the record — press Enter to ask the System.
+                  <CornerDownLeft className="size-4 text-violet-hot" /> Nothing by that name in the record — press Enter to ask the agent.
                 </li>
               )}
             </ul>

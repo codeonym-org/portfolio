@@ -4,38 +4,38 @@ import { useState } from "react";
 import { useOpenEntry } from "./open-entry";
 import { motion } from "motion/react";
 import { Download, Link2, Mail } from "lucide-react";
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { findItem } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { findItem } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { findSkill } from "@/config/skills.config";
 import { play } from "@/lib/audio";
 import { encodeCase, nodeKeyOf, type CaseFile, type Evidence } from "@/record/case-file";
 import { inspectTargetOf, nodeByKey } from "@/record/nodes";
-import { masteryGrade } from "@/lib/rarity";
+import { masteryLevel } from "@/lib/emphasis";
 import { useWorldStore } from "@/store/world-store";
 import { hueColor } from "@/components/scene/view";
 
 /** the record's own words for a piece of evidence — never the model's */
 function factsOf(e: Evidence): { kind: string; title: string; meta?: string; tags?: string[] } | null {
   switch (e.kind) {
-    case "quest": {
-      const q = quests.find((x) => x.id === e.id);
-      return q ? { kind: `Project · rank ${q.rank}`, title: q.name, meta: [q.period, q.status].filter(Boolean).join(" · "), tags: q.rewards.slice(0, 5) } : null;
+    case "project": {
+      const q = projects.find((x) => x.id === e.id);
+      return q ? { kind: q.tier === "flagship" ? "Flagship project" : "Project", title: q.name, meta: [q.period, q.status].filter(Boolean).join(" · "), tags: q.stack.slice(0, 5) } : null;
     }
     case "skill": {
       const s = findSkill(e.id);
-      return s ? { kind: `Skill · grade ${masteryGrade(s.mastery)}`, title: s.name, meta: `self-rated ${s.mastery}/100`, tags: s.tags } : null;
+      return s ? { kind: `Skill · grade ${masteryLevel(s.mastery)}`, title: s.name, meta: `self-rated ${s.mastery}/100`, tags: s.tags } : null;
     }
     case "experience": {
-      const c = chronicle.find((x) => x.id === e.id);
+      const c = timeline.find((x) => x.id === e.id);
       return c ? { kind: "Experience", title: c.role, meta: `${c.organization} · ${c.period}`, tags: c.highlights.slice(0, 4) } : null;
     }
     case "education": {
       const a = achievements.find((x) => x.id === e.id);
       return a ? { kind: "Education", title: a.title, meta: `${a.issuer} · ${a.period}` } : null;
     }
-    case "item": {
+    case "document": {
       const i = findItem(e.id);
       return i ? { kind: "Document", title: i.name, meta: i.meta, tags: i.tags } : null;
     }
@@ -43,8 +43,8 @@ function factsOf(e: Evidence): { kind: string; title: string; meta?: string; tag
 }
 
 /**
- * The System's generative answer, laid out: its thesis, then each
- * piece of evidence with the record's facts on top and the System's
+ * The agent's generative answer, laid out: its thesis, then each
+ * piece of evidence with the record's facts on top and the agent's
  * reasoning under them, numbered like the shards in the halo.
  */
 export function CasePanel({ file }: { file: CaseFile }) {
@@ -119,8 +119,8 @@ export function CasePanel({ file }: { file: CaseFile }) {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <a href={`mailto:${player.links.email}?subject=${encodeURIComponent(file.title)}`} data-active="true" className="hud-chip px-4 py-2.5 text-sm">
-          <Mail className="size-4" /> Reach {player.handle}
+        <a href={`mailto:${owner.links.email}?subject=${encodeURIComponent(file.title)}`} data-active="true" className="hud-chip px-4 py-2.5 text-sm">
+          <Mail className="size-4" /> Reach {owner.handle}
         </a>
         <button type="button" onClick={share} className="hud-chip px-4 py-2.5 text-sm">
           <Link2 className="size-4" /> {copied ? "Link copied" : "Share this case"}
@@ -130,7 +130,7 @@ export function CasePanel({ file }: { file: CaseFile }) {
         </a>
       </div>
       <p className="font-mono text-[10px] leading-relaxed text-muted-foreground/60">
-        Assembled by THE SYSTEM for this question. The facts on each card are the record&apos;s; the lines in italics are the System&apos;s reading of them and can be wrong.
+        Assembled by the agent for this question. The facts on each card come from the record; the lines in italics are its reading of them, and can be wrong.
       </p>
     </div>
   );

@@ -24,19 +24,19 @@ test("runs tasks one at a time, in order", async () => {
       return g.promise;
     },
   });
-  queue.enqueue({ id: "a", task: "open the crypt" });
-  queue.enqueue({ id: "b", task: "raise a shadow" });
+  queue.enqueue({ id: "a", task: "open the projects" });
+  queue.enqueue({ id: "b", task: "inspect a project" });
   await tick();
   assert.deepEqual(started, ["a"]);
   assert.deepEqual(queue.snapshot().map((t) => t.status), ["running", "queued"]);
   gates.get("a")!.resolve("opened");
   await tick();
   assert.deepEqual(started, ["a", "b"]);
-  gates.get("b")!.resolve("risen");
+  gates.get("b")!.resolve("shown");
   await tick();
   assert.deepEqual(queue.snapshot().map((t) => [t.status, t.result]), [
     ["done", "opened"],
-    ["done", "risen"],
+    ["done", "shown"],
   ]);
 });
 

@@ -4,8 +4,8 @@ import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Billboard, Html } from "@react-three/drei";
 import { AdditiveBlending, CanvasTexture, Color, type Group, type MeshBasicMaterial, Vector3 } from "three";
-import { quests } from "@/config/quests.config";
-import { findGuild } from "@/config/guilds.config";
+import { projects } from "@/config/projects.config";
+import { findOrganization } from "@/config/organizations.config";
 import { damp } from "@/record/layout";
 import { recordNodes } from "@/record/nodes";
 import { useWorldStore } from "@/store/world-store";
@@ -51,9 +51,9 @@ export function Hologram() {
   const chosen = useWorldStore((s) => s.chosen);
   const still = useSyncExternalStore(subscribeMotion, () => window.matchMedia(motionQuery).matches, () => false);
 
-  const index = chosen ? recordNodes.findIndex((n) => n.key === `quest:${chosen}`) : -1;
+  const index = chosen ? recordNodes.findIndex((n) => n.key === `project:${chosen}`) : -1;
   const node = index >= 0 ? recordNodes[index] : null;
-  const quest = chosen ? quests.find((q) => q.id === chosen) : undefined;
+  const project = chosen ? projects.find((q) => q.id === chosen) : undefined;
 
   const texture = useMemo(() => (typeof document === "undefined" ? null : auraTexture()), []);
   const tint = useMemo(() => new Color(node ? hueColor[node.hue] : "#ffffff"), [node]);
@@ -98,9 +98,9 @@ export function Hologram() {
     if (glow.current) glow.current.opacity = still ? 0.55 : 0.45 + Math.sin(t * 2.2) * 0.12;
   });
 
-  if (!node || !quest || !texture) return null;
+  if (!node || !project || !texture) return null;
   const additive = { transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false } as const;
-  const guild = findGuild(quest.guild)?.name;
+  const organization = findOrganization(project.organization)?.name;
 
   return (
     <group ref={root} scale={0.001}>
@@ -124,8 +124,8 @@ export function Hologram() {
         <Html position={[0, below ? -1.3 : 1.3, 0]} center zIndexRange={[16, 0]} style={{ pointerEvents: "none" }}>
           <div className={below ? "holo-card holo-card--below" : "holo-card"} style={{ ["--hue" as string]: hueColor[node.hue] }} data-still={still || undefined}>
             <span className="holo-card__tag">on display</span>
-            <span className="holo-card__name">{quest.name}</span>
-            <span className="holo-card__sub">{[stageOf(quest), guild, quest.period].filter(Boolean).join(" · ")}</span>
+            <span className="holo-card__name">{project.name}</span>
+            <span className="holo-card__sub">{[stageOf(project), organization, project.period].filter(Boolean).join(" · ")}</span>
           </div>
         </Html>
       </Billboard>

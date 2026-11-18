@@ -1,7 +1,7 @@
 import { useWorldStore } from "@/store/world-store";
 
 /**
- * Audio — CC0 samples (Kenney), the System notification chime and a
+ * Audio — CC0 samples (Kenney), the notification chime and a
  * suspense theme loop.
  * Buffers are fetched lazily on first use; everything fails silently,
  * audio is decoration and never load-bearing.
@@ -14,7 +14,6 @@ const SOUNDS = {
   close: "/audio/close.mp3",
   confirm: "/audio/confirm.mp3",
   portal: "/audio/portal.mp3",
-  shockwave: "/audio/shockwave.mp3",
   system: "/audio/notify.mp3",
   coins: "/audio/coins.mp3",
   blade: "/audio/blade.mp3",
@@ -24,7 +23,6 @@ export type SoundId = keyof typeof SOUNDS;
 
 const VOLUME: Partial<Record<SoundId, number>> = {
   hover: 0.25,
-  shockwave: 0.9,
   portal: 0.5,
   system: 0.4,
 };
@@ -85,7 +83,7 @@ export function play(id: SoundId, opts: { volume?: number; rate?: number } = {})
   });
 }
 
-/** the System chime — throttled so stacked prompts don't pile up the 3s sting */
+/** the notification chime — throttled so stacked prompts don't pile up the 3s sting */
 let lastChime = 0;
 export function chime(volume?: number) {
   const now = performance.now();
@@ -119,7 +117,7 @@ export function startMusic() {
   music.gain.gain.setTargetAtTime(MUSIC_LEVEL, ac.currentTime, 1.6);
 }
 
-/** hold the music down while the System listens or speaks */
+/** hold the music down while the agent listens or speaks */
 export function holdMusicDuck(on: boolean) {
   if (!ctx || !music) return;
   const g = music.gain.gain;

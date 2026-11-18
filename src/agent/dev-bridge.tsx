@@ -7,7 +7,7 @@ import { getSystemSnapshot } from "./system-snapshot";
 
 declare global {
   interface Window {
-    /** console access to the agent bridge — try system.run("open_zone", { zone: "crypt" }) */
+    /** console access to the agent bridge — try system.run("open_sector", { sector: "projects" }) */
     system?: {
       snapshot: typeof getSystemSnapshot;
       run: typeof executeSystemCommand;

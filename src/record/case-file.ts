@@ -2,21 +2,23 @@ import { z } from "zod";
 
 /**
  * ── CASE FILE ─────────────────────────────────────────────────
- * The System's generative answer: instead of a paragraph, it picks
+ * The agent's generative answer: instead of a paragraph, it picks
  * evidence out of the record and argues a thesis with it. The model
  * only chooses ids and writes the reasoning — every fact shown on a
  * card comes from `src/config`, looked up by id.
  *
  * A case travels in the URL hash (`#case=…`), so a visitor can send
- * the exact view the System built for them. Dependency-free besides
+ * the exact view the agent built for them. Links shared before the
+ * record's names were renamed (2026-11) still open: their kinds and
+ * ids are translated on the way in. Dependency-free besides
  * zod (unit-tested with `node --test`).
  */
 
-export const EVIDENCE_KINDS = ["quest", "skill", "experience", "education", "item"] as const;
+export const EVIDENCE_KINDS = ["project", "skill", "experience", "education", "document"] as const;
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
 export const evidenceSchema = z.object({
-  kind: z.enum(EVIDENCE_KINDS).describe("quest = project, skill, experience = a job, education = a degree, item = inventory item"),
+  kind: z.enum(EVIDENCE_KINDS).describe("project, skill, experience = a job, education = a degree, document = a document, degree link or interest"),
   id: z.string().min(1).max(64).describe("The entity's exact id from the dossier."),
   why: z.string().min(1).max(220).describe("One sentence: what this piece of the record proves for the thesis. Only facts the dossier states."),
 });
@@ -53,12 +55,46 @@ export function encodeCase(file: CaseFile): string {
   return `${HASH_KEY}=${toBase64Url(JSON.stringify(file))}`;
 }
 
+/** what older links call things, and what they are called now */
+const OLD_KINDS: Record<string, EvidenceKind> = { quest: "project", item: "document" };
+const OLD_IDS: Record<string, string> = {
+  "hunter-license": "cv",
+  "guild-crest": "employer-opensnz",
+  "guild-crest-codeonym": "github-codeonym",
+  "summoning-stone": "get-in-touch",
+  "gate-key": "site-source",
+  "master-sigil": "masters-degree",
+  "bachelor-crest": "bachelors-degree",
+  "bac-scroll": "baccalaureate",
+  "ctf-flag": "capture-the-flag",
+  "legacy-controller": "video-games",
+  "mana-crystal": "coffee",
+};
+
+/** an older link's evidence, in today's names */
+export function renamed(value: unknown): unknown {
+  if (!value || typeof value !== "object" || !Array.isArray((value as { evidence?: unknown }).evidence)) return value;
+  const file = value as { evidence: { kind?: unknown; id?: unknown }[] };
+  return {
+    ...file,
+    evidence: file.evidence.map((e) =>
+      e && typeof e === "object"
+        ? {
+            ...e,
+            kind: typeof e.kind === "string" ? (OLD_KINDS[e.kind] ?? e.kind) : e.kind,
+            id: typeof e.id === "string" ? (OLD_IDS[e.id] ?? e.id) : e.id,
+          }
+        : e,
+    ),
+  };
+}
+
 /** reads `#case=…` (with or without the #); null for anything that is not a valid case */
 export function decodeCase(hash: string): CaseFile | null {
   const raw = hash.replace(/^#/, "");
   if (!raw.startsWith(`${HASH_KEY}=`) || raw.length > MAX_ENCODED) return null;
   try {
-    const parsed = caseSchema.safeParse(JSON.parse(fromBase64Url(raw.slice(HASH_KEY.length + 1))));
+    const parsed = caseSchema.safeParse(renamed(JSON.parse(fromBase64Url(raw.slice(HASH_KEY.length + 1)))));
     return parsed.success ? parsed.data : null;
   } catch {
     return null;

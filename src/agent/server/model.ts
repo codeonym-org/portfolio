@@ -2,7 +2,7 @@ import "server-only";
 import { ChatOpenAI } from "@langchain/openai";
 
 /**
- * ── THE SYSTEM'S MIND ─────────────────────────────────────────
+ * ── THE AGENT'S MIND ─────────────────────────────────────────
  * OpenRouter speaks the OpenAI wire protocol, so the agent talks to
  * it through ChatOpenAI with a swapped base URL.
  *
@@ -79,7 +79,7 @@ function attribution() {
   return {
     "HTTP-Referer": process.env.SITE_URL ?? "https://portfolio.codeonym.work",
     // header values must stay Latin-1 — no em dashes here
-    "X-Title": "codeonym - The System",
+    "X-Title": "codeonym portfolio",
   };
 }
 

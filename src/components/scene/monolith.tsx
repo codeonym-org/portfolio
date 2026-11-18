@@ -39,12 +39,12 @@ const shell = new MeshPhysicalMaterial({
 const crack = new MeshStandardMaterial({
   color: "#06030f",
   roughness: 0.5,
-  emissive: new Color(COLORS.arcane),
+  emissive: new Color(COLORS.violet),
   emissiveIntensity: 1,
   flatShading: true,
 });
 /** the unbroken crystal inside: it glows, so every seam between the pieces is a line of light */
-const HEART_COLOR = new Color(COLORS.arcane).lerp(new Color(COLORS.arcaneHot), 0.35);
+const HEART_COLOR = new Color(COLORS.violet).lerp(new Color(COLORS.arcaneHot), 0.35);
 const heartGlow = new MeshBasicMaterial({ color: HEART_COLOR.clone(), toneMapped: false });
 /** every ridge and every break of the body, traced in light */
 const seams = new LineBasicMaterial({ color: HEART_COLOR.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false });
@@ -76,10 +76,10 @@ function glowTexture() {
 }
 
 /**
- * THE SYSTEM's body: an obsidian crystal broken into thirty pieces
+ * the agent's body: an obsidian crystal broken into thirty pieces
  * (built in Blender, see scripts/assets/monolith.py). At rest it is
- * almost sealed and only the seams glow. It opens while the System
- * thinks, breathes with its voice, and opens while the System thinks.
+ * almost sealed and only the seams glow. It opens while the agent
+ * thinks, breathes with its voice, and opens while the agent thinks.
  */
 export function Monolith() {
   const { scene } = useGLTF(MONOLITH_URL, false, false);
@@ -186,7 +186,7 @@ export function Monolith() {
       <sprite ref={halo}>
         <spriteMaterial map={glow} blending={AdditiveBlending} depthWrite={false} transparent toneMapped={false} />
       </sprite>
-      <pointLight ref={light} color={COLORS.arcane} distance={14} decay={2} />
+      <pointLight ref={light} color={COLORS.violet} distance={14} decay={2} />
     </group>
   );
 }

@@ -1,12 +1,12 @@
 import "server-only";
 import { TranscriptionService, type TranscribeFileOptions } from "@copilotkit/runtime/v2";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { pronounce } from "../voice/pronounce";
 import { audioFormat } from "../voice/protocol";
 import { OPENROUTER_URL, openRouterHeaders } from "./model";
 
 /**
- * ── THE SYSTEM'S EARS AND VOICE ───────────────────────────────
+ * ── THE AGENT'S EARS AND VOICE ───────────────────────────────
  * Both go through OpenRouter's audio endpoints:
  *
  *  STT  POST /audio/transcriptions — plugged into CopilotKit's runtime
@@ -101,7 +101,7 @@ export function synthesizeSpeech(text: string, signal?: AbortSignal) {
   return fetch(`${OPENROUTER_URL}/audio/speech`, {
     method: "POST",
     headers: { ...openRouterHeaders(), "content-type": "application/json" },
-    body: JSON.stringify({ model: ttsModelId(), voice: ttsVoice(), input: pronounce(text, player.firstName, player.pronounced), response_format: "mp3" }),
+    body: JSON.stringify({ model: ttsModelId(), voice: ttsVoice(), input: pronounce(text, owner.firstName, owner.pronounced), response_format: "mp3" }),
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20_000)]) : AbortSignal.timeout(20_000),
   });
 }

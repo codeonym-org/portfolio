@@ -97,7 +97,7 @@ export function Stage() {
         <fog attach="fog" args={[COLORS.void, 16, 44]} />
         <hemisphereLight args={["#3a3f7a", "#07050d", 0.35]} />
         <directionalLight color="#a9c4ff" intensity={1.5} position={[-6, 8, 6]} />
-        <directionalLight color={COLORS.arcane} intensity={1.1} position={[7, -2, -5]} />
+        <directionalLight color={COLORS.violet} intensity={1.1} position={[7, -2, -5]} />
         <Rig />
         <Void />
         <Beams />

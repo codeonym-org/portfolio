@@ -5,7 +5,7 @@ import { useOpenEntry } from "./open-entry";
 import { findSkill } from "@/config/skills.config";
 import { play } from "@/lib/audio";
 import { MapCard } from "./map-card";
-import { masteryGrade, rarityTile } from "@/lib/rarity";
+import { masteryLevel, emphasisTile } from "@/lib/emphasis";
 import { cn } from "@/lib/utils";
 import type { Card } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
@@ -29,11 +29,11 @@ function SkillCard({ ids, title }: { ids: string[]; title?: string }) {
               play("click");
               setInspect({ kind: "skill", id: s.id });
             }}
-            className={cn("flex items-center gap-1.5 rounded-[2px] border px-2 py-1 text-xs backdrop-blur-sm transition-shadow", rarityTile[s.rarity])}
+            className={cn("flex items-center gap-1.5 rounded-[2px] border px-2 py-1 text-xs backdrop-blur-sm transition-shadow", emphasisTile[s.emphasis])}
           >
             <s.icon className="size-3.5" />
             <span className="text-foreground/90">{s.name}</span>
-            <span className="font-display text-[9px]">{masteryGrade(s.mastery)}</span>
+            <span className="font-display text-[9px]">{masteryLevel(s.mastery)}</span>
           </button>
         ))}
       </div>
@@ -41,7 +41,7 @@ function SkillCard({ ids, title }: { ids: string[]; title?: string }) {
   );
 }
 
-/** what the System drew under its words: skill badges, the map, a way back to its case */
+/** what the agent drew under its words: skill badges, the map, a way back to its case */
 export function Cards({ cards }: { cards?: Card[] }) {
   const setCase = useWorldStore((s) => s.setCase);
   const open = useWorldStore((s) => s.caseFile);

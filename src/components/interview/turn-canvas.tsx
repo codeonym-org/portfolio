@@ -31,11 +31,11 @@ const kinds = copy.table.kinds;
 const NONE: never[] = [];
 
 const SECTOR_ICON: Record<SectorId, LucideIcon> = {
-  status: UserRound,
+  profile: UserRound,
   experience: BriefcaseBusiness,
   projects: FolderGit2,
   skills: Wrench,
-  inventory: FileText,
+  documents: FileText,
   contact: Mail,
 };
 const KIND_ICON: Record<"skills" | "map" | "case" | "brief" | "github" | "project" | "document" | "skill", LucideIcon> = {
@@ -171,7 +171,7 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
     else if (l.kind === "brief") items.push({ ...base, kind: kinds.brief, icon: KIND_ICON.brief, title: world.agent.brief, body: <BriefPanel /> });
     else if (l.kind === "github") items.push({ ...base, kind: kinds.github, icon: KIND_ICON.github, title: world.github.title, body: <GithubActivity /> });
     else {
-      const k = l.target.kind === "quest" ? "project" : l.target.kind === "item" ? "document" : "skill";
+      const k = l.target.kind === "project" ? "project" : l.target.kind === "document" ? "document" : "skill";
       items.push({ ...base, kind: kinds[k], icon: KIND_ICON[k], title: inspected(l.target.kind, l.target.id), body: <EntryExhibit target={l.target} /> });
     }
   }

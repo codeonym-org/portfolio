@@ -3,16 +3,16 @@ import { test } from "node:test";
 import { answerLocally, type BrainIndex } from "./local-brain.ts";
 
 const index: BrainIndex = {
-  player: { name: "AYOUB", title: "AI Agent Engineer", job: "Software Engineer", guild: "OpenSNZ", location: "Oujda", creed: "…" },
+  owner: { name: "AYOUB", title: "AI Agent Engineer", job: "Software Engineer", organization: "OpenSNZ", location: "Oujda", motto: "…" },
   sectors: [
-    { id: "status", name: "Profile", section: "Profile" },
+    { id: "profile", name: "Profile", section: "Profile" },
     { id: "experience", name: "Experience", section: "Experience & Education" },
-    { id: "projects", name: "Shadows", section: "Projects" },
+    { id: "projects", name: "Projects", section: "Projects" },
     { id: "skills", name: "Skills", section: "Skills" },
-    { id: "inventory", name: "Vault", section: "Inventory & CV" },
+    { id: "documents", name: "Documents", section: "Documents & CV" },
     { id: "contact", name: "The Gate", section: "Contact" },
   ],
-  quests: [
+  projects: [
     { id: "pharma-mas", name: "AiCA: Pharmaceutical Catalog Platform", summary: "A multi-agent platform.", stack: ["LangGraph"] },
     { id: "mediary", name: "Mediary", summary: "A mediator library.", stack: ["Python"] },
   ],
@@ -20,7 +20,7 @@ const index: BrainIndex = {
     { id: "langgraph", name: "LangGraph" },
     { id: "python", name: "Python" },
   ],
-  items: [{ id: "hunter-license", name: "Curriculum vitae" }],
+  items: [{ id: "cv", name: "Curriculum vitae" }],
   defaultCase: { title: "Why him" },
 };
 
@@ -29,7 +29,7 @@ const actions = (q: string) => answerLocally(q, index).actions;
 test("sector words open their sector, in English and French", () => {
   assert.deepEqual(actions("show me his skills"), [{ name: "open_sector", args: { sector: "skills" } }]);
   assert.deepEqual(actions("What is his experience?"), [{ name: "open_sector", args: { sector: "experience" } }]);
-  assert.deepEqual(actions("Who is Ayoub?"), [{ name: "open_sector", args: { sector: "status" } }]);
+  assert.deepEqual(actions("Who is Ayoub?"), [{ name: "open_sector", args: { sector: "profile" } }]);
   assert.deepEqual(actions("montre-moi ses compétences"), [{ name: "open_sector", args: { sector: "skills" } }]);
   assert.deepEqual(actions("ses projets"), [{ name: "open_sector", args: { sector: "projects" } }]);
 });
@@ -50,9 +50,9 @@ test("contact hands over the business card and shows the channels", () => {
 });
 
 test("a named project or skill is inspected, not just its sector", () => {
-  assert.deepEqual(actions("tell me about mediary"), [{ name: "inspect_entity", args: { kind: "quest", id: "mediary" } }]);
-  assert.deepEqual(actions("the pharmaceutical project"), [{ name: "inspect_entity", args: { kind: "quest", id: "pharma-mas" } }]);
-  assert.deepEqual(actions("tell me about AiCA"), [{ name: "inspect_entity", args: { kind: "quest", id: "pharma-mas" } }]);
+  assert.deepEqual(actions("tell me about mediary"), [{ name: "inspect_entity", args: { kind: "project", id: "mediary" } }]);
+  assert.deepEqual(actions("the pharmaceutical project"), [{ name: "inspect_entity", args: { kind: "project", id: "pharma-mas" } }]);
+  assert.deepEqual(actions("tell me about AiCA"), [{ name: "inspect_entity", args: { kind: "project", id: "pharma-mas" } }]);
   assert.deepEqual(actions("does he know LangGraph?"), [{ name: "inspect_entity", args: { kind: "skill", id: "langgraph" } }]);
 });
 
@@ -73,15 +73,15 @@ test("what it cannot answer, it says so and does nothing", () => {
 });
 
 test("a sector word inside a project's name does not select that project", () => {
-  const withDesign: BrainIndex = { ...index, quests: [...index.quests, { id: "design-skills", name: "design-skills", summary: "Design skills.", stack: [] }] };
+  const withDesign: BrainIndex = { ...index, projects: [...index.projects, { id: "design-skills", name: "design-skills", summary: "Design skills.", stack: [] }] };
   assert.deepEqual(answerLocally("show me his skills", withDesign).actions, [{ name: "open_sector", args: { sector: "skills" } }]);
-  assert.deepEqual(answerLocally("tell me about design-skills", withDesign).actions, [{ name: "inspect_entity", args: { kind: "quest", id: "design-skills" } }]);
+  assert.deepEqual(answerLocally("tell me about design-skills", withDesign).actions, [{ name: "inspect_entity", args: { kind: "project", id: "design-skills" } }]);
 });
 
 test("plain commands in the second person open the matching section", () => {
   assert.deepEqual(actions("Show me your projects"), [{ name: "open_sector", args: { sector: "projects" } }]);
   assert.deepEqual(actions("Walk me through your experience"), [{ name: "open_sector", args: { sector: "experience" } }]);
-  assert.deepEqual(actions("Tell me about yourself"), [{ name: "open_sector", args: { sector: "status" } }]);
+  assert.deepEqual(actions("Tell me about yourself"), [{ name: "open_sector", args: { sector: "profile" } }]);
   assert.deepEqual(actions("Why should I hire you?"), [{ name: "assemble_case", args: { title: "Why him" } }]);
   assert.deepEqual(actions("How do I reach you?"), [{ name: "show_business_card", args: {} }]);
 });

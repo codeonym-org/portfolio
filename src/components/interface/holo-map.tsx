@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
 import { LEVELS, type HoloData, type HoloPlace } from "@/components/map/holo-scene";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { useWorldStore } from "@/store/world-store";
 const HoloScene = dynamic(() => import("@/components/map/holo-scene"), { ssr: false });
 
 const copy = world.map;
-const base = player.base;
+const base = owner.base;
 const PLACE: HoloPlace = { lon: base.lon, lat: base.lat, country: base.countryCentre };
 const coordinates = `${Math.abs(base.lat).toFixed(2)}° ${base.lat >= 0 ? "N" : "S"} · ${Math.abs(base.lon).toFixed(2)}° ${base.lon >= 0 ? "E" : "W"}`;
 
@@ -26,9 +26,9 @@ const subscribeMotion = (cb: () => void) => {
 };
 
 /**
- * The holographic map: a System window over the whole stage with a
+ * The holographic map: a window over the whole stage with a
  * globe inside. It opens on the whole planet and comes down to the
- * Player's city. The data is one file served by this site; the time
+ * Owner's city. The data is one file served by this site; the time
  * comes from the visitor's own clock. Nobody is located.
  */
 export default function HoloMap() {

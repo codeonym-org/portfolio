@@ -1,11 +1,11 @@
-import type { Achievement, ChronicleEntry } from "./types";
+import type { Achievement, TimelineEntry } from "./types";
 
 /**
  * ── EXPERIENCE ─────────────────────────────────────────────────
- * `chronicle` = professional experience (newest first).
+ * `timeline` = professional experience (newest first).
  * `achievements` = education, rendered as gold tiles.
  */
-export const chronicle: ChronicleEntry[] = [
+export const timeline: TimelineEntry[] = [
   {
     id: "opensnz-engineer",
     role: "Software Engineer",

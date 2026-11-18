@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Waypoints, X } from "lucide-react";
 import type { SectorId } from "@/config/types";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { sectorById, sectors, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -13,22 +13,22 @@ import { toneColor } from "@/components/scene/view";
 import { BriefPanel } from "./brief-panel";
 import { GithubActivity } from "./github-activity";
 import { CasePanel } from "./case-panel";
-import { ArsenalPanel, ChroniclePanel, GatePanel, ShadowsPanel, StatusPanel, VaultPanel } from "./sector-panels";
+import { SkillsPanel, ExperiencePanel, ContactPanel, ProjectsPanel, ProfilePanel, DocumentsPanel } from "./sector-panels";
 
 const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 const BODY: Record<SectorId, () => ReactNode> = {
-  status: StatusPanel,
-  experience: ChroniclePanel,
-  projects: ShadowsPanel,
-  skills: ArsenalPanel,
-  inventory: VaultPanel,
-  contact: GatePanel,
+  profile: ProfilePanel,
+  experience: ExperiencePanel,
+  projects: ProjectsPanel,
+  skills: SkillsPanel,
+  documents: DocumentsPanel,
+  contact: ContactPanel,
 };
 
 /**
  * The window beside the Monolith: a sector of the record, or the case
- * the System assembled. It slides in from the right (desktop) or
+ * the agent assembled. It slides in from the right (desktop) or
  * rises as a sheet above the prompt (touch); the scene slides its
  * framing clear of it, so the halo and the window read together.
  */
@@ -51,7 +51,7 @@ export function FocusWindow() {
 
   const def = sector ? sectorById[sector] : null;
   const Body = sector ? BODY[sector] : null;
-  const tone = caseFile ? toneColor.system : def ? toneColor[def.tone] : toneColor.arcane;
+  const tone = caseFile ? toneColor.system : def ? toneColor[def.tone] : toneColor.violet;
   const close = () => {
     play("close");
     closeFocus();
@@ -109,8 +109,8 @@ export function FocusWindow() {
                   def?.section
                 )}
               </p>
-              <h2 className="mt-1.5 font-serif text-[2rem] leading-none text-white sm:text-[2.4rem]">{caseFile ? caseFile.title : brief ? titleCase(player.name) : github ? world.github.title : def?.name}</h2>
-              {!caseFile && <p className="mt-1.5 text-sm text-muted-foreground italic">{brief ? `${player.title} · ${player.job} at ${player.guild}` : github ? world.github.lead : def?.epithet}</p>}
+              <h2 className="mt-1.5 font-serif text-[2rem] leading-none text-white sm:text-[2.4rem]">{caseFile ? caseFile.title : brief ? titleCase(owner.name) : github ? world.github.title : def?.name}</h2>
+              {!caseFile && <p className="mt-1.5 text-sm text-muted-foreground italic">{brief ? `${owner.title} · ${owner.job} at ${owner.organization}` : github ? world.github.lead : def?.tagline}</p>}
             </div>
             <button type="button" aria-label="Close" onClick={close} className="hud-chip size-9 shrink-0">
               <X className="size-4" />

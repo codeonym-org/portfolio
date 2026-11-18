@@ -14,7 +14,7 @@ test("ordinary text is unchanged, a single ellipsis included", () => {
 });
 
 test("a tool call written as text is never shown", () => {
-  const leaked = 'I have opened the projects. --- { "tool": "propose_action", "arguments": { "message": "Open AiCA?", "kind": "quest" } }';
+  const leaked = 'I have opened the projects. --- { "tool": "propose_action", "arguments": { "message": "Open AiCA?", "kind": "project" } }';
   assert.equal(cleanReply(leaked), "I have opened the projects.");
   assert.equal(cleanReply('I am based in Oujda. --- { "tool": "show_map", "arguments": {} }'), "I am based in Oujda.");
   assert.equal(cleanReply('I am based in Oujda. proposeaction({"message":"Shall I show you a map?","action":"openmap"})'), "I am based in Oujda.");

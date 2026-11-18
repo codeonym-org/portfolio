@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { player } from "@/config/player.config";
-import { findItem, inventoryItems } from "@/config/inventory.config";
-import { quests } from "@/config/quests.config";
+import { owner } from "@/config/owner.config";
+import { findItem, documents } from "@/config/documents.config";
+import { projects } from "@/config/projects.config";
 import { findSkill, skills } from "@/config/skills.config";
 import type { SectorId } from "@/config/types";
 import { sectorById, sectorIds, world } from "@/config/world.config";
@@ -41,7 +41,7 @@ const define = <S extends z.ZodObject>(cmd: SystemCommand<S>) => cmd as unknown 
 const SECTOR = z
   .enum(sectorIds as [SectorId, ...SectorId[]])
   .describe(
-    "Section of the record: status = Profile (who I am, what I am known for, strengths), experience = jobs & education, projects = my projects, skills = my skills, inventory = Documents (CV, degrees, links), contact = Contact.",
+    "Section of the record: profile = Profile (who I am, what I am known for, strengths), experience = jobs & education, projects = my projects, skills = my skills, documents = Documents (CV, degrees, links), contact = Contact.",
   );
 
 const store = () => useWorldStore.getState();
@@ -121,15 +121,15 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
   }),
   define({
     name: "inspect_entity",
-    description: "Open the detail card for one skill, document (kind item) or project (kind quest) by its id from the dossier. It opens beside my answer.",
+    description: "Open the detail card for one skill, document or project by its id from the dossier. It opens beside my answer.",
     parameters: z.object({
-      kind: z.enum(["skill", "item", "quest"]),
-      id: z.string().describe("Entity id, e.g. a skill id like 'langgraph', an item id like 'hunter-license' (the CV), a project id like 'pharma-mas'."),
+      kind: z.enum(["skill", "document", "project"]),
+      id: z.string().describe("Entity id, e.g. a skill id like 'langgraph', a document id like 'cv' (the CV), a project id like 'pharma-mas'."),
     }),
     handler: ({ kind, id }) => {
-      const exists = kind === "skill" ? !!findSkill(id) : kind === "item" ? !!findItem(id) : quests.some((q) => q.id === id);
+      const exists = kind === "skill" ? !!findSkill(id) : kind === "document" ? !!findItem(id) : projects.some((q) => q.id === id);
       if (!exists) {
-        const pool = kind === "skill" ? skills : kind === "item" ? inventoryItems : quests;
+        const pool = kind === "skill" ? skills : kind === "document" ? documents : projects;
         return `No ${kind} "${id}". Valid ids: ${pool.map((e) => e.id).join(", ")}.`;
       }
       store().setInspect({ kind, id });
@@ -144,7 +144,7 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
     handler: (file) => {
       const { file: kept, unknown } = resolveCase(file, hasNode);
       if (!kept.evidence.length) {
-        return `No evidence matched the record (unknown: ${unknown.join(", ")}). Use exact ids from the dossier with kind quest / skill / experience / education / item.`;
+        return `No evidence matched the record (unknown: ${unknown.join(", ")}). Use exact ids from the dossier with kind project / skill / experience / education / document.`;
       }
       store().setCase(kept);
       window.history.replaceState(null, "", `#${encodeCase(kept)}`);
@@ -168,7 +168,7 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
     parameters: z.object({}),
     handler: () => {
       store().setCvOpen(true);
-      pulse("item:hunter-license");
+      pulse("document:cv");
       return "CV viewer open.";
     },
   }),
@@ -199,7 +199,7 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
     description: "Copy one of my channels (email address, phone number, GitHub, LinkedIn) or this portfolio's link to the stranger's clipboard.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: async ({ channel }) => {
-      const { label, text } = channelTarget(channel, player.links, window.location.origin);
+      const { label, text } = channelTarget(channel, owner.links, window.location.origin);
       try {
         await navigator.clipboard.writeText(text);
         store().pushToast({ heading: "COPIED", body: `${label} → clipboard`, tone: "system" });
@@ -216,7 +216,7 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
       "Open one of my channels for the stranger: GitHub or LinkedIn in a new tab, email in their mail app (a new message to me), the phone number in their dialer, or this portfolio's link.",
     parameters: z.object({ channel: z.enum(CHANNELS) }),
     handler: ({ channel }) => {
-      const { label, href } = channelTarget(channel, player.links, window.location.origin);
+      const { label, href } = channelTarget(channel, owner.links, window.location.origin);
       if (channel === "email" || channel === "phone") {
         window.location.href = href;
         return channel === "email" ? "Opened a new email to me in the stranger's mail app." : "Handed my phone number to the stranger's dialer.";
@@ -297,7 +297,7 @@ The view is open in front of the stranger with all of this drawn. Do not recite 
         .enum(["open_brief", "open_github", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map", "open_interview"])
         .describe("What accepting does. open_interview (home page only) takes them to my interview room."),
       sector: SECTOR.optional().describe("For open_sector."),
-      kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
+      kind: z.enum(["project", "skill", "document"]).optional().describe("For inspect_entity."),
       id: z.string().optional().describe("For inspect_entity: the exact id from the dossier."),
     }),
     handler: ({ message, action, sector, kind, id }) => {

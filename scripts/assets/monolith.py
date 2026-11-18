@@ -1,5 +1,5 @@
 """
-The Monolith — THE SYSTEM's body — and the record shards that orbit it.
+The Monolith — the agent's body — and the record shards that orbit it.
 
 Everything is generated: no downloaded meshes. Run headless (Blender ≥ 4.2):
 
@@ -34,7 +34,7 @@ import bpy
 from mathutils import Vector
 
 OUT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "."
-SEED = 82  # the Player's level; change it and the body breaks differently
+SEED = 82  # the Owner's level; change it and the body breaks differently
 PIECES = 30
 GAP = 0.05  # how far each piece pulls back from its neighbours
 
@@ -193,19 +193,19 @@ def build_shards():
         return [p + Vector((rng.uniform(-amount, amount), rng.uniform(-amount, amount), rng.uniform(-amount, amount))) for p in points]
 
     shapes = {
-        # the Player: a balanced, symmetrical seed
-        "status": [Vector((0, 0, 0.62)), Vector((0, 0, -0.62))] + ring_points(0.0, 0.42, 6),
-        # the chronicle: a tall obelisk, one per chapter
+        # the Owner: a balanced, symmetrical seed
+        "profile": [Vector((0, 0, 0.62)), Vector((0, 0, -0.62))] + ring_points(0.0, 0.42, 6),
+        # the timeline: a tall obelisk, one per chapter
         "experience": [Vector((0, 0, 0.75))] + ring_points(0.45, 0.2, 4, 0.78) + ring_points(-0.6, 0.26, 4, 0.78) + [Vector((0, 0, -0.7))],
-        # the shadows (projects): a long blade
+        # projects: a long blade
         "projects": jitter(
             [Vector((0, 0, 0.95)), Vector((0, 0, -0.75))] + ring_points(0.25, 0.3, 5, 0.3, 0.45) + ring_points(-0.35, 0.22, 5, 0.9, 0.5),
             0.03,
         ),
-        # the arsenal (skills): a small sliver, there are many of them
+        # skills: a small sliver, there are many of them
         "skills": jitter([Vector((0, 0, 0.5)), Vector((0, 0, -0.5))] + ring_points(0.08, 0.2, 3, 0.4), 0.04),
-        # the vault (inventory): a cut gem — table, crown, girdle, pavilion
-        "inventory": ring_points(0.3, 0.26, 8) + ring_points(0.1, 0.5, 8, math.pi / 8) + [Vector((0, 0, -0.55))],
+        # the documents: a cut gem — table, crown, girdle, pavilion
+        "documents": ring_points(0.3, 0.26, 8) + ring_points(0.1, 0.5, 8, math.pi / 8) + [Vector((0, 0, -0.55))],
     }
     for name, points in shapes.items():
         add_object(name, hull_from_points(points), [mat])

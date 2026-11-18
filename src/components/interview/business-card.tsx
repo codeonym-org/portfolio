@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType, type Poin
 import { AnimatePresence, motion, useSpring, useTransform } from "motion/react";
 import { Check, Copy, Download, Globe, Mail, MapPin, Phone, RotateCw, X } from "lucide-react";
 import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -15,18 +15,18 @@ const copy = world.interview.card;
 const SITE = "https://portfolio.codeonym.work";
 
 const person: CardPerson = {
-  name: player.name,
-  firstName: player.firstName,
-  title: player.title,
-  brand: player.handle,
-  location: player.location,
-  email: player.links.email,
-  phone: player.links.phone,
+  name: owner.name,
+  firstName: owner.firstName,
+  title: owner.title,
+  brand: owner.handle,
+  location: owner.location,
+  email: owner.links.email,
+  phone: owner.links.phone,
   site: SITE,
-  github: player.links.github,
-  linkedin: player.links.linkedin,
+  github: owner.links.github,
+  linkedin: owner.links.linkedin,
 };
-const fullName = `${player.firstName} ${familyName(player.name, player.firstName)}`;
+const fullName = `${owner.firstName} ${familyName(owner.name, owner.firstName)}`;
 
 const LINES: { icon: ComponentType<{ className?: string }>; label: string; value: string; href?: string }[] = [
   { icon: Mail, label: "Email", value: person.email, href: `mailto:${person.email}` },
@@ -44,7 +44,7 @@ const LINES: { icon: ComponentType<{ className?: string }>; label: string; value
  */
 function CarvedMark({ id, className }: { id: string; className?: string }) {
   return (
-    <svg viewBox="40 40 432 432" className={className} role="img" aria-label={player.handle}>
+    <svg viewBox="40 40 432 432" className={className} role="img" aria-label={owner.handle}>
       <defs>
         <linearGradient id={`${id}-arc`} gradientUnits="userSpaceOnUse" x1="300" y1="96" x2="300" y2="416">
           <stop offset="0" stopColor="#e3d4ff" />
@@ -110,9 +110,9 @@ function Front({ tall }: { tall: boolean }) {
       <div className="bc-guilloche" aria-hidden />
       <CarvedMark id="bc-front" className={cn("relative shrink-0", tall ? "w-[calc(var(--u)*30)]" : "w-[calc(var(--u)*30)]")} />
       <div className={cn("relative min-w-0", tall && "text-center")}>
-        <p className={cn("bc-carved font-display leading-none tracking-[0.16em]", tall ? "text-[calc(var(--u)*4)]" : "text-[calc(var(--u)*4.6)]")}>{player.handle.toUpperCase()}</p>
+        <p className={cn("bc-carved font-display leading-none tracking-[0.16em]", tall ? "text-[calc(var(--u)*4)]" : "text-[calc(var(--u)*4.6)]")}>{owner.handle.toUpperCase()}</p>
         <div className={cn("bc-groove my-[calc(var(--u)*2.4)]", tall && "mx-auto")} />
-        <p className="bc-foil font-mono text-[calc(var(--u)*1.9)] tracking-[0.42em] uppercase">{player.title}</p>
+        <p className="bc-foil font-mono text-[calc(var(--u)*1.9)] tracking-[0.42em] uppercase">{owner.title}</p>
       </div>
       <p className="absolute right-[calc(var(--u)*4)] bottom-[calc(var(--u)*3)] font-mono text-[calc(var(--u)*1.55)] tracking-[0.3em] text-white/40">{printed(SITE)}</p>
     </div>
@@ -125,7 +125,7 @@ function Back({ tall }: { tall: boolean }) {
       <div className="flex items-start justify-between gap-[calc(var(--u)*2)]">
         <div className="min-w-0">
           <p className={cn("bc-foil font-display leading-tight tracking-[0.1em] uppercase", tall ? "text-[calc(var(--u)*2.9)]" : "text-[calc(var(--u)*3.7)]")}>{fullName}</p>
-          <p className="mt-[calc(var(--u)*1)] font-mono text-[calc(var(--u)*1.8)] tracking-[0.34em] text-[oklch(0.8_0.12_285)] uppercase">{player.title}</p>
+          <p className="mt-[calc(var(--u)*1)] font-mono text-[calc(var(--u)*1.8)] tracking-[0.34em] text-[oklch(0.8_0.12_285)] uppercase">{owner.title}</p>
         </div>
         <CarvedMark id="bc-back" className="w-[calc(var(--u)*10)] shrink-0" />
       </div>
@@ -224,7 +224,7 @@ function Stage({ close }: { close: () => void }) {
     const url = URL.createObjectURL(new Blob([vcard(person)], { type: "text/vcard" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${player.handle}.vcf`;
+    a.download = `${owner.handle}.vcf`;
     a.click();
     URL.revokeObjectURL(url);
   };

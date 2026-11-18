@@ -1,5 +1,5 @@
 /**
- * Plays the System's reply sentence by sentence: every sentence is
+ * Plays the agent's reply sentence by sentence: every sentence is
  * sent to TTS the moment the chunker emits it (so synthesis overlaps
  * the model still writing), and played strictly in order through one
  * <audio> element. `stop()` is the barge-in: the visitor pressed the

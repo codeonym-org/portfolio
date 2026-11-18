@@ -15,7 +15,7 @@ const PROPOSAL_STAYS_MS = 40_000;
 
 
 /**
- * The System's question: a window in the middle of the stage with a
+ * The agent's question: a window in the middle of the stage with a
  * message and two answers. It never blocks: the page behind stays
  * usable, and Escape, N or "Later" close it. A proposal from the
  * agent has three outcomes: accepted, refused ("Not now", N) or

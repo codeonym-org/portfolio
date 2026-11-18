@@ -44,7 +44,7 @@ function parseArgs(call: ToolCall): Record<string, unknown> {
   }
 }
 
-const ARCHIVE_SECTOR: Record<string, string> = { identity: "status", experience: "experience", education: "experience", projects: "projects", skills: "skills", inventory: "inventory" };
+const ARCHIVE_SECTOR: Record<string, string> = { identity: "profile", experience: "experience", education: "experience", projects: "projects", skills: "skills", documents: "documents" };
 
 /** the beam for tool calls that do not touch the store themselves (backend lookups, cards) */
 function reach(name: string, args: Record<string, unknown>) {

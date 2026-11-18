@@ -8,7 +8,7 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
-// the System's voice: everything it says is set in this serif
+// the agent's voice: everything it says is set in this serif
 const instrument = Instrument_Serif({
   variable: "--font-instrument",
   weight: "400",
@@ -16,14 +16,14 @@ const instrument = Instrument_Serif({
   subsets: ["latin"],
 });
 
-// Eurostile-style display face for the wordmark and ranks (self-hosted)
+// Eurostile-style display face for the wordmark and headings (self-hosted)
 const michroma = localFont({
   src: "../fonts/michroma-latin.woff2",
   variable: "--font-michroma",
   display: "swap",
 });
 
-// the System's announcements: notices, prompts and their buttons (SIL Open Font Licence, hosted with the site)
+// the agent's announcements: notices, prompts and their buttons (SIL Open Font Licence, hosted with the site)
 const rajdhani = Rajdhani({
   variable: "--font-rajdhani",
   weight: ["500", "600", "700"],
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "https://portfolio.codeonym.work"),
   title: "CODEONYM — AI Agent Engineer",
   description:
-    "Bouarour Ayoub (codeonym) — AI Agent Engineer shipping production-grade multi-agent systems, grounded via MCP and delivered through CopilotKit/AG-UI. A portfolio with no pages: ask THE SYSTEM, and it rearranges the whole record around your question.",
+    "Bouarour Ayoub (codeonym) — AI Agent Engineer shipping production-grade multi-agent systems, grounded via MCP and delivered through CopilotKit/AG-UI. A portfolio with no pages: ask the agent, and it rearranges the whole record around your question.",
 };
 
 export const viewport: Viewport = {

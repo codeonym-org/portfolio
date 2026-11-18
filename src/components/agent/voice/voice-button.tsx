@@ -21,7 +21,7 @@ export function VoiceButton() {
   return (
     <button
       type="button"
-      aria-label={`${copy.hold} with the System (hold ${copy.key})`}
+      aria-label={`${copy.hold} with the agent (hold ${copy.key})`}
       aria-pressed={listening}
       data-active={listening || phase === "speaking"}
       onPointerDown={(e) => {
@@ -43,7 +43,7 @@ export function VoiceButton() {
       }}
       className={cn("hud-chip h-9 touch-none px-3 select-none", listening && "shadow-[0_0_18px_oklch(0.62_0.22_295/60%)]")}
     >
-      <Mic className={cn("size-4", listening ? "text-arcane-hot" : "text-system")} />
+      <Mic className={cn("size-4", listening ? "text-violet-hot" : "text-system")} />
       <span className="kbd hidden sm:inline-grid">{copy.key}</span>
     </button>
   );

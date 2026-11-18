@@ -1,11 +1,11 @@
-import type { Player } from "./types";
+import type { Owner } from "./types";
 
 /**
  * ── THE OWNER'S PROFILE ───────────────────────────────────────
  * Who the record is about: shown in the Profile window, the brief and Contact.
  * Strength values are 0–100, his own estimate.
  */
-export const player: Player = {
+export const owner: Owner = {
   name: "BOUAROUR AYOUB",
   firstName: "Ayoub",
   // he says it A-EY-OO-BE; this respelling is the one the voice gets right
@@ -15,34 +15,34 @@ export const player: Player = {
   job: "Software Engineer",
   location: "Oujda, Morocco",
   base: { city: "Oujda", country: "Morocco", lat: 34.68, lon: -1.91, timeZone: "Africa/Casablanca", countryCentre: { lon: -8.6, lat: 29.2 } },
-  guild: "OpenSNZ-Technology",
+  organization: "OpenSNZ-Technology",
   titles: [
     {
-      id: "agent-summoner",
+      id: "agents-that-improve",
       name: "Agents that improve",
       description:
         "Builds AI agents as systems that gain skills and get better with each iteration, never as static software.",
     },
     {
-      id: "citadel-architect",
+      id: "multi-agent-architect",
       name: "Multi-agent architect",
       description:
         "Designed the modular multi-agent architecture behind AiCA, the pharmaceutical catalog platform.",
     },
     {
-      id: "gate-opener",
+      id: "enterprise-agents",
       name: "Agents on enterprise data",
       description:
         "Connects agents to enterprise and legacy systems through MCP.",
     },
     {
-      id: "guild-master",
+      id: "founder",
       name: "Founder of two organisations",
       description:
         "Founded and runs codeonym-oss, open-source tooling for agentic systems, and codeonym-org, his own products.",
     },
     {
-      id: "voice-of-three-tongues",
+      id: "three-languages",
       name: "Three languages",
       description:
         "Speaks Arabic, English and French.",
@@ -53,7 +53,7 @@ export const player: Player = {
     "Drawn to agent engineering because it is still frontier work: there is no well-trodden path, so every experiment — and every failure — moves the discipline forward. Traditional software optimizes for known paths; agent engineering asks you to build the paradigm, not just implement it.",
     "Builds agents as systems meant to evolve — gaining capability, sharpening reasoning and getting measurably better with every iteration. That mindset shapes his context engineering, evaluation and observability work.",
   ],
-  creed:
+  motto:
     "I don't build AI agents as traditional software. I build them as systems meant to evolve — gaining capability, sharpening reasoning, and getting measurably better with every iteration.",
   stats: [
     { code: "AI", label: "Agentic AI & Multi-Agent Systems", value: 94 },

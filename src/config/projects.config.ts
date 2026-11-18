@@ -1,23 +1,23 @@
-import type { Quest } from "./types";
+import type { Project } from "./types";
 
 /**
  * ── PROJECTS ──────────────────────────────────────────────────
  * main = his engagements at OpenSNZ; side = personal projects, open
  * source (codeonym-oss) and own products (codeonym-org). Every project
- * names its organisation (guilds.config). Personal-project text restates
+ * names its organisation (organizations.config). Personal-project text restates
  * the repository's README and nothing beyond it; periods come from his CV.
- * (The identifiers still say quest and guild; what is shown does not.)
+ * (The identifiers still say project and organization; what is shown does not.)
  * `stage` says whether a personal project is released or still in development.
- * rank: "S" | "A" | "B" (drives glow color), status: "cleared" | "ongoing".
+ * tier: "flagship" | "major" | "minor" (size and colour of its shard), status: "shipped" | "ongoing".
  * `rewards` are the tech-stack badges.
  */
-export const quests: Quest[] = [
+export const projects: Project[] = [
   {
     id: "opensnz-contract",
     name: "Software Engineer at OpenSNZ-Technology",
-    rank: "S",
-    type: "main",
-    guild: "opensnz",
+    tier: "flagship",
+    type: "work",
+    organization: "opensnz",
     status: "ongoing",
     period: "2025/09 – Present",
     summary:
@@ -29,7 +29,7 @@ export const quests: Quest[] = [
       "Orchestrate with LangChain/LangGraph; trace, evaluate and observe agents in production with LangSmith.",
       "Mentor and supervise interns on architecture decisions, LangGraph/MCP patterns and evaluation practices.",
     ],
-    rewards: [
+    stack: [
       "Multi-Agent Systems",
       "LangChain/LangGraph",
       "LangSmith",
@@ -44,9 +44,9 @@ export const quests: Quest[] = [
   {
     id: "pharma-mas",
     name: "AiCA: Pharmaceutical Catalog Platform",
-    rank: "S",
-    type: "main",
-    guild: "opensnz",
+    tier: "flagship",
+    type: "work",
+    organization: "opensnz",
     status: "ongoing",
     stage: "released",
     period: "Since 2025/02",
@@ -58,7 +58,7 @@ export const quests: Quest[] = [
       "Coordinated specialized agents for extraction, querying, cost aggregation, reporting, and decision support.",
       "Grounded agents with a knowledge graph and RAG over raw catalog data.",
     ],
-    rewards: [
+    stack: [
       "LangChain/LangGraph",
       "LangSmith",
       "Multi-Agent Systems",
@@ -73,9 +73,9 @@ export const quests: Quest[] = [
   {
     id: "i18n-ai",
     name: "i18n-ai",
-    rank: "A",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "major",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/10",
@@ -88,7 +88,7 @@ export const quests: Quest[] = [
       "Reads and writes JSON, YAML, ARB, gettext PO and XLIFF; works with any provider LangChain's init_chat_model knows.",
       "Incremental: existing translations that pass the rules are kept; only missing and broken ones are translated.",
     ],
-    rewards: [
+    stack: [
       "Python",
       "LangChain/LangGraph",
       "LLM Agents",
@@ -101,9 +101,9 @@ export const quests: Quest[] = [
   {
     id: "mediary",
     name: "Mediary",
-    rank: "A",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "major",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/08",
@@ -116,7 +116,7 @@ export const quests: Quest[] = [
       "A CQRS pack (@command, @query, @event), notifications, streams, and dishka and FastAPI integrations.",
       "Zero dependencies, Python 3.11+, on asyncio or trio; every README example runs in CI.",
     ],
-    rewards: [
+    stack: [
       "Python",
       "CQRS",
       "Mediator",
@@ -130,9 +130,9 @@ export const quests: Quest[] = [
   {
     id: "groundwork",
     name: "groundwork",
-    rank: "A",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "major",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/07",
@@ -145,7 +145,7 @@ export const quests: Quest[] = [
       "Every write outside the planning folder — issues, branches, commits, pull requests — is shown and waits for a yes.",
       "This portfolio's own plan was made with it.",
     ],
-    rewards: [
+    stack: [
       "Claude Code plugin",
       "Agent Skills (SKILLS.md)",
       "Codex",
@@ -156,9 +156,9 @@ export const quests: Quest[] = [
   {
     id: "acli-py",
     name: "acli-py",
-    rank: "B",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "minor",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/09",
@@ -171,7 +171,7 @@ export const quests: Quest[] = [
       "Bulk changes by keys, JQL, filter or file, with a per-issue report.",
       "Script-friendly output (table, JSON, CSV) and several accounts, with API tokens in the system keyring.",
     ],
-    rewards: [
+    stack: [
       "Python",
       "CLI · TUI",
       "Jira Cloud API",
@@ -181,9 +181,9 @@ export const quests: Quest[] = [
   {
     id: "jira-time-tracker",
     name: "jira-time-tracker",
-    rank: "B",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "minor",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/09",
@@ -195,7 +195,7 @@ export const quests: Quest[] = [
       "Published on PyPI; works the same on Linux, macOS and Windows.",
       "Every command has a documentation page with a recording of its output.",
     ],
-    rewards: [
+    stack: [
       "Python",
       "CLI",
       "Jira Cloud API",
@@ -207,9 +207,9 @@ export const quests: Quest[] = [
   {
     id: "design-skills",
     name: "design-skills",
-    rank: "B",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "minor",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/09",
@@ -221,7 +221,7 @@ export const quests: Quest[] = [
       "Works the same on Linux, macOS and Windows (WSL2) with Docker or Podman — no per-machine setup.",
       "The 3D assets of this portfolio were built with it.",
     ],
-    rewards: [
+    stack: [
       "Claude Code plugin",
       "Agent Skills (SKILLS.md)",
       "Docker · Podman",
@@ -234,9 +234,9 @@ export const quests: Quest[] = [
   {
     id: "flow-reel",
     name: "flow-reel",
-    rank: "B",
-    type: "side",
-    guild: "codeonym-oss",
+    tier: "minor",
+    type: "personal",
+    organization: "codeonym-oss",
     status: "ongoing",
     stage: "released",
     period: "since 2026/11",
@@ -250,7 +250,7 @@ export const quests: Quest[] = [
       "Agent-friendly: an agent that can write a Playwright test can write a demo.",
       "Built to extend: a small core with ports for E2E tools, voices and storage.",
     ],
-    rewards: [
+    stack: [
       "TypeScript",
       "Node.js",
       "Playwright",
@@ -262,9 +262,9 @@ export const quests: Quest[] = [
   {
     id: "gsm-agent-kit",
     name: "GSM Agent Kit",
-    rank: "B",
-    type: "side",
-    guild: "codeonym-org",
+    tier: "minor",
+    type: "personal",
+    organization: "codeonym-org",
     status: "ongoing",
     stage: "in development",
     period: "since 2026/09",
@@ -277,7 +277,7 @@ export const quests: Quest[] = [
       "Replies through OpenRouter use a durable queue and bounded persistent conversations.",
       "New device adapters inherit a shared contract test suite.",
     ],
-    rewards: [
+    stack: [
       "Python",
       "Hexagonal Architecture",
       "CQRS · Mediary",

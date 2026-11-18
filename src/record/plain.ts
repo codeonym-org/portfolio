@@ -1,8 +1,8 @@
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { findGuild, guilds } from "@/config/guilds.config";
-import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { findOrganization, organizations } from "@/config/organizations.config";
+import { documentCategories, documents } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { skillCategories, skills } from "@/config/skills.config";
 
 /**
@@ -34,45 +34,45 @@ export interface PlainSection {
 const grade = (m: number) => (m >= 90 ? "S" : m >= 85 ? "A" : m >= 78 ? "B" : "C");
 
 export const plainHeader = {
-  name: player.name,
+  name: owner.name,
   /** how the first name is said */
-  pronounced: `${player.firstName} is said “${player.pronounced}”`,
-  handle: player.handle,
-  title: player.title,
-  line: `${player.job} at ${player.guild} · ${player.location}`,
-  profile: player.profile,
+  pronounced: `${owner.firstName} is said “${owner.pronounced}”`,
+  handle: owner.handle,
+  title: owner.title,
+  line: `${owner.job} at ${owner.organization} · ${owner.location}`,
+  profile: owner.profile,
   links: [
-    { label: "GitHub", href: player.links.github },
-    { label: "LinkedIn", href: player.links.linkedin },
-    { label: "Email", href: `mailto:${player.links.email}` },
-    { label: `Phone ${player.links.phone}`, href: `tel:${player.links.phone.replace(/[^+\d]/g, "")}` },
+    { label: "GitHub", href: owner.links.github },
+    { label: "LinkedIn", href: owner.links.linkedin },
+    { label: "Email", href: `mailto:${owner.links.email}` },
+    { label: `Phone ${owner.links.phone}`, href: `tel:${owner.links.phone.replace(/[^+\d]/g, "")}` },
     { label: "CV (PDF)", href: "/cv.pdf" },
   ],
-  languages: player.languages.map((l) => `${l.name} (${l.grade})`).join(" · "),
+  languages: owner.languages.map((l) => `${l.name} (${l.grade})`).join(" · "),
 };
 
 export const plainSections: PlainSection[] = [
   {
     id: "experience",
     title: "Experience",
-    entries: chronicle.map((c) => ({ id: c.id, title: `${c.role} — ${c.organization}`, meta: c.period, body: c.summary, points: c.highlights })),
+    entries: timeline.map((c) => ({ id: c.id, title: `${c.role} — ${c.organization}`, meta: c.period, body: c.summary, points: c.highlights })),
   },
   {
-    id: "guilds",
+    id: "organizations",
     title: "Organisations",
     note: "The organizations he works in. Engineer = employed there; Founder = founded and runs it.",
-    entries: guilds.map((g) => ({ id: g.id, title: `${g.name} — ${g.role}`, meta: g.kind, body: g.summary, link: g.link })),
+    entries: organizations.map((g) => ({ id: g.id, title: `${g.name} — ${g.role}`, meta: g.kind, body: g.summary, link: g.link })),
   },
   {
     id: "projects",
     title: "Projects",
-    entries: quests.map((q) => ({
+    entries: projects.map((q) => ({
       id: q.id,
       title: q.name,
-      meta: [findGuild(q.guild)?.name, q.period, q.stage ?? (q.status === "ongoing" ? "ongoing" : "shipped"), q.type === "main" ? "main work" : "personal project"].filter(Boolean).join(" · "),
+      meta: [findOrganization(q.organization)?.name, q.period, q.stage ?? (q.status === "ongoing" ? "ongoing" : "shipped"), q.type === "work" ? "main work" : "personal project"].filter(Boolean).join(" · "),
       body: q.summary,
       points: q.details,
-      tags: q.rewards,
+      tags: q.stack,
       link: q.link,
       docs: q.docs,
     })),
@@ -96,12 +96,12 @@ export const plainSections: PlainSection[] = [
     entries: achievements.map((a) => ({ id: a.id, title: a.title, meta: `${a.issuer} · ${a.period}` })),
   },
   {
-    id: "inventory",
+    id: "documents",
     title: "Documents, degrees and interests",
-    entries: inventoryCategories.map((cat) => ({
+    entries: documentCategories.map((cat) => ({
       id: cat.id,
       title: cat.name,
-      tags: inventoryItems.filter((i) => i.category === cat.id).map((i) => i.name),
+      tags: documents.filter((i) => i.category === cat.id).map((i) => i.name),
     })),
   },
 ];

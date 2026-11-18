@@ -35,8 +35,8 @@ export function sameThing(a: string, b: string): boolean {
 }
 
 /** the projects whose stack names this skill */
-export function usedIn<P extends { rewards: readonly string[] }>(skill: string, projects: readonly P[]): P[] {
-  return projects.filter((p) => p.rewards.some((r) => sameThing(skill, r)));
+export function usedIn<P extends { stack: readonly string[] }>(skill: string, projects: readonly P[]): P[] {
+  return projects.filter((p) => p.stack.some((r) => sameThing(skill, r)));
 }
 
 /** the skill a stack entry names, if any */

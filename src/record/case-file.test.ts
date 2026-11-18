@@ -6,7 +6,7 @@ const file: CaseFile = {
   title: "Fit for an agent platform role",
   thesis: "He has shipped multi-agent systems to production — العربية, français.",
   evidence: [
-    { kind: "quest", id: "pharma-mas", why: "A multi-agent system delivered end to end." },
+    { kind: "project", id: "pharma-mas", why: "A multi-agent system delivered end to end." },
     { kind: "skill", id: "langgraph", why: "The orchestration layer he uses daily." },
   ],
   verdict: "Strong on agents; the record is silent on team size.",
@@ -32,11 +32,20 @@ test("a case with too much evidence is refused", () => {
 });
 
 test("resolving drops unknown and repeated evidence and names what it dropped", () => {
-  const known = new Set(["quest:pharma-mas"]);
+  const known = new Set(["project:pharma-mas"]);
   const { file: kept, unknown } = resolveCase(
     { ...file, evidence: [...file.evidence, file.evidence[0]] },
     (key) => known.has(key),
   );
   assert.deepEqual(kept.evidence.map((e) => e.id), ["pharma-mas"]);
   assert.deepEqual(unknown, ["skill:langgraph"]);
+});
+
+test("a link shared before the rename still opens, in today's names", () => {
+  const old = { title: "Fit", thesis: "Yes.", evidence: [{ kind: "quest", id: "pharma-mas", why: "AiCA." }, { kind: "item", id: "hunter-license", why: "The CV." }] };
+  const hash = `#case=${btoa(JSON.stringify(old)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+  assert.deepEqual(decodeCase(hash)?.evidence, [
+    { kind: "project", id: "pharma-mas", why: "AiCA." },
+    { kind: "document", id: "cv", why: "The CV." },
+  ]);
 });

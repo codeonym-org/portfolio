@@ -4,14 +4,13 @@ import { chromium } from "playwright";
   const out = process.argv[2];
   const browser = await chromium.launch({ headless: true, args: ["--use-angle=vulkan", "--enable-features=Vulkan", "--ignore-gpu-blocklist", "--enable-gpu", "--use-gl=angle"] });
   const page = await (await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 })).newPage();
-  await page.addInitScript(() => localStorage.setItem("codeonym-record-v9", JSON.stringify({ state: { quality: "high", visited: [], risen: [], completed: [], xp: 0, muted: true }, version: 0 })));
+  await page.addInitScript(() => localStorage.setItem("codeonym-record-v9", JSON.stringify({ state: { quality: "high", visited: [], muted: true }, version: 3 })));
   await page.goto(process.env.URL || "http://localhost:3000/", { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => window.system && window.system.snapshot, null, { timeout: 60000 });
   const pump = (ms) => page.evaluate((ms) => new Promise((r) => { const t0 = performance.now(); const f = () => (performance.now() - t0 < ms ? requestAnimationFrame(f) : r()); requestAnimationFrame(f); }), ms);
   await pump(4000);
   await page.evaluate(() => window.system.run("open_sector", { sector: "projects" }));
   await pump(1500);
-  await page.evaluate(() => window.system.run("arise_all", {}));
   await pump(9000);
   await page.evaluate(() => {
     const style = document.createElement("style");

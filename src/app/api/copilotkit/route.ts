@@ -73,16 +73,16 @@ const handler = createCopilotRuntimeHandler({
   hooks: {
     onRequest: ({ request }) => {
       const length = Number(request.headers.get("content-length") ?? 0);
-      if (length > MAX_BODY) throw reject(413, "Message too large for the System.");
+      if (length > MAX_BODY) throw reject(413, "That message is too long.");
     },
     onBeforeHandler: ({ request, route }) => {
       if (!ALLOWED.has(route.method)) throw reject(404, "Not found.");
       if (route.method !== "agent/run" && route.method !== "transcribe") return;
       sweepRunner();
-      if (!hasModelKey()) throw reject(503, "The System is dormant (no model key configured).");
+      if (!hasModelKey()) throw reject(503, "The agent is offline (no model key is configured).");
       const bucket = route.method === "transcribe" ? "transcribe" : "run";
       if (limited(`${bucket}:${clientIp(request)}`, BUDGET[bucket], WINDOW_MS)) {
-        throw reject(429, "The System needs a moment to recover its mana. Try again in a few minutes.");
+        throw reject(429, "Too many messages for now. Try again in a few minutes.");
       }
     },
   },

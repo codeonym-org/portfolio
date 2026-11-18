@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { motion } from "motion/react";
 import { ArrowUpRight, CircleDot, Flame, GitCommitHorizontal, GitMerge, GitPullRequest, Trophy } from "lucide-react";
 import { GithubMark } from "@/components/system/brand-marks";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { world } from "@/config/world.config";
 import { bestDay, byWeekday, levels, streaks, weeks, type Activity, type Day } from "@/github/activity";
 import { ago } from "@/github/format";
@@ -60,7 +60,7 @@ function Failed() {
   return (
     <div className="gha">
       <p className="gha-lead">{copy.failed}</p>
-      <ProfileLink url={player.links.github} />
+      <ProfileLink url={owner.links.github} />
     </div>
   );
 }

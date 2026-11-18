@@ -10,7 +10,7 @@ import { SystemTools } from "./system-tools";
 import { VoiceLink } from "./voice/voice-link";
 
 /**
- * The link between the record and THE SYSTEM: a CopilotKit v2 provider
+ * The link between the record and the agent: a CopilotKit v2 provider
  * on the single-endpoint runtime (`/api/copilotkit`), the frontend
  * tools, the bridge that turns the text agent into the session the
  * interface shows, and the hold-to-talk voice link (the voice agent,

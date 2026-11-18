@@ -3,7 +3,7 @@ import { hasModelKey } from "@/agent/server/model";
 import { clientIp, limited, reject } from "@/agent/server/rate-limit";
 
 /**
- * ── THE SYSTEM'S VOICE (TTS) ──────────────────────────────────
+ * ── THE AGENT'S VOICE (TTS) ──────────────────────────────────
  * POST { text } → audio/mpeg, streamed straight from OpenRouter's
  * speech endpoint (`TTS_MODEL_ID`, `TTS_VOICE`). The browser calls it
  * once per sentence while the voice agent is still writing the next.
@@ -21,7 +21,7 @@ const CHAR_BUDGET = 12_000;
 const WINDOW_MS = 10 * 60_000;
 
 export async function POST(request: Request) {
-  if (!hasModelKey()) return reject(503, "The System is dormant (no model key configured).");
+  if (!hasModelKey()) return reject(503, "The voice is offline (no model key is configured).");
   let text = "";
   try {
     const body = (await request.json()) as { text?: unknown };
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   if (text.length > MAX_CHARS) return reject(413, "Too long to say at once.");
   // weight the window by characters, in 40-char units
   if (limited(`tts:${clientIp(request)}`, CHAR_BUDGET / 40, WINDOW_MS, Math.ceil(text.length / 40))) {
-    return reject(429, "The System's voice needs rest. Try again in a few minutes.");
+    return reject(429, "The voice has said a lot for now. Try again in a few minutes.");
   }
 
   let upstream: Response;
@@ -41,11 +41,11 @@ export async function POST(request: Request) {
     upstream = await synthesizeSpeech(text, request.signal);
   } catch (err) {
     console.error("[voice] tts request failed:", err);
-    return reject(502, "The System's voice is unreachable.");
+    return reject(502, "The voice could not be reached.");
   }
   if (!upstream.ok || !upstream.body) {
     console.error("[voice] tts failed:", upstream.status, (await upstream.text().catch(() => "")).slice(0, 300));
-    return reject(502, "The System's voice is unreachable.");
+    return reject(502, "The voice could not be reached.");
   }
   return new Response(upstream.body, {
     headers: { "content-type": upstream.headers.get("content-type") ?? "audio/mpeg", "cache-control": "no-store" },

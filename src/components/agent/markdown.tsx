@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 /**
- * The tiny Markdown the System speaks: paragraphs, bullet / numbered
+ * The tiny Markdown the agent speaks: paragraphs, bullet / numbered
  * lists, **bold**, *italic*, `code` and [links](https://…). Links are
  * limited to http(s) and mailto — model output never becomes a
  * javascript: URL.

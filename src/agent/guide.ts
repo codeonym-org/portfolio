@@ -1,4 +1,4 @@
-import { quests } from "@/config/quests.config";
+import { projects } from "@/config/projects.config";
 import { world } from "@/config/world.config";
 import { useWorldStore } from "@/store/world-store";
 import { MAX_DECLINED, unseenSteps, type Seen, type StepIndex, type Unseen } from "./next-step";
@@ -9,7 +9,7 @@ import { MAX_DECLINED, unseenSteps, type Seen, type StepIndex, type Unseen } fro
  * (two refusals in a row end the offers until the stranger asks).
  */
 
-const flagship = quests.find((q) => q.id === world.agent.flagship);
+const flagship = projects.find((q) => q.id === world.agent.flagship);
 const index: StepIndex = { flagship: flagship && { id: flagship.id, name: flagship.name } };
 
 type State = ReturnType<typeof useWorldStore.getState>;

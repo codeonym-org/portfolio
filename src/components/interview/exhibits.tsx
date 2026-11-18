@@ -7,16 +7,16 @@ import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
 import { LiveRepo } from "@/components/interface/live-repo";
 import { MapCard } from "@/components/interface/map-card";
 import { useOpenEntry } from "@/components/interface/open-entry";
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { findGuild, guilds } from "@/config/guilds.config";
-import { findItem, inventoryCategories, inventoryItems } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { findOrganization, organizations } from "@/config/organizations.config";
+import { findItem, documentCategories, documents } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { findSkill, skillCategories, skillSets, skills } from "@/config/skills.config";
-import type { InspectTarget, Quest, Rarity, SectorId, SkillDetail, SkillSet } from "@/config/types";
+import type { InspectTarget, Project, Emphasis, SectorId, SkillDetail, SkillSet } from "@/config/types";
 import { sectorById, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
-import { masteryGrade } from "@/lib/rarity";
+import { masteryLevel } from "@/lib/emphasis";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
 import { skillNamed, usedIn } from "./exhibit-links";
@@ -34,16 +34,16 @@ import { familyName } from "./vcard";
  */
 
 const copy = world.interview.table.ex;
-const FULL_NAME = `${player.firstName} ${familyName(player.name, player.firstName)}`;
+const FULL_NAME = `${owner.firstName} ${familyName(owner.name, owner.firstName)}`;
 
 /** one colour per standing, the room's own */
-const TONE: Record<Rarity, string> = {
-  legendary: "oklch(0.85 0.13 85)",
-  epic: "oklch(0.76 0.16 295)",
-  rare: "oklch(0.8 0.12 228)",
-  common: "oklch(0.74 0.02 260)",
+const TONE: Record<Emphasis, string> = {
+  highlight: "oklch(0.85 0.13 85)",
+  strong: "oklch(0.76 0.16 295)",
+  standard: "oklch(0.8 0.12 228)",
+  quiet: "oklch(0.74 0.02 260)",
 };
-const RANK_TONE: Record<Quest["rank"], string> = { S: TONE.legendary, A: TONE.epic, B: TONE.rare };
+const TIER_TONE: Record<Project["tier"], string> = { flagship: TONE.highlight, major: TONE.strong, minor: TONE.standard };
 const tone = (color: string) => ({ ["--tone" as string]: color }) as CSSProperties;
 
 const rise = {
@@ -92,8 +92,8 @@ function Hero({ icon, color, kicker, title, sub, aside }: { icon: ReactNode; col
 
 function Grade({ mastery, color }: { mastery: number; color: string }) {
   return (
-    <span className="ex-grade" style={tone(color)} title={`${copy.grade} ${masteryGrade(mastery)} · ${mastery}/100`}>
-      {masteryGrade(mastery)}
+    <span className="ex-grade" style={tone(color)} title={`${copy.grade} ${masteryLevel(mastery)} · ${mastery}/100`}>
+      {masteryLevel(mastery)}
     </span>
   );
 }
@@ -111,7 +111,7 @@ function Gauge({ value, color }: { value: number; color: string }) {
   const r = 25;
   const c = 2 * Math.PI * r;
   return (
-    <div className="ex-gauge" style={tone(color)} aria-label={`${copy.mastery} ${value}/100, ${copy.grade} ${masteryGrade(value)}`}>
+    <div className="ex-gauge" style={tone(color)} aria-label={`${copy.mastery} ${value}/100, ${copy.grade} ${masteryLevel(value)}`}>
       <svg viewBox="0 0 60 60" aria-hidden>
         <circle cx="30" cy="30" r={r} className="ex-gauge__track" />
         <motion.circle
@@ -127,7 +127,7 @@ function Gauge({ value, color }: { value: number; color: string }) {
       </svg>
       <span className="ex-gauge__n">{value}</span>
       <span className="ex-gauge__g">
-        {copy.grade} {masteryGrade(value)}
+        {copy.grade} {masteryLevel(value)}
       </span>
     </div>
   );
@@ -171,16 +171,16 @@ function useOpen() {
   };
 }
 
-const stageOf = (q: Quest) => q.stage ?? (q.status === "ongoing" ? "ongoing" : "delivered");
-const where = (q: Quest) => [findGuild(q.guild)?.name, q.period].filter(Boolean).join(" · ");
+const stageOf = (q: Project) => q.stage ?? (q.status === "ongoing" ? "ongoing" : "delivered");
+const where = (q: Project) => [findOrganization(q.organization)?.name, q.period].filter(Boolean).join(" · ");
 
 // ── the sections ──
 
 function ProfileExhibit() {
   const facts = [
-    { k: copy.facts.org, v: guilds.map((g) => `${g.name} · ${g.role}`) },
-    { k: copy.facts.based, v: [player.location] },
-    { k: copy.facts.languages, v: player.languages.map((l) => `${l.name} · ${l.grade}`) },
+    { k: copy.facts.org, v: organizations.map((g) => `${g.name} · ${g.role}`) },
+    { k: copy.facts.based, v: [owner.location] },
+    { k: copy.facts.languages, v: owner.languages.map((l) => `${l.name} · ${l.grade}`) },
   ];
   return (
     <Page>
@@ -188,10 +188,10 @@ function ProfileExhibit() {
         {/* eslint-disable-next-line @next/next/no-img-element -- a 128px face, already sized */}
         <img src="/brand/avatar.webp" alt="" className="ex-id__face" />
         <div className="min-w-0">
-          <p className="ex-kicker">{player.handle}</p>
+          <p className="ex-kicker">{owner.handle}</p>
           <h3 className="ex-id__name">{FULL_NAME}</h3>
           <p className="ex-id__role">
-            {player.title} <span>· {player.job}</span>
+            {owner.title} <span>· {owner.job}</span>
           </p>
         </div>
       </motion.header>
@@ -209,20 +209,20 @@ function ProfileExhibit() {
 
       <Block title={copy.about}>
         <div className="ex-prose">
-          {player.profile.map((p) => (
+          {owner.profile.map((p) => (
             <p key={p.slice(0, 24)}>{p}</p>
           ))}
         </div>
-        <blockquote className="ex-quote">{player.creed}</blockquote>
+        <blockquote className="ex-quote">{owner.motto}</blockquote>
       </Block>
 
       <Block title={copy.strengths}>
         <ul className="ex-stats">
-          {player.stats.map((s, i) => (
+          {owner.stats.map((s, i) => (
             <li key={s.code}>
               <span className="ex-stats__label">{s.label}</span>
               <span className="ex-stats__n">{s.value}</span>
-              <Meter value={s.value} color={TONE.epic} delay={0.1 + i * 0.05} />
+              <Meter value={s.value} color={TONE.strong} delay={0.1 + i * 0.05} />
             </li>
           ))}
         </ul>
@@ -230,7 +230,7 @@ function ProfileExhibit() {
 
       <Block title={copy.knownFor}>
         <ul className="ex-known">
-          {player.titles.map((t) => (
+          {owner.titles.map((t) => (
             <li key={t.id}>
               <p>{t.name}</p>
               <span>{t.description}</span>
@@ -245,9 +245,9 @@ function ProfileExhibit() {
 function ExperienceExhibit() {
   return (
     <Page>
-      <Block title={copy.experience} count={chronicle.length}>
+      <Block title={copy.experience} count={timeline.length}>
         <ol className="ex-timeline">
-          {chronicle.map((c, i) => (
+          {timeline.map((c, i) => (
             <motion.li key={c.id} variants={rise} data-now={i === 0}>
               <div className="ex-timeline__top">
                 <h4>{c.role}</h4>
@@ -270,7 +270,7 @@ function ExperienceExhibit() {
         <ul className="ex-rows">
           {achievements.map((a) => (
             <motion.li key={a.id} variants={rise} className="ex-edu">
-              <span className="ex-row__icon" style={tone(TONE.legendary)} aria-hidden>
+              <span className="ex-row__icon" style={tone(TONE.highlight)} aria-hidden>
                 <BookOpenText className="size-4" strokeWidth={1.7} />
               </span>
               <span className="min-w-0 flex-1">
@@ -286,24 +286,24 @@ function ExperienceExhibit() {
   );
 }
 
-function ProjectCard({ quest }: { quest: Quest }) {
+function ProjectCard({ project }: { project: Project }) {
   const open = useOpen();
-  const shown = quest.rewards.slice(0, 4);
+  const shown = project.stack.slice(0, 4);
   return (
-    <motion.button variants={rise} type="button" className="ex-card" style={tone(RANK_TONE[quest.rank])} onClick={() => open({ kind: "quest", id: quest.id })}>
+    <motion.button variants={rise} type="button" className="ex-card" style={tone(TIER_TONE[project.tier])} onClick={() => open({ kind: "project", id: project.id })}>
       <span className="ex-card__top">
-        <span className="ex-card__title">{quest.name}</span>
-        <span className="ex-pill ex-pill--tone">{stageOf(quest)}</span>
+        <span className="ex-card__title">{project.name}</span>
+        <span className="ex-pill ex-pill--tone">{stageOf(project)}</span>
       </span>
-      <span className="ex-card__meta">{where(quest)}</span>
-      <span className="ex-card__text">{quest.summary}</span>
+      <span className="ex-card__meta">{where(project)}</span>
+      <span className="ex-card__text">{project.summary}</span>
       <span className="ex-tags">
         {shown.map((r) => (
           <span key={r} className="ex-tag">
             {r}
           </span>
         ))}
-        {quest.rewards.length > shown.length && <span className="ex-tag ex-tag--more">+{quest.rewards.length - shown.length}</span>}
+        {project.stack.length > shown.length && <span className="ex-tag ex-tag--more">+{project.stack.length - shown.length}</span>}
       </span>
       <span className="ex-card__go">
         {copy.details} <ArrowUpRight className="size-3.5" />
@@ -313,25 +313,25 @@ function ProjectCard({ quest }: { quest: Quest }) {
 }
 
 function ProjectsExhibit() {
-  const work = quests.filter((q) => q.type === "main");
-  const own = guilds.filter((g) => quests.some((q) => q.type === "side" && q.guild === g.id));
+  const work = projects.filter((q) => q.type === "work");
+  const own = organizations.filter((g) => projects.some((q) => q.type === "personal" && q.organization === g.id));
   return (
     <Page>
-      <Block title={copy.atWork(findGuild(work[0]?.guild ?? "")?.name ?? "work")} count={work.length}>
+      <Block title={copy.atWork(findOrganization(work[0]?.organization ?? "")?.name ?? "work")} count={work.length}>
         <div className="ex-cards">
           {work.map((q) => (
-            <ProjectCard key={q.id} quest={q} />
+            <ProjectCard key={q.id} project={q} />
           ))}
         </div>
       </Block>
       {own.map((g) => {
-        const list = quests.filter((q) => q.type === "side" && q.guild === g.id);
+        const list = projects.filter((q) => q.type === "personal" && q.organization === g.id);
         return (
           <Block key={g.id} title={g.name} count={list.length}>
             <p className="ex-lead">{g.summary}</p>
             <div className="ex-cards">
               {list.map((q) => (
-                <ProjectCard key={q.id} quest={q} />
+                <ProjectCard key={q.id} project={q} />
               ))}
             </div>
           </Block>
@@ -343,7 +343,7 @@ function ProjectsExhibit() {
 
 function SkillRow({ skill, i }: { skill: SkillDetail; i: number }) {
   const open = useOpen();
-  const color = TONE[skill.rarity];
+  const color = TONE[skill.emphasis];
   return (
     <motion.button variants={rise} type="button" className="ex-skill" style={tone(color)} onClick={() => open({ kind: "skill", id: skill.id })}>
       <skill.icon className="ex-skill__icon" strokeWidth={1.7} aria-hidden />
@@ -412,11 +412,11 @@ function SkillsExhibit() {
 function DocumentsExhibit() {
   const open = useOpen();
   const setCvOpen = useWorldStore((s) => s.setCvOpen);
-  const cv = inventoryItems.find((i) => i.unlocks === "cv");
+  const cv = documents.find((i) => i.unlocks === "cv");
   return (
     <Page>
       {cv && (
-        <motion.div variants={rise} className="ex-feature" style={tone(TONE.legendary)}>
+        <motion.div variants={rise} className="ex-feature" style={tone(TONE.highlight)}>
           <span className="ex-feature__doc" aria-hidden>
             <span />
             <span />
@@ -426,7 +426,7 @@ function DocumentsExhibit() {
           <div className="min-w-0 flex-1">
             <p className="ex-kicker">{copy.cv}</p>
             <h4 className="ex-feature__title">{cv.name}</h4>
-            <p className="ex-feature__text">{cv.lore}</p>
+            <p className="ex-feature__text">{cv.about}</p>
             <div className="ex-actions">
               <button
                 type="button"
@@ -445,14 +445,14 @@ function DocumentsExhibit() {
           </div>
         </motion.div>
       )}
-      {inventoryCategories.map((cat) => {
-        const list = inventoryItems.filter((i) => i.category === cat.id && i !== cv);
+      {documentCategories.map((cat) => {
+        const list = documents.filter((i) => i.category === cat.id && i !== cv);
         if (!list.length) return null;
         return (
           <Block key={cat.id} title={cat.name} count={list.length}>
             <div className="ex-rows">
               {list.map((item) => (
-                <Row key={item.id} icon={item.icon} color={TONE[item.rarity]} title={item.name} sub={item.meta} meta onOpen={() => open({ kind: "item", id: item.id })} />
+                <Row key={item.id} icon={item.icon} color={TONE[item.emphasis]} title={item.name} sub={item.meta} meta onOpen={() => open({ kind: "document", id: item.id })} />
               ))}
             </div>
           </Block>
@@ -465,13 +465,13 @@ function DocumentsExhibit() {
 function ContactExhibit() {
   const [copied, setCopied] = useState(false);
   const setCardOpen = useWorldStore((s) => s.setCardOpen);
-  const { email, phone, linkedin, github } = player.links;
+  const { email, phone, linkedin, github } = owner.links;
   const bare = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
   const channels = [
-    { id: "email", label: copy.channels.email, value: email, href: `mailto:${email}`, icon: Mail, color: TONE.epic },
-    { id: "phone", label: copy.channels.phone, value: phone, href: `tel:${phone.replace(/[^+\d]/g, "")}`, icon: Phone, color: TONE.legendary },
-    { id: "linkedin", label: copy.channels.linkedin, value: bare(linkedin), href: linkedin, icon: LinkedinMark, color: TONE.rare },
-    { id: "github", label: copy.channels.github, value: bare(github), href: github, icon: GithubMark, color: TONE.common },
+    { id: "email", label: copy.channels.email, value: email, href: `mailto:${email}`, icon: Mail, color: TONE.strong },
+    { id: "phone", label: copy.channels.phone, value: phone, href: `tel:${phone.replace(/[^+\d]/g, "")}`, icon: Phone, color: TONE.highlight },
+    { id: "linkedin", label: copy.channels.linkedin, value: bare(linkedin), href: linkedin, icon: LinkedinMark, color: TONE.standard },
+    { id: "github", label: copy.channels.github, value: bare(github), href: github, icon: GithubMark, color: TONE.quiet },
   ];
   return (
     <Page>
@@ -526,7 +526,7 @@ function ContactExhibit() {
         </a>
       </motion.div>
       <motion.p variants={rise} className="ex-where">
-        <MapPin className="size-3.5" /> {player.location} · {player.languages.map((l) => l.name).join(", ")}
+        <MapPin className="size-3.5" /> {owner.location} · {owner.languages.map((l) => l.name).join(", ")}
       </motion.p>
       <motion.div variants={rise}>
         <MapCard />
@@ -536,11 +536,11 @@ function ContactExhibit() {
 }
 
 export const SECTION_EXHIBIT: Record<SectorId, () => ReactNode> = {
-  status: ProfileExhibit,
+  profile: ProfileExhibit,
   experience: ExperienceExhibit,
   projects: ProjectsExhibit,
   skills: SkillsExhibit,
-  inventory: DocumentsExhibit,
+  documents: DocumentsExhibit,
   contact: ContactExhibit,
 };
 
@@ -549,21 +549,21 @@ export const SECTION_EXHIBIT: Record<SectorId, () => ReactNode> = {
 function SkillEntry({ skill }: { skill: SkillDetail }) {
   const open = useOpen();
   const cat = skillCategories.find((c) => c.id === skill.category);
-  const color = TONE[skill.rarity];
-  const projects = usedIn(skill.name, quests);
+  const color = TONE[skill.emphasis];
+  const usedBy = usedIn(skill.name, projects);
   const siblings = skills.filter((s) => s.category === skill.category && s.id !== skill.id).sort((a, b) => b.mastery - a.mastery);
   return (
     <Page>
       <Hero icon={<skill.icon className="size-6" strokeWidth={1.5} />} color={color} kicker={`${copy.kinds.skill} · ${cat?.name ?? ""}`} title={skill.name} aside={<Gauge value={skill.mastery} color={color} />} />
       <motion.p variants={rise} className="ex-prose ex-prose--lead">
-        {skill.lore}
+        {skill.about}
       </motion.p>
       <Tags tags={skill.tags} />
-      {projects.length > 0 && (
-        <Block title={copy.usedIn} count={projects.length}>
+      {usedBy.length > 0 && (
+        <Block title={copy.usedIn} count={usedBy.length}>
           <div className="ex-rows">
-            {projects.map((q) => (
-              <Row key={q.id} icon={FolderGit2} color={RANK_TONE[q.rank]} title={q.name} sub={where(q)} onOpen={() => open({ kind: "quest", id: q.id })} />
+            {usedBy.map((q) => (
+              <Row key={q.id} icon={FolderGit2} color={TIER_TONE[q.tier]} title={q.name} sub={where(q)} onOpen={() => open({ kind: "project", id: q.id })} />
             ))}
           </div>
         </Block>
@@ -572,10 +572,10 @@ function SkillEntry({ skill }: { skill: SkillDetail }) {
         <Block title={copy.alsoIn(cat?.name ?? "")}>
           <motion.div variants={rise} className="ex-chips">
             {siblings.map((s) => (
-              <button key={s.id} type="button" className="ex-chip" style={tone(TONE[s.rarity])} onClick={() => open({ kind: "skill", id: s.id })}>
+              <button key={s.id} type="button" className="ex-chip" style={tone(TONE[s.emphasis])} onClick={() => open({ kind: "skill", id: s.id })}>
                 <s.icon className="size-3.5" strokeWidth={1.7} aria-hidden />
                 {s.name}
-                <span className="ex-chip__g">{masteryGrade(s.mastery)}</span>
+                <span className="ex-chip__g">{masteryLevel(s.mastery)}</span>
               </button>
             ))}
           </motion.div>
@@ -585,36 +585,36 @@ function SkillEntry({ skill }: { skill: SkillDetail }) {
   );
 }
 
-function ProjectEntry({ quest }: { quest: Quest }) {
+function ProjectEntry({ project }: { project: Project }) {
   const open = useOpen();
-  const color = RANK_TONE[quest.rank];
+  const color = TIER_TONE[project.tier];
   return (
     <Page>
       <Hero
         icon={<FolderGit2 className="size-6" strokeWidth={1.5} />}
         color={color}
-        kicker={`${quest.type === "main" ? copy.workProject : copy.ownProject} · ${stageOf(quest)}`}
-        title={quest.name}
-        sub={where(quest)}
+        kicker={`${project.type === "work" ? copy.workProject : copy.ownProject} · ${stageOf(project)}`}
+        title={project.name}
+        sub={where(project)}
       />
       <motion.p variants={rise} className="ex-prose ex-prose--lead">
-        {quest.summary}
+        {project.summary}
       </motion.p>
       <Block title={copy.whatIDid}>
         <ul className="ex-list">
-          {quest.details.map((d) => (
+          {project.details.map((d) => (
             <motion.li key={d} variants={rise}>
               {d}
             </motion.li>
           ))}
         </ul>
       </Block>
-      <Block title={copy.stack} count={quest.rewards.length}>
+      <Block title={copy.stack} count={project.stack.length}>
         <motion.div variants={rise} className="ex-chips">
-          {quest.rewards.map((r) => {
+          {project.stack.map((r) => {
             const skill = skillNamed(r, skills);
             return skill ? (
-              <button key={r} type="button" className="ex-chip" style={tone(TONE[skill.rarity])} title={`${copy.kinds.skill}: ${skill.name}`} onClick={() => open({ kind: "skill", id: skill.id })}>
+              <button key={r} type="button" className="ex-chip" style={tone(TONE[skill.emphasis])} title={`${copy.kinds.skill}: ${skill.name}`} onClick={() => open({ kind: "skill", id: skill.id })}>
                 {r}
                 <ChevronRight className="ex-chip__go size-3" aria-hidden />
               </button>
@@ -626,20 +626,20 @@ function ProjectEntry({ quest }: { quest: Quest }) {
           })}
         </motion.div>
       </Block>
-      {quest.type === "side" && (
+      {project.type === "personal" && (
         <motion.div variants={rise}>
-          <LiveRepo id={quest.id} />
+          <LiveRepo id={project.id} />
         </motion.div>
       )}
-      {(quest.link || quest.docs) && (
+      {(project.link || project.docs) && (
         <motion.div variants={rise} className="ex-actions">
-          {quest.link && (
-            <a href={quest.link} target="_blank" rel="noreferrer" className="talk-btn talk-btn--go ex-btn">
+          {project.link && (
+            <a href={project.link} target="_blank" rel="noreferrer" className="talk-btn talk-btn--go ex-btn">
               <GithubMark className="size-3.5" /> {copy.source}
             </a>
           )}
-          {quest.docs && (
-            <a href={quest.docs} target="_blank" rel="noreferrer" className="talk-btn ex-btn">
+          {project.docs && (
+            <a href={project.docs} target="_blank" rel="noreferrer" className="talk-btn ex-btn">
               <BookOpenText className="size-3.5" /> {copy.docs}
             </a>
           )}
@@ -654,8 +654,8 @@ function DocumentEntry({ id }: { id: string }) {
   const setCvOpen = useWorldStore((s) => s.setCvOpen);
   const openSector = useWorldStore((s) => s.openSector);
   if (!item) return null;
-  const cat = inventoryCategories.find((c) => c.id === item.category);
-  const color = TONE[item.rarity];
+  const cat = documentCategories.find((c) => c.id === item.category);
+  const color = TONE[item.emphasis];
   const use = () => {
     play("confirm", { volume: 0.4 });
     if (item.unlocks === "cv") return setCvOpen(true);
@@ -667,7 +667,7 @@ function DocumentEntry({ id }: { id: string }) {
     <Page>
       <Hero icon={<item.icon className="size-6" strokeWidth={1.5} />} color={color} kicker={cat?.name ?? copy.kinds.document} title={item.name} sub={item.meta} />
       <motion.p variants={rise} className="ex-prose ex-prose--lead">
-        {item.lore}
+        {item.about}
       </motion.p>
       <Tags tags={item.tags} />
       {action && (
@@ -687,12 +687,12 @@ export function EntryExhibit({ target }: { target: InspectTarget }) {
     const skill = findSkill(target.id);
     return skill ? <SkillEntry skill={skill} /> : null;
   }
-  if (target.kind === "quest") {
-    const quest = quests.find((q) => q.id === target.id);
-    return quest ? <ProjectEntry quest={quest} /> : null;
+  if (target.kind === "project") {
+    const project = projects.find((q) => q.id === target.id);
+    return project ? <ProjectEntry project={project} /> : null;
   }
   return <DocumentEntry id={target.id} />;
 }
 
 /** what an entry is, for the table's head */
-export const entryKind = (target: InspectTarget) => (target.kind === "skill" ? copy.kinds.skill : target.kind === "quest" ? copy.kinds.project : copy.kinds.document);
+export const entryKind = (target: InspectTarget) => (target.kind === "skill" ? copy.kinds.skill : target.kind === "project" ? copy.kinds.project : copy.kinds.document);

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { InspectTarget, SectorId, Tone } from "@/config/types";
-import { sectorById } from "@/config/world.config";
+import { isSectorId, sectorById } from "@/config/world.config";
 import type { CaseFile } from "@/record/case-file";
 
 /**
@@ -22,7 +22,7 @@ export interface Toast {
   tone: Tone;
 }
 
-/** something the System asks: a message and up to two answers. Accepting may run one command. */
+/** something the agent asks: a message and up to two answers. Accepting may run one command. */
 export interface SystemPrompt {
   /** prompts with the same id replace each other */
   id: string;
@@ -31,7 +31,7 @@ export interface SystemPrompt {
   accept: string;
   decline: string;
   tone: Tone;
-  /** a command from the System's command list, run when the visitor accepts */
+  /** a command from the agent's command list, run when the visitor accepts */
   command?: { name: string; args?: Record<string, unknown> };
   /** told to whoever raised it */
   onAnswer?: (accepted: boolean) => void;
@@ -39,14 +39,14 @@ export interface SystemPrompt {
   onIgnore?: () => void;
 }
 
-/** one thing the System proposed during this visit, and what the visitor did with it */
+/** one thing the agent proposed during this visit, and what the visitor did with it */
 export interface Proposal {
   /** the action and its arguments, as one string: the same key is never proposed twice */
   key: string;
   outcome: "waiting" | "accepted" | "refused" | "ignored";
 }
 
-/** a beam the Monolith fires at a shard (or a whole sector) when the System touches it */
+/** a beam the Monolith fires at a shard (or a whole sector) when the agent touches it */
 export interface Pulse {
   /** node key, or `sector:<id>` for every shard of a sector */
   target: string;
@@ -55,17 +55,13 @@ export interface Pulse {
 
 /** per-frame channel between the scene, the agent and the voice link — never rendered directly */
 export const live = {
-  /** THE SYSTEM is generating — the Monolith opens while it thinks */
+  /** the agent is generating — the Monolith opens while it thinks */
   agentBusy: false,
   /** the voice link's pull on the Monolith (1 = rest): it leans open while listening, pulses as it speaks */
   voiceSurge: 1,
   /** the voice's heartbeat, 0 at rest … 1 on the spike; written by the pulse monitor while the voice is live */
   heart: 0,
   pulses: [] as Pulse[],
-  /** one-shot kicks, decayed by the scene: a shockwave across the floor, a lens split, a camera shake */
-  shock: 0,
-  aberration: 0,
-  shake: 0,
   /** set once by the stage: draw one frame and hand back the canvas as a PNG */
   capture: null as null | (() => Promise<Blob | null>),
 };
@@ -85,7 +81,7 @@ interface WorldState {
 
   /** the sector brought forward (its window is open) */
   sector: SectorId | null;
-  /** the case the System assembled, brought forward instead of a sector */
+  /** the case the agent assembled, brought forward instead of a sector */
   caseFile: CaseFile | null;
   /** the one-minute brief, brought forward instead of a sector or a case */
   brief: boolean;
@@ -107,17 +103,17 @@ interface WorldState {
   /** node key under the pointer (or hovered in a window) */
   hovered: string | null;
 
-  // ── persisted: what the stranger has seen, so the System can suggest the rest ──
+  // ── persisted: what the stranger has seen, so the agent can suggest the rest ──
   visited: SectorId[];
   briefRead: boolean;
   cvRead: boolean;
 
   toasts: Toast[];
-  /** the question the System is asking right now; one at a time */
+  /** the question the agent is asking right now; one at a time */
   prompt: SystemPrompt | null;
-  /** entity keys (`quest:<id>`) inspected during this visit */
+  /** entity keys (`project:<id>`) inspected during this visit */
   inspected: string[];
-  /** what the System proposed during this visit and how the visitor answered */
+  /** what the agent proposed during this visit and how the visitor answered */
   offers: { declinedInARow: number; lastAt: number; log: Proposal[] };
 
   setReady: () => void;
@@ -143,11 +139,11 @@ interface WorldState {
   answer: (accepted: boolean) => void;
   /** closes the prompt without an answer */
   ignore: () => void;
-  /** the System proposed something */
+  /** the agent proposed something */
   raiseOffer: (key: string) => void;
   /** the visitor accepted, refused or ignored the proposal that was waiting */
   settleOffer: (outcome: Exclude<Proposal["outcome"], "waiting">) => void;
-  /** the visitor asked what to see next: the System may offer again */
+  /** the visitor asked what to see next: the agent may offer again */
   invite: () => void;
 }
 
@@ -198,7 +194,7 @@ export const useWorldStore = create<WorldState>()(
       },
       openBrief: () => {
         set({ brief: true, briefRead: true, github: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
-        pulse("sector:status");
+        pulse("sector:profile");
       },
       openGithub: () => {
         set({ github: true, brief: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
@@ -207,13 +203,13 @@ export const useWorldStore = create<WorldState>()(
       closeFocus: () => set({ sector: null, caseFile: null, brief: false, github: false, inspect: null, chosen: null }),
 
       setInspect: (inspect) => {
-        set(inspect?.kind === "quest" ? { inspect, chosen: inspect.id } : { inspect });
+        set(inspect?.kind === "project" ? { inspect, chosen: inspect.id } : { inspect });
         if (inspect) {
           pulse(`${inspect.kind}:${inspect.id}`);
           const key = `${inspect.kind}:${inspect.id}`;
           if (!get().inspected.includes(key)) set({ inspected: [...get().inspected, key] });
         }
-        if (inspect?.kind === "item" && inspect.id === "hunter-license") set({ cvRead: true });
+        if (inspect?.kind === "document" && inspect.id === "cv") set({ cvRead: true });
       },
       setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, paletteOpen: false } : { mapOpen }),
       setCvOpen: (cvOpen) => {
@@ -262,12 +258,17 @@ export const useWorldStore = create<WorldState>()(
       name: "codeonym-record-v9",
       // rehydrated after mount (Shell) so SSR and first client render match
       skipHydration: true,
-      version: 2,
-      // before version 2 the visitor had quests, XP and risen projects: keep only what was seen
-      migrate: (old) => {
-        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality };
+      version: 3,
+      migrate: (old, version) => {
+        const o = (old ?? {}) as { visited?: string[]; completed?: string[]; briefRead?: boolean; cvRead?: boolean; muted?: boolean; quality?: Quality };
+        // before version 3 two sections had other ids
+        const renamed: Record<string, SectorId> = { status: "profile", inventory: "documents" };
+        const visited = (o.visited ?? []).map((id) => renamed[id] ?? id).filter(isSectorId);
+        // before version 2 progress was kept as a list of things done
         const done = o.completed ?? [];
-        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high" };
+        const briefRead = version < 2 ? done.includes("brief") : !!o.briefRead;
+        const cvRead = version < 2 ? done.includes("license") : !!o.cvRead;
+        return { visited, briefRead, cvRead, muted: !!o.muted, quality: o.quality ?? "high" };
       },
       partialize: (s) => ({
         visited: s.visited,

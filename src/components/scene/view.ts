@@ -6,7 +6,7 @@ import type { NodeHue } from "@/record/nodes";
 export const COLORS = {
   void: "#05040b",
   obsidian: "#07060d",
-  arcane: "#8b5cf6",
+  violet: "#8b5cf6",
   arcaneHot: "#b79bff",
   system: "#4cc3ff",
   gold: "#f5b83d",
@@ -16,7 +16,7 @@ export const COLORS = {
 
 export const hueColor: Record<NodeHue, string> = {
   gold: COLORS.gold,
-  arcane: COLORS.arcane,
+  violet: COLORS.violet,
   system: COLORS.system,
   ember: COLORS.ember,
   bone: COLORS.bone,
@@ -24,7 +24,7 @@ export const hueColor: Record<NodeHue, string> = {
 
 export const toneColor: Record<Tone, string> = {
   system: COLORS.system,
-  arcane: COLORS.arcane,
+  violet: COLORS.violet,
   gold: COLORS.gold,
   ember: COLORS.ember,
 };
@@ -65,7 +65,7 @@ export function fitView(aspect: number) {
 
 export const ZOOM = { min: 0.62, max: 1.7 };
 export const TILT = { min: -0.3, max: 0.95 };
-/** hand the camera back to the System's framing */
+/** hand the camera back to the agent's framing */
 export function resetCamera() {
   view.zoom = 1;
   view.tilt = 0;
