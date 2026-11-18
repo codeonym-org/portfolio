@@ -12,10 +12,35 @@ import { ChatOpenAI } from "@langchain/openai";
  *      redeploy at all;
  *   2. the `MODEL_ID` environment variable;
  *   3. the default below.
+ *
+ * Default: Claude Haiku 5.5 with no reasoning, measured on OpenRouter
+ * (2026-11): ~1 s to the first token with tools and a 6k-token prompt,
+ * every tool call right, Artificial Analysis index 36 (gpt-oss-120b,
+ * before it: 0.6 s but 4), ~$0.0004 a turn.
  */
 
 export const OPENROUTER_URL = "https://openrouter.ai/api/v1";
-export const DEFAULT_MODEL_ID = "openai/gpt-oss-120b";
+export const DEFAULT_MODEL_ID = "anthropic/claude-haiku-5.5";
+
+/**
+ * Which of a model's OpenRouter providers to try first, in order (falling
+ * back to the rest if all are down): `MODEL_PROVIDERS`, comma-separated
+ * provider slugs. For Claude the default is the fastest to the first
+ * token in a measured run, all at the same price (Bedrock left out: one
+ * call took 12 s). Other models: OpenRouter's own routing.
+ */
+const CLAUDE_PROVIDERS = ["claude-on-aws", "anthropic", "google-vertex"];
+export function providerOrder(modelId: string): string[] | undefined {
+  const set = process.env.MODEL_PROVIDERS?.split(",").map((p) => p.trim()).filter(Boolean);
+  if (set?.length) return set;
+  return modelId.startsWith("anthropic/") ? CLAUDE_PROVIDERS : undefined;
+}
+
+/** `MODEL_REASONING` low | medium | high; unset or "off": no reasoning asked for (the default model answers straight) */
+export function reasoningEffort(): "low" | "medium" | "high" | undefined {
+  const v = process.env.MODEL_REASONING?.trim().toLowerCase();
+  return v === "low" || v === "medium" || v === "high" ? v : undefined;
+}
 
 const EDGE_TTL_MS = 30_000;
 let edgeCache: { at: number; id: string | null } | null = null;
@@ -66,11 +91,16 @@ export function openRouterHeaders(): Record<string, string> {
 export interface ChatModelOptions {
   temperature?: number;
   maxTokens?: number;
-  /** reasoning effort for models that think (the voice can't wait long) */
+  /** reasoning effort for models that think (the voice can't wait long); none sent when unset */
   reasoningEffort?: "low" | "medium" | "high";
 }
 
 export function createChatModel(modelId: string, opts: ChatModelOptions = {}) {
+  const order = providerOrder(modelId);
+  const modelKwargs = {
+    ...(opts.reasoningEffort ? { reasoning: { effort: opts.reasoningEffort } } : {}),
+    ...(order ? { provider: { order, allow_fallbacks: true } } : {}),
+  };
   return new ChatOpenAI({
     model: modelId,
     apiKey: process.env.OPEN_ROUTER_API_KEY,
@@ -79,7 +109,7 @@ export function createChatModel(modelId: string, opts: ChatModelOptions = {}) {
     streaming: true,
     // OpenRouter only implements Chat Completions
     useResponsesApi: false,
-    ...(opts.reasoningEffort ? { modelKwargs: { reasoning: { effort: opts.reasoningEffort } } } : {}),
+    ...(Object.keys(modelKwargs).length ? { modelKwargs } : {}),
     configuration: {
       baseURL: OPENROUTER_URL,
       defaultHeaders: attribution(),

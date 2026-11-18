@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 260">
+  <defs>
+    <!-- a dried puddle: smooth lobes, pale inside, the coffee gathered dark at its edge -->
+    <filter id="w" filterUnits="userSpaceOnUse" x="0" y="0" width="300" height="260" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="2" seed="11"/>
+      <feDisplacementMap in="SourceGraphic" scale="34" xChannelSelector="R" yChannelSelector="G" result="s"/>
+      <feGaussianBlur in="s" stdDeviation="0.8" result="sb"/>
+      <feMorphology in="s" operator="erode" radius="2.2" result="e"/>
+      <feComposite in="s" in2="e" operator="out" result="edge"/>
+      <feGaussianBlur in="edge" stdDeviation="1" result="edgeb"/>
+      <feFlood flood-color="#6a3a14" flood-opacity="0.34"/>
+      <feComposite in2="edgeb" operator="in" result="tide"/>
+      <feMorphology in="s" operator="erode" radius="9" result="core"/>
+      <feGaussianBlur in="core" stdDeviation="7" result="coreb"/>
+      <feFlood flood-color="#a8743a" flood-opacity="0.09"/>
+      <feComposite in2="sb" operator="in" result="body"/>
+      <feFlood flood-color="#a8743a" flood-opacity="0.05"/>
+      <feComposite in2="coreb" operator="in" result="pool"/>
+      <feMerge><feMergeNode in="body"/><feMergeNode in="pool"/><feMergeNode in="tide"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#w)" fill="#fff">
+    <ellipse cx="128" cy="124" rx="74" ry="58"/>
+    <ellipse cx="190" cy="150" rx="48" ry="36"/>
+    <ellipse cx="96" cy="176" rx="34" ry="20" transform="rotate(-24 96 176)"/>
+    <circle cx="246" cy="74" r="7"/>
+    <circle cx="262" cy="96" r="3.5"/>
+    <circle cx="44" cy="206" r="5"/>
+  </g>
+</svg>

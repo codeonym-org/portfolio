@@ -15,19 +15,21 @@ import { OPENROUTER_URL, openRouterHeaders } from "./model";
  *  TTS  POST /audio/speech — raw mp3 bytes, streamed straight through
  *       by `app/api/voice/speech`
  *
- * Defaults, measured on OpenRouter (2026-09):
- *  · STT `openai/gpt-4o-mini-transcribe` — a steady 0.7–0.9 s for a
- *    short clip, ~$0.0001 per utterance, strong on English, French and
- *    Arabic. (Parakeet / Voxtral are a hair faster but have no Arabic;
- *    Whisper bills a 10 s minimum; qwen3-asr swung from 0.5 s to 25 s.)
- *  · TTS `mistralai/voxtral-mini-tts-2603` — ~1 s to the first byte
- *    (Kokoro took 5–6 s), mp3 output, English + French voices
+ * Defaults, measured on OpenRouter (2026-11), English / French / Arabic:
+ *  · STT `mistralai/voxtral-mini-transcribe-3-0` — the fastest that got
+ *    all three right: 0.5–0.7 s for a short clip (gpt-4o-mini-transcribe,
+ *    before it: 0.8–1.2 s, and it misheard the English), 2.2 % word
+ *    error (Artificial Analysis), ~$0.0003 per utterance, webm accepted
+ *  · TTS `elevenlabs/eleven-flash-v2.5` — 0.4–0.7 s to the first byte
+ *    (Voxtral TTS, before it: 0.5–1.4 s), mp3, multilingual incl. Arabic,
+ *    ~$0.008 for a 200-character reply. Each has one provider on
+ *    OpenRouter, so there is no routing to choose.
  */
 
-export const DEFAULT_STT_MODEL_ID = "openai/gpt-4o-mini-transcribe";
-export const DEFAULT_TTS_MODEL_ID = "mistralai/voxtral-mini-tts-2603";
-/** a calm, confident British male — the System, not a butler */
-export const DEFAULT_TTS_VOICE = "gb_oliver_confident";
+export const DEFAULT_STT_MODEL_ID = "mistralai/voxtral-mini-transcribe-3-0";
+export const DEFAULT_TTS_MODEL_ID = "elevenlabs/eleven-flash-v2.5";
+/** ElevenLabs "George": a warm, calm British male; any ElevenLabs voice id works */
+export const DEFAULT_TTS_VOICE = "JBFqnCBsd6RMkjVDRZzb";
 
 export const sttModelId = () => process.env.STT_MODEL_ID?.trim() || DEFAULT_STT_MODEL_ID;
 export const ttsModelId = () => process.env.TTS_MODEL_ID?.trim() || DEFAULT_TTS_MODEL_ID;

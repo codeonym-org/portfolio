@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
-import { CopilotRuntime, createCopilotRuntimeHandler, InMemoryAgentRunner } from "@copilotkit/runtime/v2";
+import { CopilotRuntime, createCopilotRuntimeHandler, InMemoryAgentRunner, ɵGLOBAL_STORE } from "@copilotkit/runtime/v2";
+import { lapsedThreads } from "@/agent/retention";
 import { OpenRouterTranscriptionService } from "@/agent/server/audio";
 import { hasModelKey } from "@/agent/server/model";
 import { clientIp, limited, reject } from "@/agent/server/rate-limit";
@@ -16,6 +17,13 @@ import { createSystemAgent, createVoiceAgent, SYSTEM_AGENT_ID, VOICE_AGENT_ID } 
  *
  * plus `transcribe`: CopilotKit's speech-to-text route, served by
  * OpenRouter STT (`STT_MODEL_ID`).
+ *
+ * Conversations live in this process's memory only (the runner's
+ * threads, the graphs' checkpoints): at most 300 of them, and none for
+ * longer than seven days from its first message (`agent/retention.ts`).
+ * The stranger's browser keeps its own copy for the same seven days and
+ * sends the whole conversation with each message, so a thread this
+ * process has forgotten simply continues.
  */
 
 export const runtime = "nodejs";
@@ -27,6 +35,26 @@ const copilotRuntime = new CopilotRuntime({
   runner: new InMemoryAgentRunner({ maxThreads: 300, maxRunsPerThread: 40, onConcurrentRun: "supersede" }),
   transcriptionService: new OpenRouterTranscriptionService(),
 });
+
+/* ── retention: the runner has a cap on count but none on age ── */
+
+const SWEEP_EVERY_MS = 10 * 60_000;
+let sweptAt = 0;
+type Removable = { removeThread?: (id: string, store: unknown) => void };
+
+/** forget the runner's threads that began more than seven days ago; at most once every ten minutes */
+function sweepRunner(now = Date.now()) {
+  if (now - sweptAt < SWEEP_EVERY_MS) return;
+  sweptAt = now;
+  try {
+    // `removeThread` is the store's own eviction step (the one its count and byte caps use); it is not public
+    const store = ɵGLOBAL_STORE as unknown as Removable;
+    if (typeof store.removeThread !== "function") return;
+    for (const id of lapsedThreads(ɵGLOBAL_STORE, now)) store.removeThread(id, ɵGLOBAL_STORE.peek(id));
+  } catch (err) {
+    console.warn("[system] retention sweep failed", err);
+  }
+}
 
 /* ── guards: this endpoint spends real tokens on a public site ── */
 
@@ -50,6 +78,7 @@ const handler = createCopilotRuntimeHandler({
     onBeforeHandler: ({ request, route }) => {
       if (!ALLOWED.has(route.method)) throw reject(404, "Not found.");
       if (route.method !== "agent/run" && route.method !== "transcribe") return;
+      sweepRunner();
       if (!hasModelKey()) throw reject(503, "The System is dormant (no model key configured).");
       const bucket = route.method === "transcribe" ? "transcribe" : "run";
       if (limited(`${bucket}:${clientIp(request)}`, BUDGET[bucket], WINDOW_MS)) {

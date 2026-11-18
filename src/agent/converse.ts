@@ -7,8 +7,7 @@ import { sectors, world } from "@/config/world.config";
 import type { CaseFile } from "@/record/case-file";
 import { compactArgs, useSession } from "@/store/session-store";
 import { live, useWorldStore } from "@/store/world-store";
-import { mayOffer, suggestedAfter } from "./guide";
-import { answerLocally, type BrainAction, type BrainIndex } from "./local-brain";
+import { answerLocally, type BrainIndex } from "./local-brain";
 import { dropPendingProposal, executeSystemCommand } from "./system-commands";
 
 /**
@@ -55,23 +54,17 @@ function brainIndex(): BrainIndex {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let localSeq = 0;
-/** the step the local index last invited the visitor to: a plain "yes" takes it */
-let invited: BrainAction | null = null;
-let localAnswers = 0;
-const invitedTo = new Set<string>();
-const YES = /^(yes|yeah|yep|ok|okay|sure|go|do it|please|accept|oui|d'accord|vas-y|na3am|نعم)\b/i;
 
-/** answer from the local index, running its commands the way the agent would — visibly, one by one */
+/** answer from the local index, running its commands the way the agent would (visibly, one by one), and offering nothing: offers are the agent's own judgement */
 export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
   const session = useSession.getState();
-  const id = `local-${++localSeq}`;
+  // unique across visits: a conversation resumed later keeps the ids of its earlier turns
+  const id = `local-${Date.now().toString(36)}-${++localSeq}`;
   if (opts.echo !== false) session.upsertTurns([{ id: `${id}-q`, role: "visitor", text }]);
   session.set({ running: true });
   live.agentBusy = true;
   try {
-    const taking = invited && YES.test(text.trim()) ? invited : null;
-    invited = null;
-    const reply = taking ? { text: "[ Accepted. ]", actions: [taking] } : answerLocally(text, brainIndex());
+    const reply = answerLocally(text, brainIndex());
     session.step({ id: `${id}-route`, name: "local_index.route", args: compactArgs({ query: text }), source: "local" });
     await wait(260);
     session.step({ id: `${id}-route`, status: "done" });
@@ -82,17 +75,7 @@ export async function runLocally(text: string, opts: { echo?: boolean } = {}) {
       session.step({ id: step, status: /^(Invalid|Unknown|Command .* failed)/.test(result) ? "failed" : "done" });
       await wait(140);
     }
-    // without a model there is no judgement: invite to the next unseen thing on every other answer, and never twice to the same one
-    const closesTheVisit = reply.contact || reply.actions.some((a) => a.name === "close_windows" || (a.name === "open_sector" && a.args.sector === "contact"));
-    const due = ++localAnswers % 2 === 1;
-    const next = due && !closesTheVisit && mayOffer(useWorldStore.getState()) ? suggestedAfter(reply.actions) : null;
-    const step = next && !invitedTo.has(next.id) ? next : null;
-    if (step) {
-      invitedTo.add(step.id);
-      invited = step.command;
-      reply.text = `${reply.text}\n\n${step.line}`;
-    }
-    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : reply.contact ? [{ type: "contact" }] : undefined }]);
+    session.upsertTurns([{ id: `${id}-a`, role: "system", text: reply.text, cards: reply.map ? [{ type: "map" }] : undefined }]);
   } finally {
     live.agentBusy = false;
     useSession.getState().set({ running: false });

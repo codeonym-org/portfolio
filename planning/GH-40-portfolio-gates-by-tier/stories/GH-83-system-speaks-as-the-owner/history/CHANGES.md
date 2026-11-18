@@ -11,3 +11,4 @@
 - 2026-11-13: issues #83 to #88 created; decision 008 (the agent works alone).
 - 2026-11-14: tickets #84, #85, #87 and #88 done; #86 stays in progress until the owner's first interview session, so the story stays in progress.
 - 2026-11-14: #86 done after the owner's interview session; every ticket done, story done.
+- 2026-11-18: decision 009 (the agent is the owner, no disclosure; offers only by its own judgement; a question it does not answer is handed over with an offer of the card), replacing 002.

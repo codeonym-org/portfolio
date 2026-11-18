@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, FileText, Mail, Phone } from "lucide-react";
+import { useOpenEntry } from "./open-entry";
 import { GithubMark, LinkedinMark } from "@/components/system/brand-marks";
 import { achievements, chronicle } from "@/config/chronicle.config";
 import { guilds } from "@/config/guilds.config";
@@ -39,7 +40,7 @@ function Heading({ children }: { children: React.ReactNode }) {
 }
 
 function ProjectRow({ quest }: { quest: Quest }) {
-  const setInspect = useWorldStore((s) => s.setInspect);
+  const setInspect = useOpenEntry();
   const setHovered = useWorldStore((s) => s.setHovered);
   return (
     <button
@@ -63,7 +64,7 @@ function ProjectRow({ quest }: { quest: Quest }) {
 
 export function BriefPanel() {
   const openSector = useWorldStore((s) => s.openSector);
-  const setInspect = useWorldStore((s) => s.setInspect);
+  const setInspect = useOpenEntry();
   const setCvOpen = useWorldStore((s) => s.setCvOpen);
   const job = chronicle[0];
   const degree = achievements[0];

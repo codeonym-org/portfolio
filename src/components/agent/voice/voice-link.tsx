@@ -6,9 +6,11 @@ import type { AbstractAgent, Message, ToolCall } from "@ag-ui/client";
 import { SYSTEM_AGENT_ID, VOICE_AGENT_ID } from "@/agent/constants";
 import { createSpeechChunker } from "@/agent/voice/speech-chunker";
 import { formatTaskReports, formatVoiceTask, parseTaskEvent, TASK_EVENT, type TaskReport } from "@/agent/voice/protocol";
+import { soundSignals, soundVerdict } from "@/agent/voice/sound-permission";
 import { TaskQueue, type TaskRecord } from "@/agent/voice/task-queue";
 import { world } from "@/config/world.config";
 import { holdMusicDuck, play } from "@/lib/audio";
+import { useHistory } from "@/store/history-store";
 import { useSession } from "@/store/session-store";
 import { focusLabel, live, useWorldStore } from "@/store/world-store";
 import { HoldRecorder, canRecord, MAX_MS } from "./recorder";
@@ -24,6 +26,14 @@ import { useVoiceStore, voiceControl, voiceLive, type VoicePhase } from "./voice
  *             CUSTOM "voice_task" ─► task queue
  *  task queue ─► text agent run (record tools, one task at a time)
  *             ─► "[TASK REPORT]" ─► voice agent run ─► spoken outcome
+ *
+ *  in the interview, a typed question too:
+ *  text agent run ─► text deltas ─► sentence chunker ─► speaker
+ *
+ * He speaks only when his replies may be spoken (the interview's
+ * switch, `spoken`), the record's sound is on, and the browser lets
+ * this tab play sound (`agent/voice/sound-permission.ts`); otherwise
+ * his reply stays in text.
  *
  * The voice agent is run directly on its AG-UI agent (it has no
  * frontend tools), so it never contends with the text agent's runs in
@@ -87,6 +97,14 @@ function outcome(messages: Message[]): string {
   return [said, actions.length ? `(tools used: ${actions.join(", ")})` : ""].filter(Boolean).join(" ");
 }
 
+/** what speaks the text agent's replies: set up with the speaker, fed by the text agent's events */
+interface TypedVoice {
+  /** a run of the text agent began; `task` when the voice delegated it (its outcome is told by the voice) */
+  begin: (task: boolean) => void;
+  push: (delta: string) => void;
+  end: () => void;
+}
+
 export function VoiceLink() {
   const { agent: voice } = useAgent({ agentId: VOICE_AGENT_ID });
   const { agent: text } = useAgent({ agentId: SYSTEM_AGENT_ID });
@@ -94,16 +112,13 @@ export function VoiceLink() {
 
   // agents and core change identity as the runtime connects — the long-lived machinery reads them through refs
   const refs = useRef({ voice, text, copilotkit });
+  const typed = useRef<TypedVoice | null>(null);
   useEffect(() => {
     refs.current = { voice, text, copilotkit };
   }, [voice, text, copilotkit]);
 
   useEffect(() => {
     const store = useVoiceStore.getState().set;
-    if (!canRecord()) {
-      store({ available: false });
-      return;
-    }
 
     let disposed = false;
     /** bumps on every press — stale transcriptions / runs from an earlier turn are dropped */
@@ -112,6 +127,8 @@ export function VoiceLink() {
     let holdTimer = 0;
     let voiceRunning = false;
     const reports: TaskReport[] = [];
+    /** the text agent is working a task the voice delegated: its words are not spoken (the voice reports them) */
+    let taskRunning = false;
 
     const recorder = new HoldRecorder();
     const setPhase = (phase: VoicePhase) => {
@@ -124,11 +141,55 @@ export function VoiceLink() {
       if (now === "listening" || now === "decoding") return;
       setPhase(speaker.speaking ? "speaking" : voiceRunning ? "thinking" : "idle");
     };
+    /** the browser would not let this tab play sound: his replies stay in text, and the stranger is told once */
+    let toldBlocked = false;
+    const blocked = () => {
+      store({ sound: "blocked" });
+      if (toldBlocked) return;
+      toldBlocked = true;
+      useSession.getState().set({ notice: copy.soundBlocked });
+    };
     const speaker = new SpeechPlayer({
       endpoint: TTS_ENDPOINT,
       onSpeaking: () => settle(),
       onError: (err) => console.warn("[voice] speech failed", err),
+      onBlocked: blocked,
     });
+    /** may he speak now: replies spoken, sound on, and the browser allows it */
+    const maySpeak = () => {
+      const v = useVoiceStore.getState();
+      if (!v.spoken || useWorldStore.getState().muted) return false;
+      if (v.sound === "blocked") return false;
+      if (soundVerdict(soundSignals()) === "blocked") {
+        blocked();
+        return false;
+      }
+      if (v.sound !== "allowed") store({ sound: "allowed" });
+      return true;
+    };
+
+    /* ── a typed question's reply, spoken (the interview) ── */
+    let typedLive = false;
+    let typedChunker = createSpeechChunker();
+    const sayTyped = (lines: string[]) => {
+      if (!typedLive || !lines.length) return;
+      if (!maySpeak()) {
+        typedLive = false;
+        return;
+      }
+      lines.forEach((l) => speaker.say(l));
+    };
+    typed.current = {
+      begin: (delegated) => {
+        const task = delegated || taskRunning;
+        typedChunker = createSpeechChunker();
+        typedLive = !task && useVoiceStore.getState().speakTyped;
+        // a new question: he stops mid-sentence and listens
+        if (typedLive) speaker.stop();
+      },
+      push: (delta) => sayTyped(typedChunker.push(delta)),
+      end: () => sayTyped(typedChunker.flush()),
+    };
 
     /* ── the text agent works the queue ── */
     const queue = new TaskQueue({
@@ -148,7 +209,12 @@ export function VoiceLink() {
         const { text: agent, copilotkit: core } = refs.current;
         const start = agent.messages.length;
         agent.addMessage({ id: `voice-task-${task.id}`, role: "user", content: formatVoiceTask(task.n, task.task) });
-        await core.runAgent({ agent });
+        taskRunning = true;
+        try {
+          await core.runAgent({ agent });
+        } finally {
+          taskRunning = false;
+        }
         return outcome((agent.messages as Message[]).slice(start + 1));
       },
     });
@@ -158,7 +224,7 @@ export function VoiceLink() {
       voiceRunning = true;
       settle();
       const chunker = createSpeechChunker();
-      const muted = () => useWorldStore.getState().muted;
+      const muted = () => !maySpeak();
       const say = (lines: string[]) => {
         if (myTurn !== turn || muted()) return;
         lines.forEach((l) => speaker.say(l));
@@ -210,13 +276,14 @@ export function VoiceLink() {
       if (phase === "listening" || phase === "decoding") return;
       const agent = refs.current.voice;
       agent.addMessage({ id: crypto.randomUUID(), role: "user", content: formatTaskReports(reports.splice(0)) });
-      store({ notice: useWorldStore.getState().muted ? copy.muted : null, heard: "", reply: "" });
+      store({ notice: useWorldStore.getState().muted ? copy.muted : !useVoiceStore.getState().spoken ? copy.textOnly : null, heard: "", reply: "" });
       await runVoice(agent, turn);
     };
 
     /* ── hold to talk ── */
     const press = async () => {
       if (holding || disposed) return;
+      if (!canRecord()) return void store({ notice: copy.unsupported });
       holding = true;
       const myTurn = ++turn;
       // barge-in: the visitor talks over the System
@@ -270,6 +337,7 @@ export function VoiceLink() {
       }
       store({ heard: said, phase: "thinking" });
       if (useWorldStore.getState().muted) store({ notice: copy.muted });
+      else if (!useVoiceStore.getState().spoken) store({ notice: copy.textOnly });
       play("confirm", { volume: 0.3 });
       const agent = refs.current.voice;
       // anything that finished while the visitor was talking rides along, before their words
@@ -280,6 +348,29 @@ export function VoiceLink() {
 
     voiceControl.press = () => void press();
     voiceControl.release = () => void release();
+    // any press or key on the page: from then on the tab may play sound
+    voiceControl.unlock = () => {
+      speaker.unlock();
+      if (useVoiceStore.getState().sound === "blocked" && soundVerdict(soundSignals()) === "allowed") store({ sound: null });
+    };
+    voiceControl.hush = () => {
+      typedLive = false;
+      speaker.stop();
+    };
+
+    /* ── another conversation: the voice starts over in it (the text agent holds what was said there) ── */
+    const stopHistory = useHistory.subscribe((s, prev) => {
+      if (s.current === prev.current) return;
+      turn++;
+      speaker.stop();
+      if (voiceRunning) refs.current.voice.abortRun();
+      queue.clear();
+      reports.length = 0;
+      refs.current.voice.setMessages([]);
+      refs.current.voice.threadId = crypto.randomUUID();
+      store({ heard: "", reply: "", tasks: [], notice: null });
+      setPhase("idle");
+    });
 
     /* ── hold V (never while typing) ── */
     const typing = (e: KeyboardEvent) => !!(e.target as HTMLElement | null)?.closest("input, textarea, [contenteditable=true]");
@@ -309,9 +400,10 @@ export function VoiceLink() {
     };
     raf = requestAnimationFrame(meter);
 
-    store({ available: true });
+    store({ available: canRecord() });
 
     return () => {
+      stopHistory();
       disposed = true;
       cancelAnimationFrame(raf);
       window.clearTimeout(holdTimer);
@@ -320,6 +412,9 @@ export function VoiceLink() {
       window.removeEventListener("blur", onBlur);
       voiceControl.press = () => {};
       voiceControl.release = () => {};
+      voiceControl.unlock = () => {};
+      voiceControl.hush = () => {};
+      typed.current = null;
       queue.clear();
       speaker.dispose();
       recorder.dispose();
@@ -328,6 +423,17 @@ export function VoiceLink() {
       store({ available: false, phase: "idle" });
     };
   }, []);
+
+  /* ── the text agent's words, as they stream (its identity changes as the runtime connects) ── */
+  useEffect(() => {
+    const { unsubscribe } = text.subscribe({
+      onRunStartedEvent: () => typed.current?.begin(false),
+      onTextMessageContentEvent: ({ event }) => typed.current?.push(event.delta),
+      onTextMessageEndEvent: () => typed.current?.end(),
+      onRunFinalized: () => typed.current?.end(),
+    });
+    return unsubscribe;
+  }, [text]);
 
   return null;
 }

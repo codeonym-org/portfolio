@@ -19,7 +19,7 @@ import { Cards } from "./cards";
 const copy = world.agent;
 
 /** reveals text at reading speed; follows along when the text is still streaming in */
-function useReveal(text: string, id: string) {
+export function useReveal(text: string, id: string) {
   const [state, setState] = useState({ id, shown: 0 });
   const shown = state.id === id ? state.shown : 0;
   useEffect(() => {
@@ -109,7 +109,7 @@ export function Console() {
   const online = useSession((s) => s.online);
   const mode = useSession((s) => s.mode);
   const stop = useSession((s) => s.agentStop);
-  const focused = useWorldStore((s) => !!(s.sector || s.caseFile || s.brief));
+  const focused = useWorldStore((s) => !!(s.sector || s.caseFile || s.brief || s.github));
   const touch = useWorldStore((s) => s.touch);
   const ready = useWorldStore((s) => s.ready);
   const setPaletteOpen = useWorldStore((s) => s.setPaletteOpen);
@@ -198,7 +198,7 @@ export function Console() {
     <div className={cn("console-scrim", focused || !ready ? "opacity-0" : turns.length || speaking ? "opacity-100" : "opacity-60")} aria-hidden />
     <section
       ref={section}
-      aria-label={`${copy.name} — console`}
+      aria-label="The conversation"
       className={cn(
         "pointer-events-none fixed z-30 flex flex-col gap-3 transition-[left,width,transform,opacity] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
         touch
@@ -254,6 +254,9 @@ export function Console() {
         <div className={cn("pointer-events-auto flex gap-1.5", touch ? "-mx-3 overflow-x-auto px-3 [scrollbar-width:none]" : "flex-wrap justify-center")}>
           <button type="button" data-active="true" onPointerEnter={() => play("hover")} onClick={() => useWorldStore.getState().openBrief()} className="hud-chip shrink-0 px-3 py-1.5 text-[13px] backdrop-blur-md">
             {copy.brief}
+          </button>
+          <button type="button" onPointerEnter={() => play("hover")} onClick={() => useWorldStore.getState().openGithub()} className="hud-chip shrink-0 px-3 py-1.5 text-[13px] backdrop-blur-md">
+            {world.github.open}
           </button>
           {copy.suggestions.map((s) => (
             <button key={s} type="button" onPointerEnter={() => play("hover")} onClick={() => send(s)} className="hud-chip shrink-0 px-3 py-1.5 text-[13px] backdrop-blur-md">

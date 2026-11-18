@@ -52,7 +52,7 @@ function Tags({ tags }: { tags?: string[] }) {
   );
 }
 
-function Body({ target }: { target: InspectTarget }) {
+export function InspectBody({ target }: { target: InspectTarget }) {
   const setCvOpen = useWorldStore((s) => s.setCvOpen);
   const openSector = useWorldStore((s) => s.openSector);
   const setInspect = useWorldStore((s) => s.setInspect);
@@ -180,7 +180,7 @@ export function InspectCard() {
             <button type="button" aria-label="Close" onClick={() => setInspect(null)} className="hud-chip absolute top-4 right-4 size-8">
               <X className="size-4" />
             </button>
-            <Body target={target} />
+            <InspectBody target={target} />
           </motion.div>
         </motion.div>
       )}

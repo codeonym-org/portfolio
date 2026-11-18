@@ -1,28 +1,32 @@
-# THE SYSTEM — the portfolio's agent
+# The portfolio's agent
 
-The Monolith at the centre of the page is two LangChain agents. Both are
-**Ayoub's replica**: an AI that answers in his place, in the first person, as
-he would in an interview. Its rules:
+Two LangChain agents, and both are **Ayoub**: they answer a stranger in the
+first person, as he would in a job interview. Their rules:
 
-- The first reply says once that it is his AI replica; a label under the
-  console says so at all times.
 - It answers only from the record and the interview file
-  (`src/config/interview.config.ts`). A question with no answer on file gets
-  "I'd rather answer that myself" and the contact card, never a guess.
-- It never settles anything binding (salary, start date, offer, contract): the
-  real Ayoub confirms it.
+  (`src/config/interview.config.ts`).
+- What it does not answer here (a question with no answer on file, an opinion
+  or plan the record does not state, anything binding: salary, start date,
+  offer, contract) it never guesses or settles: it says it would rather discuss
+  it directly and offers his business card in a window (`propose_action` →
+  `show_business_card`); accepting hands the card over.
+- Every offer is the agent's own judgement, and rare. The page never offers
+  anything on its own: no greeting window, no scripted invitation.
+- Asked sincerely whether the stranger is talking to a person, it never claims
+  to be human. A line under the console says the answers are generated from
+  the record.
 - The local index, used when the model is unreachable, does not speak as him.
 
 The two agents:
 
-- **the text System** (`system`): visitors type to it (the prompt at the
+- **the text agent** (`system`): strangers type to it (the prompt at the
   bottom, **/** or **T** to focus it). It answers from Ayoub's record and
-  answers *with the page*: it opens sections, inspects entries,
-  pushes notifications, and assembles a **case file** — a set of evidence
-  picked from the record by id, each with one line on why it matters.
-- **the voice System** (`system-voice`): visitors **hold V** (or the mic
+  answers *with the page*: it opens sections, inspects entries, hands over his
+  card, and assembles a **case file** — a set of evidence picked from the
+  record by id, each with one line on why it matters.
+- **the voice agent** (`system-voice`): strangers **hold V** (or the mic
   button) and talk. It answers out loud, and its only tool hands work to the
-  text System in the background.
+  text agent in the background.
 
 ```
 browser                                   server (one Next.js route)
@@ -79,19 +83,28 @@ hold V ─► MediaRecorder ─► runtime `transcribe` (OpenRouter STT, STT_MOD
 - A finished task comes back as a `[TASK REPORT]` message once the voice is
   free (not while the visitor is holding the key). Reports that pile up are
   sent as one message.
-- Barge-in: pressing V while the System speaks stops the audio, cancels the
+- Barge-in: pressing V while he speaks stops the audio, cancels the
   pending TTS requests and aborts the voice run. Queued tasks keep running.
 - The voice agent runs on its AG-UI agent directly (`agent.runAgent`), and the
   text agent through `copilotkit.runAgent`. They never share CopilotKit's run
   loop.
 - The reply is spoken sentence by sentence while it streams. The first chunk
   may break at a comma, so the first audio arrives sooner.
+- In the interview, the text agent's replies to typed questions are spoken too,
+  through the same chunker and speaker (not its runs for delegated tasks: the
+  voice tells those). A switch in the interview sets his replies to text only.
+- Before saying anything, the page asks whether the browser lets this tab play
+  sound (`voice/sound-permission.ts`: the browser's autoplay policy where it has
+  one, otherwise whether the stranger has pressed or typed on the page). If not,
+  the reply stays in text and the stranger is told once; a refused play is
+  caught the same way. Any press or key afterwards lets him speak again.
 
 | File | Role |
 | --- | --- |
 | `voice/protocol.ts` | wire shapes between the agents (task event, task/report messages) |
 | `voice/task-queue.ts` | sequential background task queue |
 | `voice/speech-chunker.ts` | streamed text → speakable sentences |
+| `voice/sound-permission.ts` | whether the browser lets the tab play sound |
 | `server/voice-agent.ts` | the voice `createAgent` + `delegate_task` |
 | `server/audio.ts` | OpenRouter STT (`TranscriptionService`) + TTS |
 | `../app/api/voice/speech` | TTS route (mp3 stream) |
@@ -112,26 +125,65 @@ Pure modules have unit tests: `pnpm test`.
 | `interview-grounding.ts` | the interview file (`src/config/interview.config.ts`) as grounding: each HR question, its answer and its state |
 | `server/tools.ts` | backend tools (`consult_archive`) |
 | `server/model.ts` | OpenRouter model + per-request model id |
-| `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads |
+| `server/checkpointer.ts` | MemorySaver capped to the 300 most recent threads, none kept past seven days |
+| `retention.ts` | the retention period (seven days from the first message) and which threads a store must forget |
+| `history.ts` | the conversations a browser keeps: what is saved, what is dropped, which one is resumed |
+| `../store/history-store.ts` | those conversations in `localStorage`, and the thread in progress |
 | `server/in-process-client.ts` | LangGraph SDK client served by the local graph |
 | `server/system-agent.ts` | AG-UI agents (text + voice); route app context into CopilotKit state |
 | `server/middleware.ts` | history window + app-context note (shared by both agents) |
 | `server/rate-limit.ts` | per-IP sliding windows for the public routes |
-| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut, the disclosure on the first reply only |
+| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut |
+| `next-step.ts`, `guide.ts` | what the stranger has not seen yet, and whether offers may still be made: context for the agent's own judgement |
 | `../components/agent/` | provider, frontend tools, the bridge to the session store |
 | `../store/session-store.ts` | turns, cards and the run trace the interface renders |
+
+## Conversations and retention
+
+Nothing is stored in a database. On the server a conversation lives in the process's memory: the runner's threads
+(`InMemoryAgentRunner`) and the graphs' checkpoints (`BoundedMemorySaver`). Both are capped at 300 threads and both
+forget a thread seven days after its first message (`retention.ts`; the runner is swept from the route, at most every
+ten minutes). A serverless instance is recycled long before that, so the server's memory is a cache, not the record.
+
+The record is the visitor's own browser: `store/history-store.ts` saves each conversation in `localStorage` under its
+thread id (the turns shown, the text agent's AG-UI messages, what was said aloud) and drops it seven days after its
+first message. The link (`components/agent/agent-bridge.tsx`) runs the agent under the current thread id and starts it
+from the saved messages, and AG-UI sends the whole message list with every run, so a thread the server has forgotten
+continues with its context. The voice agent starts over in a resumed conversation; the text agent holds what was said.
+Only the interview (`/interview`) is kept this way. The home page talks in a thread of its own, held in memory for the
+visit and never saved; going between the two pages switches threads, each found where it was left. On the home page,
+the agent may offer a stranger who wants to go further its interview room (`propose_action` → `open_interview`), once a
+visit, when it judges it fits.
+
+In the interview room the stranger can take the conversation away as a designed PDF: the PDF button in the top bar, the
+card at the end of the conversation, or by asking for it (the room's own frontend tool, `download_transcript`, which
+the voice reaches through its text twin). The browser makes the file (`components/interview/transcript*.ts(x)`, with
+`@react-pdf/renderer` loaded only then): a cover with the facts and the contents, then every question answered so far,
+numbered and timed, with the answer, what it showed and the steps it took, an index of everything shown, and a last
+page with every way to reach the owner (CV, `/contact.vcf`, the room, the record) and his business card at actual size.
+Arabic questions and answers are set right to left (IBM Plex Sans Arabic). A question still being answered is left out.
+
+"My GitHub" (`open_github`, the palette, a chip on the home console, the Contact section) brings forward the owner's
+GitHub activity, live: the year's contribution calendar, commits, pull requests, issues, streaks, the week, the years,
+the languages and the public repositories committed to most (`components/interface/github-activity.tsx`). The server
+reads it from GitHub's GraphQL API with `GITHUB_TOKEN`, once an hour (`github/activity-live.ts`, `/api/github/activity`);
+a private repository is counted at most, never named (`github/activity.ts`). The tool returns the numbers, so the agent
+can name one or two. Without the token the view says GitHub did not answer and links to the profile.
 
 ## Environment
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | yes | OpenRouter key; without it the route answers 503 |
-| `MODEL_ID` | no | OpenRouter model id for both agents, default `openai/gpt-oss-120b` (the voice agent uses low reasoning effort) |
-| `STT_MODEL_ID` | no | OpenRouter speech-to-text model, default `openai/gpt-4o-mini-transcribe` (steady ~0.8 s, multilingual incl. Arabic, ~$0.0001 per utterance) |
-| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `mistralai/voxtral-mini-tts-2603` (~1 s to first byte, mp3) |
-| `TTS_VOICE` | no | voice id for the TTS model, default `gb_oliver_confident` (Voxtral voices: `en_paul_*`, `gb_oliver_*`, `gb_jane_*`, `fr_marie_*`) |
+| `MODEL_ID` | no | OpenRouter model id for both agents, default `anthropic/claude-haiku-5.5` (~1 s to the first token, every tool call right in the 2026-11 run, ~$0.0004 a turn) |
+| `MODEL_PROVIDERS` | no | OpenRouter providers to try first, comma-separated; falls back to the others. Default for Claude models: `claude-on-aws,anthropic,google-vertex` (the fastest measured, same price) |
+| `MODEL_REASONING` | no | `low`, `medium` or `high`; unset sends no reasoning setting at all (Haiku answers straight). The voice agent uses at most `low`. Set it if you switch to a model that always thinks, such as gpt-oss |
+| `STT_MODEL_ID` | no | OpenRouter speech-to-text model, default `mistralai/voxtral-mini-transcribe-3-0` (0.5–0.7 s, English, French and Arabic, ~$0.0003 per utterance) |
+| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `elevenlabs/eleven-flash-v2.5` (0.4–0.7 s to first byte, mp3, multilingual) |
+| `TTS_VOICE` | no | voice id for the TTS model, default `JBFqnCBsd6RMkjVDRZzb` (ElevenLabs "George"); any ElevenLabs voice id |
 | `EDGE_CONFIG` | no | Vercel Edge Config connection string. When set, the `MODEL_ID` **item** in Edge Config overrides the env var. |
 | `SITE_URL` | no | sent to OpenRouter as `HTTP-Referer` |
+| `GITHUB_TOKEN` | no | fine-grained, public repositories only, no permissions: live project data (anonymous without it) and "My GitHub" (needs it) |
 | `LANGSMITH_TRACING` | no | `true` traces every agent run to LangSmith (LangChain reads the `LANGSMITH_*` vars itself) |
 | `LANGSMITH_API_KEY` | with tracing | LangSmith API key |
 | `LANGSMITH_PROJECT` | no | LangSmith project the traces land in |

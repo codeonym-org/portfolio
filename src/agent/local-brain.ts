@@ -27,8 +27,6 @@ export interface BrainAction {
 export interface BrainReply {
   text: string;
   actions: BrainAction[];
-  /** show the contact buttons under the reply */
-  contact?: boolean;
   /** show the map card under the reply */
   map?: boolean;
 }
@@ -90,6 +88,10 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: "The record in one minute. Every line opens its full entry.", actions: [{ name: "open_brief", args: {} }] };
   }
 
+  if (has(text, "github", "contribution", "commits", "streak", "open source", "open-source")) {
+    return { text: "My GitHub, live: the year's calendar, streaks and languages.", actions: [{ name: "open_github", args: {} }] };
+  }
+
   if (has(text, "hire", "fit", "why him", "why you", "why should", "convince", "recruit", "embauch", "strongest", "case")) {
     return {
       text: "The local index cannot argue. This is the case the record makes on its own.",
@@ -102,7 +104,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   }
 
   if (has(text, ...SECTOR_WORDS.contact)) {
-    return { text: `Every channel below reaches ${p.name} directly.`, actions: [open("contact")], contact: true };
+    return { text: `Here is ${p.name}'s card: every channel on it reaches him directly.`, actions: [{ name: "show_business_card", args: {} }] };
   }
 
   const quest = mention(text, index.quests);

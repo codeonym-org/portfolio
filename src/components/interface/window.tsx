@@ -5,12 +5,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { Waypoints, X } from "lucide-react";
 import type { SectorId } from "@/config/types";
 import { player } from "@/config/player.config";
-import { sectorById, sectors } from "@/config/world.config";
+import { sectorById, sectors, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
 import { toneColor } from "@/components/scene/view";
 import { BriefPanel } from "./brief-panel";
+import { GithubActivity } from "./github-activity";
 import { CasePanel } from "./case-panel";
 import { ArsenalPanel, ChroniclePanel, GatePanel, ShadowsPanel, StatusPanel, VaultPanel } from "./sector-panels";
 
@@ -35,12 +36,13 @@ export function FocusWindow() {
   const sector = useWorldStore((s) => s.sector);
   const caseFile = useWorldStore((s) => s.caseFile);
   const brief = useWorldStore((s) => s.brief);
+  const github = useWorldStore((s) => s.github);
   const touch = useWorldStore((s) => s.touch);
   const openSector = useWorldStore((s) => s.openSector);
   const closeFocus = useWorldStore((s) => s.closeFocus);
   const scroller = useRef<HTMLDivElement>(null);
 
-  const key = caseFile ? `case:${caseFile.title}` : brief ? "brief" : sector;
+  const key = caseFile ? `case:${caseFile.title}` : brief ? "brief" : github ? "github" : sector;
   useEffect(() => {
     if (!key) return;
     play("open");
@@ -62,7 +64,7 @@ export function FocusWindow() {
         <motion.aside
           key="window"
           role="dialog"
-          aria-label={caseFile ? `Case file — ${caseFile.title}` : brief ? "The brief — the record in one minute" : `${def?.name} — ${def?.section}`}
+          aria-label={caseFile ? `Case file — ${caseFile.title}` : brief ? "The brief — the record in one minute" : github ? world.github.title : `${def?.name} — ${def?.section}`}
           className={cn(
             "glass glass-edge notch sys-panel pointer-events-auto fixed z-40 flex flex-col [--n:20px]",
             touch ? "inset-x-2 bottom-[4.6rem] h-[56dvh]" : "top-20 right-[2vw] bottom-6 w-[min(600px,44vw)]",
@@ -101,19 +103,21 @@ export function FocusWindow() {
                   </>
                 ) : brief ? (
                   "The record in one minute"
+                ) : github ? (
+                  world.github.eyebrow
                 ) : (
                   def?.section
                 )}
               </p>
-              <h2 className="mt-1.5 font-serif text-[2rem] leading-none text-white sm:text-[2.4rem]">{caseFile ? caseFile.title : brief ? titleCase(player.name) : def?.name}</h2>
-              {!caseFile && <p className="mt-1.5 text-sm text-muted-foreground italic">{brief ? `${player.title} · ${player.job} at ${player.guild}` : def?.epithet}</p>}
+              <h2 className="mt-1.5 font-serif text-[2rem] leading-none text-white sm:text-[2.4rem]">{caseFile ? caseFile.title : brief ? titleCase(player.name) : github ? world.github.title : def?.name}</h2>
+              {!caseFile && <p className="mt-1.5 text-sm text-muted-foreground italic">{brief ? `${player.title} · ${player.job} at ${player.guild}` : github ? world.github.lead : def?.epithet}</p>}
             </div>
             <button type="button" aria-label="Close" onClick={close} className="hud-chip size-9 shrink-0">
               <X className="size-4" />
             </button>
           </header>
           <div ref={scroller} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-1 pb-6 sm:px-7">
-            <div key={key}>{caseFile ? <CasePanel file={caseFile} /> : brief ? <BriefPanel /> : Body && <Body />}</div>
+            <div key={key}>{caseFile ? <CasePanel file={caseFile} /> : brief ? <BriefPanel /> : github ? <GithubActivity /> : Body && <Body />}</div>
           </div>
         </motion.aside>
       )}

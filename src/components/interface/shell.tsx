@@ -11,7 +11,7 @@ import { hasNode } from "@/record/nodes";
 import { useWorldStore } from "@/store/world-store";
 import { Boot } from "./boot";
 import { Console } from "./console";
-import { IndexWheel } from "./index-wheel";
+import { BusinessCard } from "@/components/interview/business-card";
 import { CvModal, InspectCard } from "./inspect";
 import { Palette } from "./palette";
 import { SystemDialog } from "./system-dialog";
@@ -100,12 +100,13 @@ export function Shell() {
         return;
       }
       if (e.key === "Escape") {
+        if (s.cardOpen) return; // the card puts itself down
         if (s.mapOpen) s.setMapOpen(false);
         else if (s.prompt) s.ignore();
         else if (s.paletteOpen) s.setPaletteOpen(false);
         else if (s.cvOpen) s.setCvOpen(false);
         else if (s.inspect) s.setInspect(null);
-        else if (s.sector || s.caseFile || s.brief) s.closeFocus();
+        else if (s.sector || s.caseFile || s.brief || s.github) s.closeFocus();
         return;
       }
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || s.paletteOpen || s.mapOpen) return;
@@ -136,13 +137,13 @@ export function Shell() {
       <div className="scrim z-10" aria-hidden />
       <TopBar />
       <Trace />
-      <IndexWheel />
       <Console />
       <FocusWindow />
       <Toasts />
       <SystemDialog />
       <InspectCard />
       <CvModal />
+      <BusinessCard />
       <Palette />
       {mapOpen && <HoloMap />}
       <Boot />

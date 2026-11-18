@@ -89,6 +89,8 @@ interface WorldState {
   caseFile: CaseFile | null;
   /** the one-minute brief, brought forward instead of a sector or a case */
   brief: boolean;
+  /** my GitHub activity, brought forward like the brief */
+  github: boolean;
   inspect: InspectTarget | null;
   /**
    * the project on display in the sky (its id): set when one is opened,
@@ -97,6 +99,8 @@ interface WorldState {
    */
   chosen: string | null;
   cvOpen: boolean;
+  /** his business card is in the stranger's hand, over everything */
+  cardOpen: boolean;
   /** the holographic map, over everything */
   mapOpen: boolean;
   paletteOpen: boolean;
@@ -115,8 +119,6 @@ interface WorldState {
   inspected: string[];
   /** what the System proposed during this visit and how the visitor answered */
   offers: { declinedInARow: number; lastAt: number; log: Proposal[] };
-  /** persisted: the first-visit offer has been made */
-  greeted: boolean;
 
   setReady: () => void;
   setQuality: (q: Quality) => void;
@@ -125,10 +127,12 @@ interface WorldState {
   openSector: (sector: SectorId) => void;
   setCase: (file: CaseFile | null) => void;
   openBrief: () => void;
+  openGithub: () => void;
   /** close the sector window and the case, back to the open sky */
   closeFocus: () => void;
   setInspect: (target: InspectTarget | null) => void;
   setCvOpen: (open: boolean) => void;
+  setCardOpen: (open: boolean) => void;
   setMapOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   setHovered: (key: string | null) => void;
@@ -139,7 +143,6 @@ interface WorldState {
   answer: (accepted: boolean) => void;
   /** closes the prompt without an answer */
   ignore: () => void;
-  setGreeted: () => void;
   /** the System proposed something */
   raiseOffer: (key: string) => void;
   /** the visitor accepted, refused or ignored the proposal that was waiting */
@@ -162,7 +165,9 @@ export const useWorldStore = create<WorldState>()(
       inspect: null,
       chosen: null,
       brief: false,
+      github: false,
       cvOpen: false,
+      cardOpen: false,
       mapOpen: false,
       paletteOpen: false,
       hovered: null,
@@ -175,7 +180,6 @@ export const useWorldStore = create<WorldState>()(
       prompt: null,
       inspected: [],
       offers: { declinedInARow: 0, lastAt: 0, log: [] },
-      greeted: false,
 
       setReady: () => set({ ready: true }),
       setQuality: (quality) => set({ quality }),
@@ -184,19 +188,23 @@ export const useWorldStore = create<WorldState>()(
 
       openSector: (sector) => {
         if (get().sector === sector && !get().caseFile) return;
-        set({ sector, caseFile: null, brief: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
+        set({ sector, caseFile: null, brief: false, github: false, inspect: null, paletteOpen: false, chosen: sector === "projects" ? get().chosen : null });
         pulse(`sector:${sector}`);
         if (!get().visited.includes(sector)) set({ visited: [...get().visited, sector] });
       },
       setCase: (caseFile) => {
-        set(caseFile ? { caseFile, sector: null, brief: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
+        set(caseFile ? { caseFile, sector: null, brief: false, github: false, inspect: null, paletteOpen: false, chosen: null } : { caseFile: null });
         caseFile?.evidence.forEach((e, i) => setTimeout(() => pulse(`${e.kind}:${e.id}`), i * 140));
       },
       openBrief: () => {
-        set({ brief: true, briefRead: true, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
+        set({ brief: true, briefRead: true, github: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
         pulse("sector:status");
       },
-      closeFocus: () => set({ sector: null, caseFile: null, brief: false, inspect: null, chosen: null }),
+      openGithub: () => {
+        set({ github: true, brief: false, sector: null, caseFile: null, inspect: null, paletteOpen: false, chosen: null });
+        pulse("sector:projects");
+      },
+      closeFocus: () => set({ sector: null, caseFile: null, brief: false, github: false, inspect: null, chosen: null }),
 
       setInspect: (inspect) => {
         set(inspect?.kind === "quest" ? { inspect, chosen: inspect.id } : { inspect });
@@ -211,6 +219,7 @@ export const useWorldStore = create<WorldState>()(
       setCvOpen: (cvOpen) => {
         set(cvOpen ? { cvOpen, cvRead: true } : { cvOpen });
       },
+      setCardOpen: (cardOpen) => set(cardOpen ? { cardOpen, paletteOpen: false } : { cardOpen }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setHovered: (hovered) => {
         if (get().hovered !== hovered) set({ hovered });
@@ -237,7 +246,6 @@ export const useWorldStore = create<WorldState>()(
         set({ prompt: null });
         (prompt.onIgnore ?? (() => prompt.onAnswer?.(false)))();
       },
-      setGreeted: () => set({ greeted: true }),
       raiseOffer: (key) => set((s) => ({ offers: { ...s.offers, lastAt: Date.now(), log: [...s.offers.log.slice(-11), { key, outcome: "waiting" }] } })),
       settleOffer: (outcome) =>
         set((s) => ({
@@ -257,9 +265,9 @@ export const useWorldStore = create<WorldState>()(
       version: 2,
       // before version 2 the visitor had quests, XP and risen projects: keep only what was seen
       migrate: (old) => {
-        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality; greeted?: boolean };
+        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality };
         const done = o.completed ?? [];
-        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high", greeted: !!o.greeted };
+        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high" };
       },
       partialize: (s) => ({
         visited: s.visited,
@@ -267,7 +275,6 @@ export const useWorldStore = create<WorldState>()(
         cvRead: s.cvRead,
         muted: s.muted,
         quality: s.quality,
-        greeted: s.greeted,
       }),
     },
   ),

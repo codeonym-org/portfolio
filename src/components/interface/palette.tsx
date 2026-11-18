@@ -11,6 +11,7 @@ import { sectorById, sectors, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { recordNodes } from "@/record/nodes";
+import { useHistory } from "@/store/history-store";
 import { compactArgs, useSession } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
 
@@ -33,14 +34,15 @@ function runCommand(name: string, args: Record<string, unknown> = {}) {
 }
 
 const ACTIONS: { label: string; sub: string; search: string; name: string; args?: Record<string, unknown> }[] = [
+  { label: "Take his business card", sub: "show_business_card()", search: "business card contact reach vcard", name: "show_business_card" },
   { label: "Open the CV", sub: "open_cv()", search: "cv resume license pdf", name: "open_cv" },
   { label: "Download the CV", sub: "download_cv()", search: "cv resume download pdf", name: "download_cv" },
   { label: "Copy the email address", sub: 'copy_contact(channel: "email")', search: "email copy contact", name: "copy_contact", args: { channel: "email" } },
   { label: "Save a picture of the Monolith", sub: "capture_snapshot()", search: "snapshot screenshot picture photo", name: "capture_snapshot" },
-  { label: "Cast: shockwave", sub: 'cast_effect(effect: "shockwave")', search: "effect shockwave pulse", name: "cast_effect", args: { effect: "shockwave" } },
   { label: "The one-minute brief", sub: "open_brief()", search: "brief summary overview short quick recruiter hiring tldr", name: "open_brief" },
+  { label: "My GitHub, live", sub: "open_github()", search: "github contributions commits activity streak calendar open source code languages", name: "open_github" },
   { label: "The holographic map", sub: "open_map()", search: "map globe hologram where location based city oujda morocco time zone", name: "open_map" },
-  { label: "Gates — every way into the record", sub: "open_gates()", search: "gates realm worlds planets tiers first light erebus", name: "open_gates" },
+  { label: "The interview — talk to my avatar", sub: "open_interview()", search: "interview avatar face talk voice hr", name: "open_interview" },
   { label: "Back to orbit", sub: "close_windows()", search: "close home orbit reset view", name: "close_windows" },
 ];
 
@@ -64,6 +66,15 @@ function buildEntries(): Entry[] {
       search: `${a.label} ${a.search}`.toLowerCase(),
       run: () => runCommand(a.name, a.args),
     })),
+    {
+      id: "action:new-conversation",
+      label: "Start a new conversation",
+      sub: "on the interview, each one is kept seven days",
+      group: "Commands",
+      color: toneColor.system,
+      search: "start a new conversation fresh reset clear chat history thread again",
+      run: () => useHistory.getState().fresh(),
+    },
     ...recordNodes
       .filter((n) => n.kind !== "player")
       .map((n) => ({
