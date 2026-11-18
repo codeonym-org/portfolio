@@ -60,7 +60,7 @@ function Level() {
   return (
     <span ref={bars} className="inline-flex h-4 items-center gap-[2px]" aria-hidden>
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className="w-[2px] bg-arcane-hot" />
+        <span key={i} className="w-[2px] bg-violet-hot" />
       ))}
     </span>
   );
@@ -83,7 +83,7 @@ function Transcript({ turns }: { turns: Turn[] }) {
       {turns.map((t) =>
         t.role === "visitor" ? (
           <p key={t.id} className="font-mono text-xs text-muted-foreground">
-            <span className="text-arcane-hot">{t.voice ? "voice ›" : "you ›"}</span> {t.text}
+            <span className="text-violet-hot">{t.voice ? "voice ›" : "you ›"}</span> {t.text}
           </p>
         ) : (
           <div key={t.id} className="space-y-2 border-l border-white/10 pl-3 text-sm leading-relaxed text-foreground/85">
@@ -98,7 +98,7 @@ function Transcript({ turns }: { turns: Turn[] }) {
 
 /**
  * The only fixed control on screen. Whatever is typed (or said) here
- * goes to THE SYSTEM; its answer is set above the prompt in its own
+ * goes to the agent; its answer is set above the prompt in its own
  * voice — the latest exchange only, the transcript is one click away —
  * while the sky rearranges behind it.
  */
@@ -218,7 +218,7 @@ export function Console() {
           ref={words}
           tabIndex={overflowing ? 0 : undefined}
           role={overflowing ? "region" : undefined}
-          aria-label={overflowing ? "The System's answer (scrolls)" : undefined}
+          aria-label={overflowing ? "The agent's answer (scrolls)" : undefined}
           className={cn(
             "fade-top answer-scroll max-h-[38dvh] space-y-3 overflow-y-auto overscroll-contain pt-8 pr-2 focus-visible:outline-none",
             overflowing && "pointer-events-auto",
@@ -227,11 +227,11 @@ export function Console() {
         >
           {question && (
             <p className="font-mono text-xs text-muted-foreground">
-              <span className="text-arcane-hot">{speaking ? "voice ›" : lastVisitor?.voice ? "voice ›" : "you ›"}</span> {question}
+              <span className="text-violet-hot">{speaking ? "voice ›" : lastVisitor?.voice ? "voice ›" : "you ›"}</span> {question}
             </p>
           )}
           {status && (
-            <p className={cn("eyebrow flex items-center gap-2 text-arcane-hot", !touch && !focused && "justify-center")}>
+            <p className={cn("eyebrow flex items-center gap-2 text-violet-hot", !touch && !focused && "justify-center")}>
               {speaking ? <Level /> : <span className="spinner" />} {status}
             </p>
           )}

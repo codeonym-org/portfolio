@@ -1,7 +1,7 @@
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { inventoryItems } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { documents } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { skillCategories, skills } from "@/config/skills.config";
 import { sectors, world } from "@/config/world.config";
 import type { CaseFile } from "@/record/case-file";
@@ -25,14 +25,14 @@ function defaultCase(): CaseFile {
     .filter((s) => job.has(s.category))
     .sort((a, b) => b.mastery - a.mastery)
     .slice(0, 2);
-  const main = quests.filter((q) => q.type === "main");
+  const main = projects.filter((q) => q.type === "work");
   return {
-    title: `The record of ${player.handle}`,
-    thesis: player.profile[0],
+    title: `The record of ${owner.handle}`,
+    thesis: owner.profile[0],
     evidence: [
-      ...main.map((q) => ({ kind: "quest" as const, id: q.id, why: q.summary })),
-      { kind: "experience" as const, id: chronicle[0].id, why: `${chronicle[0].role} at ${chronicle[0].organization}, ${chronicle[0].period}.` },
-      ...top.map((s) => ({ kind: "skill" as const, id: s.id, why: s.lore })),
+      ...main.map((q) => ({ kind: "project" as const, id: q.id, why: q.summary })),
+      { kind: "experience" as const, id: timeline[0].id, why: `${timeline[0].role} at ${timeline[0].organization}, ${timeline[0].period}.` },
+      ...top.map((s) => ({ kind: "skill" as const, id: s.id, why: s.about })),
       { kind: "education" as const, id: achievements[0].id, why: `${achievements[0].title} — ${achievements[0].issuer}, ${achievements[0].period}.` },
     ].map((e) => ({ ...e, why: e.why.length > 220 ? `${e.why.slice(0, 217)}…` : e.why })),
     verdict: "Assembled by the local index from the record as written — no model weighed it. Ask again when the link is up for a case argued to your question.",
@@ -42,11 +42,11 @@ function defaultCase(): CaseFile {
 let index: BrainIndex | null = null;
 function brainIndex(): BrainIndex {
   index ??= {
-    player: { name: player.firstName, title: player.title, job: player.job, guild: player.guild, location: player.location, creed: player.creed },
+    owner: { name: owner.firstName, title: owner.title, job: owner.job, organization: owner.organization, location: owner.location, motto: owner.motto },
     sectors: sectors.map(({ id, name, section }) => ({ id, name, section })),
-    quests: quests.map((q) => ({ id: q.id, name: q.name, summary: q.summary, stack: q.rewards })),
+    projects: projects.map((q) => ({ id: q.id, name: q.name, summary: q.summary, stack: q.stack })),
     skills: skills.map(({ id, name }) => ({ id, name })),
-    items: inventoryItems.map(({ id, name }) => ({ id, name })),
+    items: documents.map(({ id, name }) => ({ id, name })),
     defaultCase: defaultCase(),
   };
   return index;

@@ -1,9 +1,9 @@
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { inventoryItems } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { documents } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { skillCategories, skills } from "@/config/skills.config";
-import type { InspectTarget, Rarity, SectorId } from "@/config/types";
+import type { InspectTarget, Emphasis, SectorId } from "@/config/types";
 import { seeded, type Orbit } from "./layout";
 
 /**
@@ -13,10 +13,10 @@ import { seeded, type Orbit } from "./layout";
  * a node's `key` is `<kind>:<id>` everywhere.
  */
 
-export type NodeKind = "player" | "title" | "experience" | "education" | "quest" | "skill" | "item" | "channel";
+export type NodeKind = "owner" | "title" | "experience" | "education" | "project" | "skill" | "document" | "channel";
 
 /** what a shard glows with */
-export type NodeHue = "gold" | "arcane" | "system" | "ember" | "bone";
+export type NodeHue = "gold" | "violet" | "system" | "ember" | "bone";
 
 export interface RecordNode {
   key: string;
@@ -35,7 +35,7 @@ export interface RecordNode {
   search: string;
 }
 
-const rarityHue: Record<Rarity, NodeHue> = { legendary: "gold", epic: "arcane", rare: "system", common: "bone" };
+const emphasisHue: Record<Emphasis, NodeHue> = { highlight: "gold", strong: "violet", standard: "system", quiet: "bone" };
 const TAU = Math.PI * 2;
 
 function ring(count: number, base: Omit<Orbit, "phase">, spread = TAU) {
@@ -49,56 +49,56 @@ function build(): RecordNode[] {
 
   // ── Ayoub: a crown above the Monolith, his titles around it ──
   add({
-    kind: "player",
-    id: "player",
-    sector: "status",
-    label: player.name,
-    sub: player.title,
-    shape: "status",
+    kind: "owner",
+    id: "owner",
+    sector: "profile",
+    label: owner.name,
+    sub: owner.title,
+    shape: "profile",
     size: 0.62,
     hue: "gold",
     orbit: { radius: 0, y: 3.35, incline: 0, roll: 0, speed: 0, phase: 0 },
-    search: `${player.handle} ${player.job} profile status who`,
+    search: `${owner.handle} ${owner.job} profile status who`,
   });
-  const titleOrbit = ring(player.titles.length, { radius: 1.25, y: 3.35, incline: 0.32, roll: 0.1, speed: 0.22 });
-  player.titles.forEach((t, i) =>
-    add({ kind: "title", id: t.id, sector: "status", label: t.name, sub: "TITLE", shape: "status", size: 0.2, hue: "gold", orbit: titleOrbit(i), search: t.description }),
+  const titleOrbit = ring(owner.titles.length, { radius: 1.25, y: 3.35, incline: 0.32, roll: 0.1, speed: 0.22 });
+  owner.titles.forEach((t, i) =>
+    add({ kind: "title", id: t.id, sector: "profile", label: t.name, sub: "TITLE", shape: "profile", size: 0.2, hue: "gold", orbit: titleOrbit(i), search: t.description }),
   );
 
-  // ── the chronicle ──
-  const chapters = chronicle.length + achievements.length;
+  // ── the timeline ──
+  const chapters = timeline.length + achievements.length;
   const chapterOrbit = ring(chapters, { radius: 3.3, y: 0.3, incline: 0.52, roll: 0.22, speed: 0.085 });
-  chronicle.forEach((c, i) =>
+  timeline.forEach((c, i) =>
     add({ kind: "experience", id: c.id, sector: "experience", label: c.role, sub: c.period, shape: "experience", size: 0.5, hue: "system", orbit: chapterOrbit(i), search: `${c.organization} ${c.highlights.join(" ")}` }),
   );
   achievements.forEach((a, i) =>
-    add({ kind: "education", id: a.id, sector: "experience", label: a.title, sub: a.period, shape: "experience", size: 0.36, hue: "bone", orbit: chapterOrbit(chronicle.length + i), search: a.issuer }),
+    add({ kind: "education", id: a.id, sector: "experience", label: a.title, sub: a.period, shape: "experience", size: 0.36, hue: "bone", orbit: chapterOrbit(timeline.length + i), search: a.issuer }),
   );
 
   // ── the projects: the widest blades in the sky ──
-  const questOrbit = ring(quests.length, { radius: 4.85, y: 0, incline: 0.17, roll: -0.13, speed: 0.06 });
-  quests.forEach((q, i) =>
+  const projectOrbit = ring(projects.length, { radius: 4.85, y: 0, incline: 0.17, roll: -0.13, speed: 0.06 });
+  projects.forEach((q, i) =>
     add({
-      kind: "quest",
+      kind: "project",
       id: q.id,
       sector: "projects",
       label: q.name,
-      sub: `RANK ${q.rank} · ${q.status.toUpperCase()}`,
+      sub: `${q.tier === "flagship" ? "FLAGSHIP · " : ""}${(q.stage ?? q.status).toUpperCase()}`,
       shape: "projects",
-      size: q.rank === "S" ? 0.78 : q.rank === "A" ? 0.62 : 0.52,
-      hue: q.rank === "S" ? "gold" : "arcane",
-      orbit: questOrbit(i),
-      search: `${q.summary} ${q.rewards.join(" ")} project`,
+      size: q.tier === "flagship" ? 0.78 : q.tier === "major" ? 0.62 : 0.52,
+      hue: q.tier === "flagship" ? "gold" : "violet",
+      orbit: projectOrbit(i),
+      search: `${q.summary} ${q.stack.join(" ")} project`,
     }),
   );
 
-  // ── the vault ──
-  const itemOrbit = ring(inventoryItems.length, { radius: 6.15, y: -0.25, incline: -0.36, roll: 0.08, speed: 0.045 });
-  inventoryItems.forEach((item, i) =>
-    add({ kind: "item", id: item.id, sector: "inventory", label: item.name, sub: item.meta, shape: "inventory", size: 0.34, hue: rarityHue[item.rarity], orbit: itemOrbit(i), search: `${item.lore} ${(item.tags ?? []).join(" ")}` }),
+  // ── documents ──
+  const itemOrbit = ring(documents.length, { radius: 6.15, y: -0.25, incline: -0.36, roll: 0.08, speed: 0.045 });
+  documents.forEach((item, i) =>
+    add({ kind: "document", id: item.id, sector: "documents", label: item.name, sub: item.meta, shape: "documents", size: 0.34, hue: emphasisHue[item.emphasis], orbit: itemOrbit(i), search: `${item.about} ${(item.tags ?? []).join(" ")}` }),
   );
 
-  // ── the arsenal: a belt of slivers, one cluster per category ──
+  // ── skills: a belt of slivers, one cluster per category ──
   const gap = 0.16;
   const arc = (TAU - gap * skillCategories.length) / skills.length;
   let cursor = 0;
@@ -113,9 +113,9 @@ function build(): RecordNode[] {
         sub: cat.name,
         shape: "skills",
         size: 0.2 + (s.mastery - 70) * 0.004,
-        hue: rarityHue[s.rarity],
+        hue: emphasisHue[s.emphasis],
         orbit: { radius: 7.6 + seeded(n, 1) * 1.1, y: (seeded(n, 2) - 0.5) * 1.1, incline: 0.07, roll: -0.04, speed: 0.032, phase: cursor },
-        search: `${s.lore} ${(s.tags ?? []).join(" ")} ${cat.name}`,
+        search: `${s.about} ${(s.tags ?? []).join(" ")} ${cat.name}`,
       });
       cursor += arc;
       n++;
@@ -125,14 +125,14 @@ function build(): RecordNode[] {
 
   // ── the gate ──
   const channels = [
-    { id: "email", label: "Email", sub: player.links.email },
-    { id: "phone", label: "Phone", sub: player.links.phone },
-    { id: "linkedin", label: "LinkedIn", sub: player.links.linkedin.replace(/^https?:\/\/(www\.)?/, "") },
-    { id: "github", label: "GitHub", sub: player.links.github.replace(/^https?:\/\//, "") },
+    { id: "email", label: "Email", sub: owner.links.email },
+    { id: "phone", label: "Phone", sub: owner.links.phone },
+    { id: "linkedin", label: "LinkedIn", sub: owner.links.linkedin.replace(/^https?:\/\/(www\.)?/, "") },
+    { id: "github", label: "GitHub", sub: owner.links.github.replace(/^https?:\/\//, "") },
   ];
   const gateOrbit = ring(channels.length, { radius: 3.85, y: -2.55, incline: 0, roll: 0, speed: -0.08 });
   channels.forEach((c, i) =>
-    add({ kind: "channel", id: c.id, sector: "contact", label: c.label, sub: c.sub, shape: "contact", size: 0.5, hue: "arcane", orbit: gateOrbit(i), search: "contact reach hire" }),
+    add({ kind: "channel", id: c.id, sector: "contact", label: c.label, sub: c.sub, shape: "contact", size: 0.5, hue: "violet", orbit: gateOrbit(i), search: "contact reach hire" }),
   );
 
   return nodes;
@@ -149,7 +149,7 @@ export function nodesOfSector(sector: SectorId) {
 
 /** the detail card a shard opens, if it has one — the rest open their sector */
 export function inspectTargetOf(node: RecordNode): InspectTarget | null {
-  return node.kind === "quest" || node.kind === "skill" || node.kind === "item" ? { kind: node.kind, id: node.id } : null;
+  return node.kind === "project" || node.kind === "skill" || node.kind === "document" ? { kind: node.kind, id: node.id } : null;
 }
 
 /** projects leave the outer ring and bind to the Monolith on a tight, steep orbit */

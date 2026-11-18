@@ -2,23 +2,24 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { Download, ExternalLink, X } from "lucide-react";
-import { findItem, inventoryCategories } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { findGuild } from "@/config/guilds.config";
+import { ProjectGlyph } from "./project-glyph";
+import { findItem, documentCategories } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { findOrganization } from "@/config/organizations.config";
 import { LiveRepo } from "./live-repo";
-import { quests } from "@/config/quests.config";
+import { projects } from "@/config/projects.config";
 import { findSkill, skillCategories } from "@/config/skills.config";
-import type { InspectTarget, Rarity } from "@/config/types";
+import type { InspectTarget, Emphasis } from "@/config/types";
 import { sectorById } from "@/config/world.config";
 import { play } from "@/lib/audio";
-import { masteryGrade, rarityBar, rarityText, rarityTile } from "@/lib/rarity";
+import { masteryLevel, emphasisBar, emphasisText, emphasisTile } from "@/lib/emphasis";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
 
 const CV_URL = "/cv.pdf";
 const SEGMENTS = 20;
 
-function Mastery({ mastery, rarity }: { mastery: number; rarity: Rarity }) {
+function Mastery({ mastery, emphasis }: { mastery: number; emphasis: Emphasis }) {
   const filled = Math.round((mastery / 100) * SEGMENTS);
   return (
     <div className="flex items-center gap-2">
@@ -30,7 +31,7 @@ function Mastery({ mastery, rarity }: { mastery: number; rarity: Rarity }) {
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
             transition={{ delay: 0.15 + i * 0.02 }}
-            className={cn("h-2 flex-1 skew-x-[-14deg]", i < filled ? rarityBar[rarity] : "bg-white/8")}
+            className={cn("h-2 flex-1 skew-x-[-14deg]", i < filled ? emphasisBar[emphasis] : "bg-white/8")}
           />
         ))}
       </div>
@@ -63,18 +64,18 @@ export function InspectBody({ target }: { target: InspectTarget }) {
     const cat = skillCategories.find((c) => c.id === skill.category);
     return (
       <>
-        <Header icon={<skill.icon className="size-8" strokeWidth={1.4} />} rarity={skill.rarity} kind="SKILL" title={skill.name} sub={`${cat?.name ?? ""} · GRADE ${masteryGrade(skill.mastery)}`} />
-        <Mastery mastery={skill.mastery} rarity={skill.rarity} />
-        <p className="text-[15px] leading-relaxed text-foreground/85 ">{skill.lore}</p>
+        <Header icon={<skill.icon className="size-8" strokeWidth={1.4} />} emphasis={skill.emphasis} kind="SKILL" title={skill.name} sub={`${cat?.name ?? ""} · GRADE ${masteryLevel(skill.mastery)}`} />
+        <Mastery mastery={skill.mastery} emphasis={skill.emphasis} />
+        <p className="text-[15px] leading-relaxed text-foreground/85 ">{skill.about}</p>
         <Tags tags={skill.tags} />
       </>
     );
   }
 
-  if (target.kind === "item") {
+  if (target.kind === "document") {
     const item = findItem(target.id);
     if (!item) return null;
-    const cat = inventoryCategories.find((c) => c.id === item.category);
+    const cat = documentCategories.find((c) => c.id === item.category);
     const use = () => {
       play("confirm");
       if (item.unlocks === "cv") return setCvOpen(true);
@@ -87,8 +88,8 @@ export function InspectBody({ target }: { target: InspectTarget }) {
     const usable = item.unlocks || item.link;
     return (
       <>
-        <Header icon={<item.icon className="size-8" strokeWidth={1.4} />} rarity={item.rarity} kind={cat?.name ?? "ITEM"} title={item.name} sub={item.meta} />
-        <p className="text-[15px] leading-relaxed text-foreground/85 ">{item.lore}</p>
+        <Header icon={<item.icon className="size-8" strokeWidth={1.4} />} emphasis={item.emphasis} kind={cat?.name ?? "ITEM"} title={item.name} sub={item.meta} />
+        <p className="text-[15px] leading-relaxed text-foreground/85 ">{item.about}</p>
         <Tags tags={item.tags} />
         {usable && (
           <button type="button" data-active="true" onClick={use} className="hud-chip w-full py-3 font-display text-[11px] tracking-[0.3em]">
@@ -100,35 +101,35 @@ export function InspectBody({ target }: { target: InspectTarget }) {
     );
   }
 
-  const quest = quests.find((q) => q.id === target.id);
-  if (!quest) return null;
+  const project = projects.find((q) => q.id === target.id);
+  if (!project) return null;
   return (
     <>
       <Header
-        icon={<span className="font-display text-2xl">{quest.rank}</span>}
-        rarity={quest.rank === "S" ? "legendary" : quest.rank === "A" ? "epic" : "rare"}
-        kind={`${quest.type === "main" ? "WORK" : "PERSONAL"} PROJECT · ${(quest.stage ?? (quest.status === "ongoing" ? "ongoing" : "delivered")).toUpperCase()}`}
-        title={quest.name}
-        sub={[findGuild(quest.guild)?.name, quest.period].filter(Boolean).join(" · ")}
+        icon={<ProjectGlyph project={project} className="size-7" />}
+        emphasis={project.tier === "flagship" ? "highlight" : project.tier === "major" ? "strong" : "standard"}
+        kind={`${project.type === "work" ? "WORK" : "PERSONAL"} PROJECT · ${(project.stage ?? (project.status === "ongoing" ? "ongoing" : "delivered")).toUpperCase()}`}
+        title={project.name}
+        sub={[findOrganization(project.organization)?.name, project.period].filter(Boolean).join(" · ")}
       />
-      <p className="text-[15px] leading-relaxed text-foreground/85">{quest.summary}</p>
+      <p className="text-[15px] leading-relaxed text-foreground/85">{project.summary}</p>
       <ul className="space-y-1 text-sm text-foreground/80">
-        {quest.details.map((d) => (
+        {project.details.map((d) => (
           <li key={d} className="flex gap-2">
-            <span className="mt-2 size-1 shrink-0 rotate-45 bg-arcane-hot" />
+            <span className="mt-2 size-1 shrink-0 rotate-45 bg-violet-hot" />
             {d}
           </li>
         ))}
       </ul>
-      <Tags tags={quest.rewards} />
-      {quest.type === "side" && <LiveRepo id={quest.id} />}
-      {quest.link && (
-        <a href={quest.link} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
+      <Tags tags={project.stack} />
+      {project.type === "personal" && <LiveRepo id={project.id} />}
+      {project.link && (
+        <a href={project.link} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
           <ExternalLink className="size-4" /> View source
         </a>
       )}
-      {quest.docs && (
-        <a href={quest.docs} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
+      {project.docs && (
+        <a href={project.docs} target="_blank" rel="noreferrer" className="hud-chip w-full py-2.5 text-sm">
           <ExternalLink className="size-4" /> Read the docs
         </a>
       )}
@@ -136,12 +137,12 @@ export function InspectBody({ target }: { target: InspectTarget }) {
   );
 }
 
-function Header({ icon, rarity, kind, title, sub }: { icon: React.ReactNode; rarity: Rarity; kind: string; title: string; sub?: string }) {
+function Header({ icon, emphasis, kind, title, sub }: { icon: React.ReactNode; emphasis: Emphasis; kind: string; title: string; sub?: string }) {
   return (
     <div className="flex items-start gap-4">
-      <span className={cn("grid size-16 shrink-0 place-items-center border", rarityTile[rarity])}>{icon}</span>
+      <span className={cn("grid size-16 shrink-0 place-items-center border", emphasisTile[emphasis])}>{icon}</span>
       <div className="min-w-0 flex-1 pr-8">
-        <p className={cn("font-display text-[9px] tracking-[0.3em] uppercase", rarityText[rarity])}>
+        <p className={cn("font-display text-[9px] tracking-[0.3em] uppercase", emphasisText[emphasis])}>
           ◆ {kind}
         </p>
         <h3 className="mt-1 text-xl leading-tight font-bold text-white">{title}</h3>
@@ -151,7 +152,7 @@ function Header({ icon, rarity, kind, title, sub }: { icon: React.ReactNode; rar
   );
 }
 
-/** game-style detail card for a skill, item or quest */
+/** game-style detail card for a skill, item or project */
 export function InspectCard() {
   const target = useWorldStore((s) => s.inspect);
   const setInspect = useWorldStore((s) => s.setInspect);
@@ -211,10 +212,10 @@ export function CvModal() {
             exit={{ y: 30, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <header className="flex items-center gap-3 border-b border-arcane/20 px-5 py-3">
+            <header className="flex items-center gap-3 border-b border-violet/20 px-5 py-3">
               <div className="min-w-0 flex-1">
-                <p className="font-display text-[9px] tracking-[0.35em] text-rank-s">CURRICULUM VITAE</p>
-                <p className="truncate font-semibold text-white">{player.name} — {player.job}</p>
+                <p className="font-display text-[9px] tracking-[0.35em] text-gold">CURRICULUM VITAE</p>
+                <p className="truncate font-semibold text-white">{owner.name} — {owner.job}</p>
               </div>
               <a href={CV_URL} download="bouarour-ayoub-cv.pdf" className="hud-chip px-3 py-2 text-sm">
                 <Download className="size-4" /> <span className="hidden sm:inline">Download</span>

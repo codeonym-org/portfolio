@@ -63,7 +63,7 @@ export default function PlainRecord() {
       {plainSections.map((section, n) => (
         <section key={section.id} id={section.id} className="mt-16 scroll-mt-8">
           <h2 className="flex items-baseline gap-4 border-b border-white/10 pb-3">
-            <span className="font-mono text-[11px] text-arcane-hot">{String(n + 1).padStart(2, "0")}</span>
+            <span className="font-mono text-[11px] text-violet-hot">{String(n + 1).padStart(2, "0")}</span>
             <span className="font-serif text-3xl">{section.title}</span>
           </h2>
           {section.note && <p className="mt-3 text-sm text-muted-foreground">{section.note}</p>}
@@ -78,7 +78,7 @@ export default function PlainRecord() {
                 {e.points && e.points.length > 0 && (
                   <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-foreground/70">
                     {e.points.map((p) => (
-                      <li key={p} className="relative pl-5 before:absolute before:left-0 before:text-arcane-hot before:content-['—']">
+                      <li key={p} className="relative pl-5 before:absolute before:left-0 before:text-violet-hot before:content-['—']">
                         {p}
                       </li>
                     ))}

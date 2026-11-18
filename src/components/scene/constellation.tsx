@@ -4,14 +4,14 @@ import { useMemo, useRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Html, useGLTF } from "@react-three/drei";
 import { type BufferGeometry, Color, type Group, type Mesh, MeshStandardMaterial } from "three";
-import { quests } from "@/config/quests.config";
+import { projects } from "@/config/projects.config";
 import type { SectorId } from "@/config/types";
 import { sectorById, sectors } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { nodeKeyOf } from "@/record/case-file";
 import { damp, haloPoints, orbitPoint, seeded, type Vec3 } from "@/record/layout";
 import { boundOrbit, inspectTargetOf, nodesOfSector, recordNodes, type RecordNode } from "@/record/nodes";
-import { live, useWorldStore } from "@/store/world-store";
+import { useWorldStore } from "@/store/world-store";
 import { COLORS, hueColor, toneColor, view } from "./view";
 
 export const SHARDS_URL = "/models/record/shards.glb";
@@ -52,7 +52,7 @@ const materials = recordNodes.map((n) => {
 
 /** the first shard of each sector carries the sector's beacon */
 const leaders = new Map<string, SectorId>(sectors.map((s) => [nodesOfSector(s.id)[0].key, s.id]));
-const questOrder = new Map(quests.map((q, i) => [q.id, i]));
+const projectOrder = new Map(projects.map((q, i) => [q.id, i]));
 
 type Side = "top" | "bottom" | "left" | "right";
 
@@ -155,7 +155,7 @@ export function Constellation() {
       const group = groups.current[i];
       if (!group) continue;
       const place = formation.get(node.key);
-      const isQuest = node.kind === "quest";
+      const isProject = node.kind === "project";
 
       let x: number, y: number, z: number;
       if (place) {
@@ -164,8 +164,8 @@ export function Constellation() {
         z = place[2];
       } else {
         // projects ride close to the Monolith; everything else keeps its sector's ring
-        const orbit = isQuest ? boundOrbit(questOrder.get(node.id) ?? 0) : node.orbit;
-        orbitPoint(orbit, t, scratch, isQuest ? Math.max(view.orbitScale, 0.8) : view.orbitScale);
+        const orbit = isProject ? boundOrbit(projectOrder.get(node.id) ?? 0) : node.orbit;
+        orbitPoint(orbit, t, scratch, isProject ? Math.max(view.orbitScale, 0.8) : view.orbitScale);
         x = scratch[0] * cos + scratch[2] * sin;
         y = scratch[1];
         z = -scratch[0] * sin + scratch[2] * cos;
@@ -181,7 +181,7 @@ export function Constellation() {
       let glow = 0.8;
       if (focused) glow = place ? 1.6 : glow * 0.3;
       // the project on display burns hottest of all (its aura is drawn by the Hologram)
-      const onDisplay = isQuest && state.chosen === node.id;
+      const onDisplay = isProject && state.chosen === node.id;
       if (onDisplay) glow = Math.max(glow, 2.4);
       if (state.hovered === node.key) glow = Math.max(glow * 1.6, 2.2);
       nodeFlash[i] *= Math.exp(-dt * 2.2);
@@ -201,7 +201,6 @@ export function Constellation() {
       mesh.rotation.x = damp(mesh.rotation.x, place ? 0 : (seeded(i, 12) - 0.5) * 0.9, 3, dt);
     }
 
-    if (live.shock > 0) live.shock = Math.max(0, live.shock - dt * 0.9);
   });
 
   const over = (node: RecordNode) => (e: ThreeEvent<PointerEvent>) => {
@@ -229,7 +228,7 @@ export function Constellation() {
         const place = formation.get(node.key);
         const beacon = !formation.size ? leaders.get(node.key) : undefined;
         // the project on display is named by its hologram's card, not a label
-        const onDisplay = node.kind === "quest" && chosen === node.id;
+        const onDisplay = node.kind === "project" && chosen === node.id;
         const labeled = !onDisplay && (hovered === node.key || (showFormationLabels && !!place));
         return (
           <group

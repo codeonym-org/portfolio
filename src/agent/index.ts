@@ -6,7 +6,7 @@
  *  write side — system-commands: zod tool registry, registered as
  *               CopilotKit v2 frontend tools in
  *               components/agent/system-tools.tsx
- *  server     — server/: THE SYSTEM, a LangChain `createAgent` with
+ *  server     — server/: the agent, a LangChain `createAgent` with
  *               CopilotKit state + middleware, run in-process behind
  *               the v2 runtime at app/api/copilotkit
  */

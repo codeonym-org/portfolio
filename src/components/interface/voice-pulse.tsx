@@ -7,11 +7,11 @@ import { live } from "@/store/world-store";
 
 /**
  * ── THE PULSE ─────────────────────────────────────────────────
- * While the voice link is live the System has a heartbeat on screen:
+ * While the voice link is live the agent has a heartbeat on screen:
  * a monitor line above the prompt, and the Monolith's heart beating
  * with it (`live.heart`, read by the scene). Listening follows the
  * visitor's microphone, thinking is a slow resting beat, speaking
- * follows the System's voice. Unmounted while the voice is idle, so
+ * follows the agent's voice. Unmounted while the voice is idle, so
  * it costs nothing then.
  */
 

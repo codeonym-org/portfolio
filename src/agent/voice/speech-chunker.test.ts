@@ -12,27 +12,27 @@ const feed = (deltas: string[]) => {
 
 test("emits each sentence as soon as it is complete", () => {
   const chunker = createSpeechChunker();
-  assert.deepEqual(chunker.push("The crypt holds his quests. The ar"), ["The crypt holds his quests."]);
+  assert.deepEqual(chunker.push("The section holds my projects. The ar"), ["The section holds my projects."]);
   assert.deepEqual(chunker.push("mory holds his skills! Anything"), ["The armory holds his skills!"]);
   assert.deepEqual(chunker.flush(), ["Anything"]);
 });
 
 test("streams token by token", () => {
-  const text = "Understood, Hunter. I have sent the order to the archive. It will report back shortly.";
+  const text = "Understood, sure. I have sent the order to the archive. It will report back shortly.";
   assert.deepEqual(feed([...text]), [
-    "Understood, Hunter.",
+    "Understood, sure.",
     "I have sent the order to the archive.",
     "It will report back shortly.",
   ]);
 });
 
 test("keeps short fragments with the next sentence", () => {
-  assert.deepEqual(feed(["Yes. ", "The Shadow Gate lists every channel."]), ["Yes. The Shadow Gate lists every channel."]);
+  assert.deepEqual(feed(["Yes. ", "The Contact section lists every channel."]), ["Yes. The Contact section lists every channel."]);
 });
 
 test("does not split decimals or common abbreviations", () => {
-  assert.deepEqual(feed(["Version 3.5 ships agents, e.g. the System itself. Done here."]), [
-    "Version 3.5 ships agents, e.g. the System itself.",
+  assert.deepEqual(feed(["Version 3.5 ships agents, e.g. the agent itself. Done here."]), [
+    "Version 3.5 ships agents, e.g. the agent itself.",
     "Done here.",
   ]);
 });
@@ -51,13 +51,13 @@ test("breaks a run-on sentence at a comma before it grows too long", () => {
 
 test("speakable strips markdown, links, brackets and emoji", () => {
   assert.equal(speakable("**Bold** and `code` — see [GitHub](https://github.com/x) 🚀"), "Bold and code — see GitHub");
-  assert.equal(speakable("[ QUEST ACCEPTED ] Walking now."), "QUEST ACCEPTED. Walking now.");
+  assert.equal(speakable("[ ON SCREEN ] Walking now."), "ON SCREEN. Walking now.");
   assert.equal(speakable("- first item"), "first item");
   assert.equal(speakable("### "), "");
 });
 
 test("speakable drops leaked model control tokens but keeps comparisons", () => {
-  assert.equal(speakable("Opening the crypt now, Hunter.<return"), "Opening the crypt now, Hunter.");
+  assert.equal(speakable("Opening the projects now, sure.<return"), "Opening the projects now, sure.");
   assert.equal(speakable("Done.<|return|>"), "Done.");
   assert.equal(speakable("Rank A < rank S."), "Rank A < rank S.");
 });
@@ -69,7 +69,7 @@ test("drops chunks with nothing to say", () => {
 test("the first chunk breaks early at a comma so the voice starts sooner", () => {
   const chunker = createSpeechChunker();
   const first = chunker.push(
-    "Indeed, the flagship quest is the multi-agent pharmaceutical catalog, a system that automates extraction and decision support",
+    "Indeed, the flagship project is the multi-agent pharmaceutical catalog, a system that automates extraction and decision support",
   );
   assert.equal(first.length, 1);
   assert.match(first[0], /,$/);
@@ -79,9 +79,9 @@ test("the first chunk breaks early at a comma so the voice starts sooner", () =>
 });
 
 test("splits sentences glued together without a space", () => {
-  assert.deepEqual(feed(["Its details are in the crypt view.Hunter, the quest is summoned. Next up."]), [
-    "Its details are in the crypt view.",
-    "Hunter, the quest is summoned.",
+  assert.deepEqual(feed(["Its details are in the projects view.Then, the project is open. Next up."]), [
+    "Its details are in the projects view.",
+    "Then, the project is open.",
     "Next up.",
   ]);
   // but not initials or versions

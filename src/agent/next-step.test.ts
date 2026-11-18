@@ -17,7 +17,7 @@ test("what has been seen is not listed", () => {
     unseenSteps({ ...fresh, briefRead: true, sectors: ["projects"] }, index).map((s) => s.id),
     ["flagship", "experience", "skills", "cv", "contact"],
   );
-  assert.deepEqual(unseenSteps({ sectors: ["projects", "experience", "skills", "contact"], briefRead: true, cvRead: true, inspected: ["quest:pharma-mas"] }, index), []);
+  assert.deepEqual(unseenSteps({ sectors: ["projects", "experience", "skills", "contact"], briefRead: true, cvRead: true, inspected: ["project:pharma-mas"] }, index), []);
 });
 
 test("without a flagship the projects come after the brief", () => {
@@ -25,7 +25,7 @@ test("without a flagship the projects come after the brief", () => {
 });
 
 test("an offer's key is the action and its arguments, in any order", () => {
-  assert.equal(proposalKey("inspect_entity", { kind: "quest", id: "pharma-mas" }), proposalKey("inspect_entity", { id: "pharma-mas", kind: "quest" }));
+  assert.equal(proposalKey("inspect_entity", { kind: "project", id: "pharma-mas" }), proposalKey("inspect_entity", { id: "pharma-mas", kind: "project" }));
   assert.notEqual(proposalKey("open_sector", { sector: "skills" }), proposalKey("open_sector", { sector: "projects" }));
   assert.equal(proposalKey("open_brief"), "open_brief");
 });

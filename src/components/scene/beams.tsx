@@ -22,7 +22,7 @@ interface Beam {
 }
 
 /**
- * The System's reach, drawn: whenever it touches part of the record
+ * The agent's reach, drawn: whenever it touches part of the record
  * (a tool call, an inspection, a sector opening) a beam leaves the
  * Monolith for the shards involved. A case file keeps its evidence
  * tethered for as long as it is open.

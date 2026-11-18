@@ -14,7 +14,7 @@ export interface Seen {
   sectors: string[];
   briefRead: boolean;
   cvRead: boolean;
-  /** entity keys (`quest:<id>`) the stranger has inspected this visit */
+  /** entity keys (`project:<id>`) the stranger has inspected this visit */
   inspected: string[];
 }
 
@@ -40,7 +40,7 @@ export function unseenSteps(seen: Seen, index: StepIndex): Unseen[] {
   const sector = (id: string): Unseen | false => !opened(id) && { id, command: { name: "open_sector", args: { sector: id } } };
   const steps: (Unseen | false | undefined)[] = [
     !seen.briefRead && { id: "brief", command: { name: "open_brief", args: {} } },
-    index.flagship && !seen.inspected.includes(`quest:${index.flagship.id}`) && { id: "flagship", command: { name: "inspect_entity", args: { kind: "quest", id: index.flagship.id } } },
+    index.flagship && !seen.inspected.includes(`project:${index.flagship.id}`) && { id: "flagship", command: { name: "inspect_entity", args: { kind: "project", id: index.flagship.id } } },
     sector("projects"),
     sector("experience"),
     sector("skills"),

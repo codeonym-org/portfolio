@@ -17,7 +17,7 @@ interface VoiceState {
   phase: VoicePhase;
   /** what the visitor last said (transcript) */
   heard: string;
-  /** what the System is saying now (streams in) */
+  /** what the agent is saying now (streams in) */
   reply: string;
   tasks: readonly TaskRecord[];
   notice: string | null;
@@ -43,7 +43,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
   set: (patch) => set(patch),
 }));
 
-/** 0..1 loudness of whoever is talking — mic while listening, the System while speaking */
+/** 0..1 loudness of whoever is talking — mic while listening, the agent while speaking */
 export const voiceLive = { level: 0 };
 
 /** hold-to-talk entry points, registered by the orchestrator; `unlock` is called inside any press or key so later replies may play */

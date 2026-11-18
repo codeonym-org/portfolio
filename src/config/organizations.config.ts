@@ -1,14 +1,14 @@
-import type { Guild } from "./types";
+import type { Organization } from "./types";
 
 /**
  * ── ORGANISATIONS ─────────────────────────────────────────────
  * The organisations the owner works in, and the role held in each.
- * Every project names its organisation (`Quest.guild` = an id here), so a
+ * Every project names its organisation (`Project.organization` = an id here), so a
  * gate and the agent can group projects by organisation.
  * "Engineer" = employed there; "Founder" = founded and runs it.
- * (The identifiers still say guild and quest; what is shown does not.)
+ * (The identifiers still say organization and project; what is shown does not.)
  */
-export const guilds: Guild[] = [
+export const organizations: Organization[] = [
   {
     id: "opensnz",
     name: "OpenSNZ-Technology",
@@ -34,4 +34,4 @@ export const guilds: Guild[] = [
   },
 ];
 
-export const findGuild = (id: string) => guilds.find((g) => g.id === id);
+export const findOrganization = (id: string) => organizations.find((g) => g.id === id);

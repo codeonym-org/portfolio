@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text -- react-pdf's Image is drawn into the PDF and takes no alt */
 import { Circle, Defs, Document, Font, G, Image, LinearGradient, Link, Page, Path, RadialGradient, Rect, Stop, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { world } from "@/config/world.config";
 import type { Block, Exchange, Run, Transcript } from "./transcript";
 import { familyName } from "./vcard";
@@ -20,7 +20,7 @@ import { familyName } from "./vcard";
  * transcript is asked for.
  */
 
-const FULL_NAME = `${player.firstName} ${familyName(player.name, player.firstName)}`;
+const FULL_NAME = `${owner.firstName} ${familyName(owner.name, owner.firstName)}`;
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://portfolio.codeonym.work").replace(/\/$/, "");
 /** on the cover with the facts, or on a page of their own when there are many */
 const CONTENTS_ON_COVER = 11;
@@ -376,7 +376,7 @@ function ExchangeView({ e, first, face }: { e: Exchange; first: boolean; face: s
         <View style={s.answer}>
           <View style={s.by} wrap={false}>
             <Image src={face} style={s.byFace} />
-            <Text style={s.byText}>{player.firstName.toUpperCase()}</Text>
+            <Text style={s.byText}>{owner.firstName.toUpperCase()}</Text>
             {e.wait ? <Text style={s.byWait}>· answered in {e.wait}</Text> : null}
           </View>
           <View style={[s.said, e.answerRtl ? s.saidRtl : {}]}>
@@ -408,7 +408,7 @@ function ExchangeView({ e, first, face }: { e: Exchange; first: boolean; face: s
 
 const bare = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 const CV = `${SITE}/cv.pdf`;
-const { email, phone, linkedin, github } = player.links;
+const { email, phone, linkedin, github } = owner.links;
 
 /** on the cover, by my name: the CV, one click away */
 function CvLink() {
@@ -500,11 +500,11 @@ function CardFront({ base }: { base: string }) {
       <Image src={`${base}/transcript/card-front.jpg`} style={s.cardImg} />
       <View style={{ position: "absolute", top: 0, bottom: 0, left: 6 * u + 30 * u + 4 * u, justifyContent: "center" }}>
         <View>
-          <Text style={[s.carved, { position: "absolute", top: 0.2 * u, left: 0, color: "rgba(255,255,255,0.34)" }]}>{player.handle.toUpperCase()}</Text>
-          <Text style={s.carved}>{player.handle.toUpperCase()}</Text>
+          <Text style={[s.carved, { position: "absolute", top: 0.2 * u, left: 0, color: "rgba(255,255,255,0.34)" }]}>{owner.handle.toUpperCase()}</Text>
+          <Text style={s.carved}>{owner.handle.toUpperCase()}</Text>
         </View>
         <View style={[s.groove, { width: 30 * u, marginVertical: 2.4 * u }]} />
-        <Text style={s.foilTitle}>{player.title.toUpperCase()}</Text>
+        <Text style={s.foilTitle}>{owner.title.toUpperCase()}</Text>
       </View>
       <Link src={SITE} style={s.cardSite}>
         {bare(SITE).toUpperCase()}
@@ -520,7 +520,7 @@ function CardBack({ base }: { base: string }) {
     { label: "LINKEDIN", value: bare(linkedin), href: linkedin },
     { label: "GITHUB", value: bare(github), href: github },
     { label: "RECORD", value: bare(SITE), href: SITE },
-    { label: "BASED IN", value: player.location },
+    { label: "BASED IN", value: owner.location },
   ];
   return (
     <View style={s.card}>
@@ -528,7 +528,7 @@ function CardBack({ base }: { base: string }) {
       <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, paddingHorizontal: 5.5 * u, paddingVertical: 4.5 * u }}>
         <View style={{ maxWidth: 72 * u }}>
           <Text style={s.backName}>{FULL_NAME.toUpperCase()}</Text>
-          <Text style={s.backTitle}>{player.title.toUpperCase()}</Text>
+          <Text style={s.backTitle}>{owner.title.toUpperCase()}</Text>
         </View>
         <View style={[s.groove, { marginVertical: 3 * u }]} />
         <View style={s.lines}>
@@ -566,7 +566,7 @@ function LastPage({ base, footer }: { base: string; footer: ReactNode }) {
     { label: "INTERVIEW ME AGAIN", value: bare(`${SITE}/interview`), sub: "The room this conversation took place in", href: `${SITE}/interview` },
     { label: "THE RECORD", value: bare(`${SITE}/record`), sub: "My whole record on one plain page", href: `${SITE}/record` },
     { label: "EMAIL", value: email, sub: "The quickest way to reach me", href: `mailto:${email}` },
-    ...(phone ? [{ label: "PHONE", value: phone, sub: player.location, href: `tel:${phone.replace(/\s+/g, "")}` }] : []),
+    ...(phone ? [{ label: "PHONE", value: phone, sub: owner.location, href: `tel:${phone.replace(/\s+/g, "")}` }] : []),
     { label: "LINKEDIN", value: bare(linkedin), sub: "My professional profile", href: linkedin },
     { label: "GITHUB", value: bare(github), sub: "My code, in the open", href: github },
   ];
@@ -589,7 +589,7 @@ function LastPage({ base, footer }: { base: string; footer: ReactNode }) {
           </Link>
         </View>
         <Text style={s.sign}>{FULL_NAME}</Text>
-        <Text style={s.signRole}>{player.title.toUpperCase()}</Text>
+        <Text style={s.signRole}>{owner.title.toUpperCase()}</Text>
       </View>
 
       <View style={s.lastSheet}>
@@ -637,7 +637,7 @@ export function TranscriptDocument({ t, base }: { t: Transcript; base: string })
     <View style={s.head} fixed>
       <View style={s.headBrand}>
         <Image src={`${base}/transcript/mark.png`} style={s.mark} />
-        <Text style={[s.headText, { color: c.text }]}>{player.handle.toUpperCase()}</Text>
+        <Text style={[s.headText, { color: c.text }]}>{owner.handle.toUpperCase()}</Text>
       </View>
       <Text style={s.headText}>
         INTERVIEW TRANSCRIPT · {t.shortDate.toUpperCase()} · {t.reference}
@@ -655,10 +655,10 @@ export function TranscriptDocument({ t, base }: { t: Transcript; base: string })
     <Document
       title={`Interview with ${FULL_NAME} · ${t.shortDate}`}
       author={FULL_NAME}
-      subject={`Transcript of an interview with ${FULL_NAME}, ${player.title}: ${t.questions} questions, ${t.date}, ${t.started}–${t.ended}`}
-      keywords={`interview, transcript, ${player.title}, ${player.handle}, ${t.reference}`}
-      creator={`${player.handle} portfolio`}
-      producer={`${player.handle} portfolio`}
+      subject={`Transcript of an interview with ${FULL_NAME}, ${owner.title}: ${t.questions} questions, ${t.date}, ${t.started}–${t.ended}`}
+      keywords={`interview, transcript, ${owner.title}, ${owner.handle}, ${t.reference}`}
+      creator={`${owner.handle} portfolio`}
+      producer={`${owner.handle} portfolio`}
       language="en"
       pageMode="useOutlines"
     >
@@ -678,8 +678,8 @@ export function TranscriptDocument({ t, base }: { t: Transcript; base: string })
             <View style={s.who}>
               <Image src={face} style={s.face} />
               <View>
-                <Text style={s.role}>{player.title}</Text>
-                <Text style={s.place}>{player.location}</Text>
+                <Text style={s.role}>{owner.title}</Text>
+                <Text style={s.place}>{owner.location}</Text>
               </View>
             </View>
           </View>

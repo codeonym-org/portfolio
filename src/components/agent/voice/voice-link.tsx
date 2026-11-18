@@ -93,7 +93,7 @@ function outcome(messages: Message[]): string {
     .flatMap((m) => (m as { toolCalls?: ToolCall[] }).toolCalls ?? [])
     .map((c) => c.function.name)
     .filter((n, i, all) => all.indexOf(n) === i);
-  if (!said && !actions.length) throw new Error("The text System returned nothing.");
+  if (!said && !actions.length) throw new Error("The text agent returned nothing.");
   return [said, actions.length ? `(tools used: ${actions.join(", ")})` : ""].filter(Boolean).join(" ");
 }
 
@@ -203,7 +203,7 @@ export function VoiceLink() {
         const waitUntil = Date.now() + TEXT_BUSY_TIMEOUT_MS;
         // a visitor-typed chat turn may be running on the same agent — let it finish
         while (refs.current.text.isRunning) {
-          if (Date.now() > waitUntil) throw new Error("The text System stayed busy.");
+          if (Date.now() > waitUntil) throw new Error("The text agent stayed busy.");
           await new Promise((r) => setTimeout(r, 250));
         }
         const { text: agent, copilotkit: core } = refs.current;
@@ -286,7 +286,7 @@ export function VoiceLink() {
       if (!canRecord()) return void store({ notice: copy.unsupported });
       holding = true;
       const myTurn = ++turn;
-      // barge-in: the visitor talks over the System
+      // barge-in: the visitor talks over the agent
       speaker.stop();
       if (voiceRunning) refs.current.voice.abortRun();
       speaker.unlock();

@@ -103,7 +103,7 @@ const home = homeOutline(read(countries10).features, 0.01).filter((l) => l.lengt
 // ── the city's roads ──
 // Overpass returns a way whole, even when most of it is outside the box (a motorway runs for 100 km):
 // keep only what lies within REACH_KM of the base, which is what the plate shows.
-// BASE is the same point as `player.base` in src/config/player.config.ts.
+// BASE is the same point as `owner.base` in src/config/owner.config.ts.
 const BASE = { lon: -1.91, lat: 34.68 };
 const REACH_KM = 12.5;
 const near = (lon, lat) => Math.hypot((lon - BASE.lon) * Math.cos((BASE.lat * Math.PI) / 180), lat - BASE.lat) * 111.2 <= REACH_KM;

@@ -16,13 +16,10 @@
   --color-void: var(--void);
   --color-system: var(--system);
   --color-system-dim: var(--system-dim);
-  --color-arcane: var(--arcane);
-  --color-arcane-hot: var(--arcane-hot);
+  --color-violet: var(--violet);
+  --color-violet-hot: var(--violet-hot);
   --color-ember: var(--ember);
-  --color-gold: var(--rank-s);
-  --color-rank-s: var(--rank-s);
-  --color-rank-a: var(--rank-a);
-  --color-rank-b: var(--rank-b);
+  --color-gold: var(--gold);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -47,17 +44,15 @@
   --animate-aura-pulse: aura-pulse 5s ease-in-out infinite;
 }
 
-/* The System is dark by nature — a single dark theme. */
+/* The site is dark by nature — a single dark theme. */
 :root {
   --void: #05040b;
   --system: oklch(0.78 0.13 232);
   --system-dim: oklch(0.76 0.14 230 / 40%);
-  --arcane: oklch(0.62 0.22 295);
-  --arcane-hot: oklch(0.74 0.17 300);
+  --violet: oklch(0.62 0.22 295);
+  --violet-hot: oklch(0.74 0.17 300);
   --ember: oklch(0.7 0.19 40);
-  --rank-s: oklch(0.8 0.15 80);
-  --rank-a: oklch(0.62 0.22 295);
-  --rank-b: oklch(0.76 0.14 230);
+  --gold: oklch(0.8 0.15 80);
 
   --background: #05040b;
   --foreground: oklch(0.93 0.014 285);
@@ -67,7 +62,7 @@
   --card-foreground: oklch(0.94 0.012 280);
   --popover: oklch(0.13 0.03 290);
   --popover-foreground: oklch(0.94 0.012 280);
-  --primary: var(--arcane);
+  --primary: var(--violet);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.2 0.04 290);
   --secondary-foreground: oklch(0.94 0.012 280);
@@ -78,7 +73,7 @@
   --destructive: oklch(0.62 0.22 25);
   --border: oklch(0.62 0.22 295 / 26%);
   --input: oklch(0.62 0.22 295 / 20%);
-  --ring: var(--arcane);
+  --ring: var(--violet);
   --radius: 0.125rem;
 
   /* panel glass */
@@ -107,7 +102,7 @@
   ::selection {
     background: oklch(0.62 0.22 295 / 35%);
   }
-  /* thin arcane scrollbars inside panels */
+  /* thin violet scrollbars inside panels */
   * {
     scrollbar-width: thin;
     scrollbar-color: oklch(0.62 0.22 295 / 45%) transparent;
@@ -186,8 +181,8 @@
     width: 5px;
     height: 5px;
     transform: rotate(45deg);
-    background: var(--arcane-hot);
-    box-shadow: 0 0 10px var(--arcane-hot);
+    background: var(--violet-hot);
+    box-shadow: 0 0 10px var(--violet-hot);
   }
   .sys-heading::after {
     content: "";
@@ -197,12 +192,6 @@
   }
 
   /* ── controls: hairline rectangles, mono, quiet until touched ── */
-  @keyframes gate-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  }
   .hud-chip {
     position: relative;
     display: inline-flex;
@@ -232,7 +221,7 @@
   }
   .hud-chip[data-active="true"] {
     background: oklch(0.62 0.22 295 / 22%);
-    border-color: var(--arcane-hot);
+    border-color: var(--violet-hot);
     color: white;
     box-shadow: 0 0 24px -6px oklch(0.62 0.22 295 / 70%);
   }
@@ -299,7 +288,7 @@
     }
   }
   .hdr-tool:focus-visible {
-    box-shadow: 0 0 0 1px var(--arcane-hot);
+    box-shadow: 0 0 0 1px var(--violet-hot);
   }
   .hdr-tool:active {
     transform: scale(0.96);
@@ -639,7 +628,7 @@
     color: var(--muted-foreground);
   }
 
-  /* ── the System's voice: large, in the System font, never a chat bubble ── */
+  /* ── the agent's voice: large, in the display font, never a chat bubble ── */
   .oracle {
     font-family: var(--font-rajdhani), var(--font-geist), sans-serif;
     font-weight: 500;
@@ -659,7 +648,7 @@
     text-shadow: 0 0 22px oklch(0.74 0.17 300 / 70%);
   }
   .oracle em {
-    color: var(--arcane-hot);
+    color: var(--violet-hot);
   }
   .oracle code {
     font-family: var(--font-geist-mono);
@@ -688,8 +677,8 @@
     width: 0.45em;
     height: 0.08em;
     margin-left: 0.12em;
-    background: var(--arcane-hot);
-    box-shadow: 0 0 12px var(--arcane-hot);
+    background: var(--violet-hot);
+    box-shadow: 0 0 12px var(--violet-hot);
     animation: blink 0.9s step-end infinite;
   }
 
@@ -723,7 +712,7 @@
     right: 0;
     bottom: -1px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--arcane-hot), var(--system), transparent);
+    background: linear-gradient(90deg, transparent, var(--violet-hot), var(--system), transparent);
     background-size: 50% 100%;
     background-repeat: no-repeat;
     animation: sweep 1.3s linear infinite;
@@ -734,8 +723,8 @@
     height: 8px;
     flex: none;
     transform: rotate(45deg);
-    background: var(--arcane-hot);
-    box-shadow: 0 0 14px var(--arcane-hot);
+    background: var(--violet-hot);
+    box-shadow: 0 0 14px var(--violet-hot);
   }
   .prompt[data-running="true"] .prompt__mark {
     animation: aura-pulse 0.7s ease-in-out infinite;
@@ -759,8 +748,8 @@
     color: oklch(0.7 0.03 285 / 75%);
   }
   .trace-row[data-status="running"] .trace-row__name {
-    color: var(--arcane-hot);
-    text-shadow: 0 0 12px var(--arcane);
+    color: var(--violet-hot);
+    text-shadow: 0 0 12px var(--violet);
   }
   .trace-row[data-status="failed"] .trace-row__name {
     color: var(--ember);
@@ -769,7 +758,7 @@
     display: inline-block;
     width: 8px;
     height: 8px;
-    border: 1px solid var(--arcane-hot);
+    border: 1px solid var(--violet-hot);
     border-right-color: transparent;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
@@ -954,8 +943,8 @@
   .bar > span {
     position: absolute;
     inset: 0 auto 0 0;
-    background: linear-gradient(90deg, var(--arcane), var(--arcane-hot), var(--system));
-    box-shadow: 0 0 12px var(--arcane);
+    background: linear-gradient(90deg, var(--violet), var(--violet-hot), var(--system));
+    box-shadow: 0 0 12px var(--violet);
     transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .bar > span::after {
@@ -972,7 +961,7 @@
       0 0 8px oklch(0.76 0.14 230 / 60%),
       0 0 24px oklch(0.76 0.14 230 / 30%);
   }
-  .text-glow-arcane {
+  .text-glow-violet {
     text-shadow:
       0 0 10px oklch(0.62 0.22 295 / 70%),
       0 0 30px oklch(0.62 0.22 295 / 40%);
@@ -1000,13 +989,13 @@
     transform: translateX(-3px);
   }
   .glitch::after {
-    color: var(--arcane-hot);
+    color: var(--violet-hot);
     animation: glitch-slice 3.1s steps(2, end) infinite reverse;
     transform: translateX(3px);
   }
 
-  /* full-screen System interrupt frame (error / 404) */
-  /* ── the System window: every notice and prompt the System raises ── */
+  /* full-screen interrupt frame (error / 404) */
+  /* ── the dialog window: every notice and prompt the agent raises ── */
   @keyframes sys-open {
     from {
       opacity: 0;
@@ -1165,7 +1154,7 @@
     backdrop-filter: blur(10px);
   }
 
-  /* the sky dims toward the console, so the System's words always read */
+  /* the sky dims toward the console, so the agent's words always read */
   .scrim {
     position: fixed;
     inset: auto 0 0 0;
@@ -1175,7 +1164,7 @@
   }
 
   /* fade the top of a scroller into the sky */
-  /* behind the System's words: the scene dims where the text is, so neither prints over the other */
+  /* behind the agent's words: the scene dims where the text is, so neither prints over the other */
   .console-scrim {
     position: fixed;
     inset: auto 0 0 0;
@@ -1323,7 +1312,7 @@
     transition: text-decoration-color 0.2s, color 0.2s;
   }
   .plain-link:hover {
-    color: var(--arcane-hot);
+    color: var(--violet-hot);
     text-decoration-color: currentColor;
   }
 }

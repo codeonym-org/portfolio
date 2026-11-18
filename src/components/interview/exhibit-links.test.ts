@@ -19,8 +19,8 @@ test("a word inside a word is not a match", () => {
 
 test("projects by skill, and the skill a stack entry names", () => {
   const projects = [
-    { id: "a", rewards: ["Python", "MCP"] },
-    { id: "b", rewards: ["TypeScript"] },
+    { id: "a", stack: ["Python", "MCP"] },
+    { id: "b", stack: ["TypeScript"] },
   ];
   assert.deepEqual(
     usedIn("MCP Protocol", projects).map((p) => p.id),

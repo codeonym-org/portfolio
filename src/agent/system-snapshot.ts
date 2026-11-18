@@ -1,7 +1,7 @@
-import { achievements, chronicle } from "@/config/chronicle.config";
-import { inventoryCategories, inventoryItems } from "@/config/inventory.config";
-import { player } from "@/config/player.config";
-import { quests } from "@/config/quests.config";
+import { achievements, timeline } from "@/config/timeline.config";
+import { documentCategories, documents } from "@/config/documents.config";
+import { owner } from "@/config/owner.config";
+import { projects } from "@/config/projects.config";
 import { skillCategories, skillSets, skills } from "@/config/skills.config";
 import { systemConfig } from "@/config/system.config";
 import type { Destination, InspectTarget, SectorId } from "@/config/types";
@@ -51,24 +51,24 @@ export interface SystemSnapshot {
     briefRead: boolean;
     cvRead: boolean;
   };
-  player: typeof player;
-  quests: typeof quests;
+  owner: typeof owner;
+  projects: typeof projects;
   skills: {
     sets: typeof skillSets;
     categories: { id: string; name: string; set: string }[];
-    skills: { id: string; name: string; category: string; rarity: string; mastery: number; lore: string; tags?: string[] }[];
+    skills: { id: string; name: string; category: string; emphasis: string; mastery: number; about: string; tags?: string[] }[];
   };
-  chronicle: typeof chronicle;
+  timeline: typeof timeline;
   achievements: typeof achievements;
-  inventory: {
+  documents: {
     categories: { id: string; name: string }[];
     items: {
       id: string;
       name: string;
       category: string;
-      rarity: string;
+      emphasis: string;
       meta?: string;
-      lore: string;
+      about: string;
       tags?: string[];
       unlocks?: Destination;
       link?: string;
@@ -78,31 +78,31 @@ export interface SystemSnapshot {
 
 /** static part — configs never change at runtime */
 const dossier = {
-  player,
-  quests,
+  owner,
+  projects,
   skills: {
     sets: skillSets,
     categories: skillCategories.map(({ id, name, set }) => ({ id, name, set })),
-    skills: skills.map(({ id, name, category, rarity, mastery, lore, tags }) => ({
+    skills: skills.map(({ id, name, category, emphasis, mastery, about, tags }) => ({
       id,
       name,
       category,
-      rarity,
+      emphasis,
       mastery,
-      lore,
+      about,
       ...(tags ? { tags } : {}),
     })),
   },
-  chronicle,
+  timeline,
   achievements,
-  inventory: {
-    categories: inventoryCategories.map(({ id, name }) => ({ id, name })),
-    items: inventoryItems.map(({ id, name, category, rarity, meta, lore, tags, unlocks, link }) => ({
+  documents: {
+    categories: documentCategories.map(({ id, name }) => ({ id, name })),
+    items: documents.map(({ id, name, category, emphasis, meta, about, tags, unlocks, link }) => ({
       id,
       name,
       category,
-      rarity,
-      lore,
+      emphasis,
+      about,
       ...(meta ? { meta } : {}),
       ...(tags ? { tags } : {}),
       ...(unlocks ? { unlocks } : {}),

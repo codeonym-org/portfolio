@@ -46,12 +46,12 @@ function inProcessAgent(id: string, getGraph: Parameters<typeof createInProcessC
   });
 }
 
-/** the text System: world tools, archive, the dialogue window */
+/** the text agent: page tools, archive, the dialogue window */
 export function createSystemAgent() {
   return inProcessAgent(SYSTEM_AGENT_ID, async () => getSystemGraph(await resolveModelId()));
 }
 
-/** the voice System: talks, and delegates every action to the text System */
+/** the voice agent: talks, and delegates every action to the text agent */
 export function createVoiceAgent() {
   return inProcessAgent(VOICE_AGENT_ID, async () => getVoiceGraph(await resolveModelId()));
 }

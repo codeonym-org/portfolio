@@ -1,9 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 
-export type QuestRank = "S" | "A" | "B";
-export type QuestStatus = "cleared" | "ongoing";
-export type Tone = "system" | "arcane" | "gold" | "ember";
-export type Rarity = "legendary" | "epic" | "rare" | "common";
+/** how much a project weighs in the record: the size and colour of its shard, its order */
+export type ProjectTier = "flagship" | "major" | "minor";
+export type ProjectStatus = "shipped" | "ongoing";
+export type Tone = "system" | "violet" | "gold" | "ember";
+export type Emphasis = "highlight" | "strong" | "standard" | "quiet";
 
 export interface Stat {
   /** short code beside the bar (AI, BE, ...) */
@@ -14,7 +15,7 @@ export interface Stat {
   value: number;
 }
 
-export interface PlayerLinks {
+export interface OwnerLinks {
   github: string;
   linkedin: string;
   email: string;
@@ -22,17 +23,17 @@ export interface PlayerLinks {
   phone: string;
 }
 
-/** honorific earned through deeds — shown as gold cards at the Awakening Circle */
-export interface PlayerTitle {
+/** something I am known for: one of the gold cards in the Profile section */
+export interface OwnerTitle {
   id: string;
   name: string;
-  /** the deed behind the title, one line */
+  /** what it rests on, one line */
   description: string;
 }
 
-export interface Player {
+export interface Owner {
   name: string;
-  /** what the System calls him: it is his companion, so it uses his first name */
+  /** his first name, as the agent and the page use it */
   firstName: string;
   /** how his first name is said, respelled for the voice and for readers: "A-yoob" */
   pronounced: string;
@@ -42,17 +43,17 @@ export interface Player {
   location: string;
   /** where Ayoub lives, for the map card: coordinates of the city, IANA time zone */
   base: { city: string; country: string; lat: number; lon: number; timeZone: string; countryCentre: { lon: number; lat: number } };
-  guild: string;
-  titles: PlayerTitle[];
+  organization: string;
+  titles: OwnerTitle[];
   profile: string[];
-  creed: string;
+  motto: string;
   stats: Stat[];
-  links: PlayerLinks;
+  links: OwnerLinks;
   languages: { name: string; grade: string }[];
 }
 
 /** an organization Ayoub works in */
-export interface Guild {
+export interface Organization {
   id: string;
   name: string;
   /** Ayoub's role there: employed, or founder and maintainer */
@@ -63,21 +64,22 @@ export interface Guild {
   link?: string;
 }
 
-export interface Quest {
+export interface Project {
   id: string;
   name: string;
-  rank: QuestRank;
-  type: "main" | "side";
-  /** must match a Guild id (guilds.config) */
-  guild: string;
+  tier: ProjectTier;
+  /** work for an employer, or my own */
+  type: "work" | "personal";
+  /** must match a Organization id (organizations.config) */
+  organization: string;
   /** personal projects only: released, or still being built */
   stage?: "released" | "in development";
-  status: QuestStatus;
+  status: ProjectStatus;
   period?: string;
   summary: string;
   details: string[];
-  /** tech stack, framed as quest rewards */
-  rewards: string[];
+  /** the stack it is built with */
+  stack: string[];
   link?: string;
   /** documentation site, when the project has one */
   docs?: string;
@@ -107,21 +109,21 @@ export interface SkillDetail {
   icon: LucideIcon;
   /** must match a SkillCategoryDef id */
   category: string;
-  rarity: Rarity;
+  emphasis: Emphasis;
   /** 0–100 mastery, drives the gauge and grade */
   mastery: number;
-  /** flavor description shown on the inspect card */
-  lore: string;
+  /** what it is, shown on its card */
+  about: string;
   tags?: string[];
 }
 
 /** what the inspect card is currently showing */
 export interface InspectTarget {
-  kind: "skill" | "item" | "quest";
+  kind: "skill" | "document" | "project";
   id: string;
 }
 
-export interface ChronicleEntry {
+export interface TimelineEntry {
   id: string;
   role: string;
   organization: string;
@@ -137,55 +139,33 @@ export interface Achievement {
   period: string;
 }
 
-export interface InventoryCategory {
+export interface DocumentCategory {
   id: string;
   name: string;
   icon: LucideIcon;
 }
 
-export interface InventoryItem {
+export interface DocumentItem {
   id: string;
   name: string;
   icon: LucideIcon;
-  /** must match an InventoryCategory id */
+  /** must match an DocumentCategory id */
   category: string;
-  rarity: Rarity;
+  emphasis: Emphasis;
   /** provenance line (issuer · period) shown under the item name */
   meta?: string;
-  /** flavor description shown on the inspect card */
-  lore: string;
+  /** what it is, shown on its card */
+  about: string;
   tags?: string[];
-  /** USE-ing this item opens a destination: a zone panel or the CV */
+  /** opening it goes to a section or the CV */
   unlocks?: Destination;
-  /** USE-ing this item opens an external destination */
+  /** opening it goes to this address */
   link?: string;
-}
-
-export interface Vital {
-  code: string;
-  label: string;
-  reading: string;
-  /** 0–100 */
-  percent: number;
-  tone: "ember" | "system";
-  icon: LucideIcon;
-}
-
-export interface AmbientEvent {
-  heading: string;
-  body: string;
-  tone: Tone;
 }
 
 export interface SystemConfig {
   /** release number, surfaced to agents in the snapshot */
   version: string;
-  /** HP/SP-style gauges shown at the Awakening Circle */
-  vitals: Vital[];
-  /** ambient System notifications — one surfaces every eventIntervalMs ± jitter */
-  ambientEvents: AmbientEvent[];
-  /** average ms between ambient notifications */
-  eventIntervalMs: number;
   runtimeError: StatusCopy & { retry: string; home: string; ref: string; copy: string; copied: string };
   notFound: StatusCopy & { home: string; interview: string; plain: string; tried: string; site: string };
 }
@@ -203,11 +183,11 @@ export interface StatusCopy {
 
 /** the six sectors of the record — each one is a ring of shards around the Monolith */
 export type SectorId =
-  | "status"
+  | "profile"
   | "experience"
   | "projects"
   | "skills"
-  | "inventory"
+  | "documents"
   | "contact";
 
 /** where a USE / link / agent command can send the visitor */
@@ -220,7 +200,7 @@ export interface SectorDef {
   /** what the window holds, in plain words (e.g. "Status & Profile") */
   section: string;
   /** one-line flavor under the name */
-  epithet: string;
+  tagline: string;
   icon: LucideIcon;
   tone: Tone;
   /** agent-facing routing hint (exposed through src/agent) */

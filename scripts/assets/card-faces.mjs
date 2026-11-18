@@ -10,7 +10,7 @@ import { chromium } from "playwright";
   const out = process.argv[2] ?? ".";
   const browser = await chromium.launch({ headless: true, args: ["--use-angle=vulkan", "--enable-features=Vulkan", "--ignore-gpu-blocklist", "--enable-gpu", "--use-gl=angle"] });
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 3 })).newPage();
-  await page.addInitScript(() => localStorage.setItem("codeonym-record-v9", JSON.stringify({ state: { quality: "low", visited: [], risen: [], completed: [], xp: 0, muted: true, greeted: true }, version: 0 })));
+  await page.addInitScript(() => localStorage.setItem("codeonym-record-v9", JSON.stringify({ state: { quality: "low", visited: [], muted: true }, version: 3 })));
   await page.goto(process.env.URL || "http://localhost:3000/interview", { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => window.system && window.system.snapshot, null, { timeout: 90000 });
   await page.evaluate(() => window.system.run("show_business_card", {}));

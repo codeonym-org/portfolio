@@ -28,7 +28,7 @@ export function LiveRepo({ id }: { id: string }) {
       </p>
       <ul className="space-y-1.5 text-[13px] text-foreground/80">
         <li className="flex items-start gap-2">
-          <Tag className="mt-0.5 size-3.5 shrink-0 text-rank-s" />
+          <Tag className="mt-0.5 size-3.5 shrink-0 text-gold" />
           {live.release ? (
             <span>
               Latest release{" "}

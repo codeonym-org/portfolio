@@ -243,7 +243,7 @@ export function createInProcessClient({ graphId, getGraph }: InProcessClientOpti
             if (controller.signal.aborted) return;
             console.error("[system-agent] run failed:", err);
             // details stay in the server log; the visitor gets an in-world line
-            yield { event: "error", data: { error: "RunError", message: "The System lost its link to the Gate. Try again in a moment." } };
+            yield { event: "error", data: { error: "RunError", message: "The agent lost its connection. Try again in a moment." } };
           } finally {
             if (controllers.get(threadId) === controller) controllers.delete(threadId);
           }

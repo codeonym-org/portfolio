@@ -4,26 +4,25 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { type PerspectiveCamera, Vector3 } from "three";
 import { damp } from "@/record/layout";
-import { live, useWorldStore } from "@/store/world-store";
-import { aberration, fitView, resetCamera, TILT, view, ZOOM } from "./view";
+import { useWorldStore } from "@/store/world-store";
+import { fitView, resetCamera, TILT, view, ZOOM } from "./view";
 
 const LOOK = new Vector3(0, 0.25, 0);
 /** the bar at the top of the screen, px */
 const TOP_BAR = 76;
 /** the Monolith's height on screen as a share of the viewport height, at camera distance 1 (measured: 0.467 at 15) */
 const BODY_SPAN = 0.467 * 15;
-/** how far the System may pull the camera back to keep its words clear */
+/** how far the agent may pull the camera back to keep its words clear */
 const MAX_PULL = 1.55;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /**
  * The camera never travels — the record comes to the visitor. The rig
  * (1) slides the framing clear of whatever window is open, (2) frames
- * the Monolith above the System's words: it pulls back and lifts the
+ * the Monolith above the agent's words: it pulls back and lifts the
  * scene by what the console takes, (3) gives the visitor a camera of
  * their own: drag to spin and tilt, wheel or pinch to zoom, double
- * click to reset, and (4) carries the small things: parallax, shake,
- * the lens split on big moments.
+ * click to reset, and (4) carries a slight parallax.
  */
 export function Rig() {
   const { camera, gl, size } = useThree();
@@ -133,7 +132,7 @@ export function Rig() {
     if (s.ready) intro.current = Math.min(1, intro.current + dt / 3.2);
     const ease = 1 - Math.pow(1 - intro.current, 3);
     const focused = !!(s.sector || s.caseFile || s.brief || s.github);
-    // the System's words take the bottom of the screen: the Monolith is framed in what is left above them
+    // the agent's words take the bottom of the screen: the Monolith is framed in what is left above them
     const free = Math.max(160, size.height - TOP_BAR - view.clear);
     const reading = !focused && view.clear > 0;
     const pullWant = reading ? clamp((BODY_SPAN * size.height) / (0.8 * free) / view.distance, 1, MAX_PULL) : 1;
@@ -143,11 +142,9 @@ export function Rig() {
     f.tilt = damp(f.tilt, view.tilt, 6, dt);
     const distance = view.distance * (0.62 + 0.38 * ease) * (focused ? 0.97 : 1) * f.pull * f.zoom;
 
-    live.shake *= Math.exp(-dt * 4);
-    const jitter = live.shake * 0.12;
     cam.position.set(
-      damp(cam.position.x, view.pointer.x * 0.55, 2, dt) + (Math.random() - 0.5) * jitter,
-      damp(cam.position.y, 0.5 - view.pointer.y * 0.3 - (1 - ease) * 1.6 + Math.sin(f.tilt) * distance, 3, dt) + (Math.random() - 0.5) * jitter,
+      damp(cam.position.x, view.pointer.x * 0.55, 2, dt),
+      damp(cam.position.y, 0.5 - view.pointer.y * 0.3 - (1 - ease) * 1.6 + Math.sin(f.tilt) * distance, 3, dt),
       damp(cam.position.z, Math.cos(f.tilt) * distance, 3, dt),
     );
     cam.lookAt(LOOK);
@@ -169,9 +166,6 @@ export function Rig() {
     offset.current.y = damp(offset.current.y, wantY, 4, dt);
     cam.setViewOffset(size.width, size.height, offset.current.x, offset.current.y, size.width, size.height);
 
-    live.aberration *= Math.exp(-dt * 3);
-    const split = 0.0003 + live.aberration * 0.004;
-    aberration.set(split, split);
   });
 
   return null;

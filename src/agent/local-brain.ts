@@ -10,9 +10,9 @@
  */
 
 export interface BrainIndex {
-  player: { name: string; title: string; job: string; guild: string; location: string; creed: string };
+  owner: { name: string; title: string; job: string; organization: string; location: string; motto: string };
   sectors: { id: string; name: string; section: string }[];
-  quests: { id: string; name: string; summary: string; stack: string[] }[];
+  projects: { id: string; name: string; summary: string; stack: string[] }[];
   skills: { id: string; name: string }[];
   items: { id: string; name: string }[];
   /** the case shown for "why hire him" — built from the record by the caller */
@@ -48,8 +48,8 @@ const SECTOR_WORDS: Record<string, string[]> = {
   experience: ["experience", "career", "job", "work history", "worked", "company", "employer", "education", "degree", "study", "studied", "university", "master", "opensnz", "parcours", "etudes", "formation", "diplome"],
   projects: ["project", "built", "build", "shipped", "case stud", "projet", "realisation", "portfolio"],
   skills: ["skill", "stack", "tech", "tool", "framework", "competence", "language", "langage", "know"],
-  inventory: ["inventory", "credential", "certificate", "item", "license", "inventaire", "document", "degree", "diploma", "diplome"],
-  status: ["who", "about", "profile", "status", "ayoub", "codeonym", "creed", "title", "qui", "profil", "bio", "introduce", "himself", "yourself"],
+  documents: ["credential", "certificate", "license", "inventaire", "document", "degree", "diploma", "diplome"],
+  profile: ["who", "about", "profile", "status", "ayoub", "codeonym", "motto", "title", "qui", "profil", "bio", "introduce", "himself", "yourself"],
 };
 
 const GENERIC = new Set(["skills", "project", "projects", "system", "systems", "agents", "record", "portfolio", "platform"]);
@@ -74,7 +74,7 @@ function mention<T extends { id: string; name: string }>(text: string, list: T[]
 
 export function answerLocally(input: string, index: BrainIndex): BrainReply {
   const text = fold(input);
-  const p = index.player;
+  const p = index.owner;
   const open = (sector: string): BrainAction => ({ name: "open_sector", args: { sector } });
 
   if (!text) return { text: "The local index heard nothing.", actions: [] };
@@ -107,26 +107,26 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
     return { text: `Here is ${p.name}'s card: every channel on it reaches him directly.`, actions: [{ name: "show_business_card", args: {} }] };
   }
 
-  const quest = mention(text, index.quests);
-  if (quest) {
-    return { text: `${quest.name}. ${quest.summary}`, actions: [{ name: "inspect_entity", args: { kind: "quest", id: quest.id } }] };
+  const project = mention(text, index.projects);
+  if (project) {
+    return { text: `${project.name}. ${project.summary}`, actions: [{ name: "inspect_entity", args: { kind: "project", id: project.id } }] };
   }
   const skill = mention(text, index.skills);
   if (skill) return { text: `${skill.name}. Its entry is open.`, actions: [{ name: "inspect_entity", args: { kind: "skill", id: skill.id } }] };
   const item = mention(text, index.items);
-  if (item) return { text: `${item.name}, from the documents.`, actions: [{ name: "inspect_entity", args: { kind: "item", id: item.id } }] };
+  if (item) return { text: `${item.name}, from the documents.`, actions: [{ name: "inspect_entity", args: { kind: "document", id: item.id } }] };
 
   if (has(text, "close", "back", "home", "reset view", "fermer", "retour")) return { text: "The record returns to orbit.", actions: [{ name: "close_windows", args: {} }] };
 
-  for (const id of ["experience", "projects", "skills", "inventory", "status"]) {
+  for (const id of ["experience", "projects", "skills", "documents", "profile"]) {
     if (!has(text, ...SECTOR_WORDS[id])) continue;
     const sector = index.sectors.find((s) => s.id === id);
     if (!sector) continue;
     const line =
-      id === "status"
-        ? `${p.name} — ${p.job}, ${p.title}, at ${p.guild} (${p.location}).`
+      id === "profile"
+        ? `${p.name} — ${p.job}, ${p.title}, at ${p.organization} (${p.location}).`
         : id === "projects"
-          ? `${index.quests.length} projects on record. Pick one to read its details.`
+          ? `${index.projects.length} projects on record. Pick one to read its details.`
           : `${sector.name}: ${sector.section.toLowerCase()}.`;
     return { text: line, actions: [open(id)] };
   }

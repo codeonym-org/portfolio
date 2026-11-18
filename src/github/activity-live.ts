@@ -1,5 +1,5 @@
 import "server-only";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { fromRaw, type Activity, type RawUser } from "./activity";
 
 /**
@@ -16,7 +16,7 @@ import { fromRaw, type Activity, type RawUser } from "./activity";
  *  · any failure returns null.
  */
 
-const LOGIN = player.links.github.match(/github\.com\/([\w-]+)/)?.[1] ?? "";
+const LOGIN = owner.links.github.match(/github\.com\/([\w-]+)/)?.[1] ?? "";
 const TTL_MS = 60 * 60_000;
 
 const USER = `query($login: String!) {

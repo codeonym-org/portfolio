@@ -1,5 +1,5 @@
-import { findItem } from "@/config/inventory.config";
-import { quests } from "@/config/quests.config";
+import { findItem } from "@/config/documents.config";
+import { projects } from "@/config/projects.config";
 import { findSkill } from "@/config/skills.config";
 import { sectorById, world } from "@/config/world.config";
 import type { Card } from "@/store/session-store";
@@ -15,10 +15,10 @@ const copy = world.interview;
 const kinds = copy.table.kinds;
 
 /** the name of what is inspected */
-export function inspected(kind: "skill" | "item" | "quest", id: string): string {
+export function inspected(kind: "skill" | "document" | "project", id: string): string {
   if (kind === "skill") return findSkill(id)?.name ?? id;
-  if (kind === "item") return findItem(id)?.name ?? id;
-  return quests.find((q) => q.id === id)?.name ?? id;
+  if (kind === "document") return findItem(id)?.name ?? id;
+  return projects.find((q) => q.id === id)?.name ?? id;
 }
 
 /** a card drawn under an answer, by kind and name */
@@ -37,6 +37,6 @@ export function laidShown(l: Laid): string {
   if (l.kind === "case") return `${kinds.case} · ${l.file.title}`;
   if (l.kind === "brief") return world.agent.brief;
   if (l.kind === "github") return `${kinds.github} · ${world.github.title}`;
-  const k = l.target.kind === "quest" ? kinds.project : l.target.kind === "item" ? kinds.document : kinds.skill;
+  const k = l.target.kind === "project" ? kinds.project : l.target.kind === "document" ? kinds.document : kinds.skill;
   return `${k} · ${inspected(l.target.kind, l.target.id)}`;
 }

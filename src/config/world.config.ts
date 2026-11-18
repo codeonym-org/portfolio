@@ -1,5 +1,5 @@
 import {
-  Backpack,
+  FileText,
   DoorOpen,
   Gauge,
   Landmark,
@@ -10,19 +10,19 @@ import type { SectorDef, SectorId } from "./types";
 
 /**
  * ── THE RECORD ────────────────────────────────────────────────
- * There are no pages. THE SYSTEM's body, the Monolith, floats in the
+ * There are no pages. the agent's body, the Monolith, floats in the
  * void and the whole record orbits it as shards. Each sector below is
  * one ring of shards and one window. A visitor reaches them by asking
- * the System, by the index, by the palette, or by touching a shard.
+ * the agent, by the index, by the palette, or by touching a shard.
  *
  * The order here is the order of the index (keys 1–6).
  */
 export const sectors: SectorDef[] = [
   {
-    id: "status",
+    id: "profile",
     name: "Profile",
     section: "Profile",
-    epithet: "who he is and what he is known for",
+    tagline: "who he is and what he is known for",
     icon: Gauge,
     tone: "gold",
     description:
@@ -32,7 +32,7 @@ export const sectors: SectorDef[] = [
     id: "experience",
     name: "Experience",
     section: "Experience & Education",
-    epithet: "where he has worked and studied",
+    tagline: "where he has worked and studied",
     icon: Landmark,
     tone: "system",
     description:
@@ -42,9 +42,9 @@ export const sectors: SectorDef[] = [
     id: "projects",
     name: "Projects",
     section: "Projects",
-    epithet: "what he has built, at work and on his own",
+    tagline: "what he has built, at work and on his own",
     icon: Skull,
-    tone: "arcane",
+    tone: "violet",
     description:
       "His projects: engagements at OpenSNZ, open source (codeonym-oss) and own products (codeonym-org), each with its details and stack.",
   },
@@ -52,18 +52,18 @@ export const sectors: SectorDef[] = [
     id: "skills",
     name: "Skills",
     section: "Skills",
-    epithet: "what he works with",
+    tagline: "what he works with",
     icon: Swords,
     tone: "ember",
     description:
       "His skills: technical (AI, agent stack, languages, web, databases, ops) and beyond the job (languages spoken, soft skills, interests), each with a grade.",
   },
   {
-    id: "inventory",
+    id: "documents",
     name: "Documents",
     section: "Documents & CV",
-    epithet: "the CV, degrees and links",
-    icon: Backpack,
+    tagline: "the CV, degrees and links",
+    icon: FileText,
     tone: "gold",
     description:
       "Documents: the full CV, links, degrees and interests.",
@@ -72,9 +72,9 @@ export const sectors: SectorDef[] = [
     id: "contact",
     name: "Contact",
     section: "Contact",
-    epithet: "how to reach him",
+    tagline: "how to reach him",
     icon: DoorOpen,
-    tone: "arcane",
+    tone: "violet",
     description:
       "Contact channels: email, phone, LinkedIn and GitHub.",
   },

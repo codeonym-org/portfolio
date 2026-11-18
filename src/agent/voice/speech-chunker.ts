@@ -30,7 +30,7 @@ function sentenceEnd(text: string): number {
     let j = i + 1;
     while (j < text.length && END.test(text[j])) j++;
     if (j >= text.length) return -1; // can't tell yet: "3." might become "3.5"
-    // two replies glued without a space ("…view.Hunter") — a word, then a capitalized word
+    // two replies glued without a space ("…view.Then") — a word, then a capitalized word
     if (/\p{Lu}/u.test(text[j]) && /\p{Ll}{3}$/u.test(text.slice(0, i))) {
       if (j + 1 >= text.length) return -1;
       if (/\p{Ll}/u.test(text[j + 1])) return j;
@@ -62,7 +62,7 @@ function softBreak(text: string): number {
 export function speakable(raw: string): string {
   let t = raw;
   t = t.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1"); // [label](url) → label
-  t = t.replace(/\[\s*([^\]]+?)\s*\]\s*/g, "$1. "); // [ QUEST ACCEPTED ] → QUEST ACCEPTED.
+  t = t.replace(/\[\s*([^\]]+?)\s*\]\s*/g, "$1. "); // [ ON SCREEN ] → ON SCREEN.
   t = t.replace(/https?:\/\/\S+/g, "");
   t = t.replace(/<\|?[\w-]+\|?>?/g, ""); // leaked control tokens: <|return|>, <return, <br>
   t = t.replace(/[*_`~#>|]+/g, "");

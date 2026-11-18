@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Clock, Globe, MapPin } from "lucide-react";
 import { world } from "@/config/world.config";
 import { useWorldStore } from "@/store/world-store";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { clockIn, difference, offsetMinutes } from "@/record/time";
 import { WORLD_LAND } from "@/record/world-map";
 
@@ -14,7 +14,7 @@ import { WORLD_LAND } from "@/record/world-map";
  * visitor's own clock. Nothing is requested, nobody is located.
  */
 export function MapCard() {
-  const base = player.base;
+  const base = owner.base;
   // the clock is the visitor's: it only exists in the browser
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -29,7 +29,7 @@ export function MapCard() {
     <figure className="glass-edge w-full max-w-md overflow-hidden bg-black/40" aria-label={`Map: ${base.city}, ${base.country}`}>
       <figcaption className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1 border-b border-white/[0.07] px-3.5 py-2.5 text-sm">
         <span className="flex items-center gap-2 font-semibold text-white">
-          <MapPin className="size-4 text-rank-s" /> {base.city}, {base.country}
+          <MapPin className="size-4 text-gold" /> {base.city}, {base.country}
         </span>
         <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
           <Clock className="size-3.5 text-system" />

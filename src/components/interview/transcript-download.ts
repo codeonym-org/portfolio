@@ -3,7 +3,7 @@
 import { createElement } from "react";
 import { create } from "zustand";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
-import { player } from "@/config/player.config";
+import { owner } from "@/config/owner.config";
 import { useHistory } from "@/store/history-store";
 import { useSession } from "@/store/session-store";
 import { describe, stepsFor } from "./activity";
@@ -86,7 +86,7 @@ async function make(): Promise<string> {
   try {
     const t = transcript(exchanges, {
       id: useHistory.getState().current,
-      name: `${player.firstName} ${familyName(player.name, player.firstName)}`,
+      name: `${owner.firstName} ${familyName(owner.name, owner.firstName)}`,
       now: Date.now(),
     });
     const [{ pdf }, { TranscriptDocument, registerFonts }] = await Promise.all([import("@react-pdf/renderer"), import("./transcript-pdf")]);

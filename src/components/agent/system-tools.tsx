@@ -10,7 +10,7 @@ import { findSkill, skills } from "@/config/skills.config";
 import { focusLabel, useWorldStore } from "@/store/world-store";
 
 /**
- * ── THE SYSTEM'S HANDS ────────────────────────────────────────
+ * ── THE AGENT'S HANDS ────────────────────────────────────────
  * Registers every record command as a CopilotKit v2 frontend tool
  * (executed here, in the browser, when the agent calls it), plus two
  * presentation tools whose cards the console draws under the reply
