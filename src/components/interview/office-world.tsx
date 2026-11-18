@@ -6,12 +6,14 @@ import { Mesh, MeshStandardMaterial, Object3D, SRGBColorSpace } from "three";
 
 /**
  * ── THE OFFICE ────────────────────────────────────────────────
- * A bright office made by Hyper3D WorldGen from one photo of a desk:
- * the oak desk with a laptop, an open notebook, a pen cup, a book and
- * a plant on it; behind him a second desk with a monitor, shelves of
- * binders, a tall plant, a lamp. It is one model, already at the
- * room's size: the desk top is at height 0 and he sits at the origin.
- * His chair is its own model, and the desk gets a front panel.
+ * A bright office, each piece of it a Hyper3D Rodin model at its real
+ * size: the oak desk with a laptop, an open notebook and a pen, a book,
+ * a pen cup, a snake plant and two printed reports on it; behind him a
+ * white desk with a monitor and a lamp, a shelf of binders, a framed
+ * print, a fig tree and a dome lamp on a sideboard under the window.
+ * The walls, the floor and the window are plain shapes around them.
+ * The desk top is at height 0 and he sits at the origin. His chair is
+ * its own model.
  */
 
 const OFFICE = "/models/office/office.glb";
@@ -30,7 +32,6 @@ export function prepare(root: Object3D) {
     mesh.receiveShadow = true;
     const m = mesh.material as MeshStandardMaterial;
     if (m.map) m.map.colorSpace = SRGBColorSpace;
-    m.metalness = Math.min(m.metalness, 0.05);
     m.envMapIntensity = 0.5;
   });
 }
@@ -43,11 +44,6 @@ export function Office() {
   return (
     <>
       <primitive object={office.scene} position={[0, 0, FORWARD]} />
-      {/* the desk's front panel: the stranger sees a desk, not his knees */}
-      <mesh position={[0, -0.3, 0.66 + FORWARD]} castShadow receiveShadow>
-        <boxGeometry args={[2.1, 0.5, 0.02]} />
-        <meshStandardMaterial color="#4f5653" roughness={0.6} />
-      </mesh>
       <primitive object={chair.scene} position={[0, -0.265, -0.06]} scale={0.5} />
     </>
   );

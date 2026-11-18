@@ -340,8 +340,8 @@ export default function OfficeStage() {
       />
       {/* the fill, from the other side, so no half of his face is dark */}
       <pointLight position={[1.3, 0.7, 2.2]} intensity={3.2} distance={6} decay={1.5} color="#ffeede" />
-      {/* daylight from a window out of frame, as a faint cool rim behind him */}
-      <directionalLight position={[1.6, 0.9, -1.4]} intensity={0.5} color="#dbe6ff" />
+      {/* daylight from the window behind him, on his right: a faint cool rim */}
+      <directionalLight position={[1.65, 1.1, -3]} intensity={0.6} color="#dbe6ff" />
       {/* the ceiling lights: one over the far wall, one over him */}
       <pointLight position={[-0.6, 1.8, -2]} intensity={5} distance={6} decay={1.6} color="#ffffff" />
       <pointLight position={[0.4, 1.8, -0.4]} intensity={3} distance={5} decay={1.6} color="#fff6ec" />
