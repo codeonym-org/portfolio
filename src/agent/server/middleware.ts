@@ -1,5 +1,5 @@
 import "server-only";
-import { createMiddleware, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "langchain";
+import { AIMessage, createMiddleware, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "langchain";
 import { cachedSystemBlocks, markedContent } from "../prompt-cache";
 
 /** keeps the system context plus the last N turns, never splitting a tool-call pair */
@@ -65,3 +65,30 @@ export function promptCache(fixed: string) {
     },
   });
 }
+
+/**
+ * The model's reply keeps its tool calls in one place only, the typed
+ * `tool_calls`. ChatOpenAI also leaves the provider's raw copy in
+ * `additional_kwargs.tool_calls`; copilotkitMiddleware then moves the
+ * browser's tool calls out of `tool_calls` (it runs them on the page),
+ * the raw copy stays behind, and LangChain warns "New LangChain packages
+ * are available…" on every turn that only touches the page.
+ */
+export const typedToolCalls = createMiddleware({
+  name: "TypedToolCalls",
+  wrapModelCall: async (request, handler) => {
+    const reply = await handler(request);
+    if (!AIMessage.isInstance(reply) || !("tool_calls" in (reply.additional_kwargs ?? {}))) return reply;
+    const additional_kwargs = Object.fromEntries(Object.entries(reply.additional_kwargs).filter(([k]) => k !== "tool_calls"));
+    return new AIMessage({
+      content: reply.content,
+      id: reply.id,
+      name: reply.name,
+      additional_kwargs,
+      response_metadata: reply.response_metadata,
+      tool_calls: reply.tool_calls,
+      invalid_tool_calls: reply.invalid_tool_calls,
+      usage_metadata: reply.usage_metadata,
+    });
+  },
+});
