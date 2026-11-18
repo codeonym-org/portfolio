@@ -483,6 +483,34 @@
       display: block;
     }
   }
+  /* phones: the way in, set a little tighter, so it clears the mark (its tracking: `top-bar.tsx`) */
+  @media (max-width: 429px) {
+    .hdr .hdr-cta {
+      gap: 0.5rem;
+      padding-right: 0.7rem;
+    }
+  }
+  @media (max-width: 379px) {
+    .hdr .hdr-bar {
+      padding: 0 0.125rem;
+    }
+  }
+  /* a narrow phone: my GitHub moves from the header into the Index */
+  .hdr-menu__foot.hdr-menu__gh {
+    display: none;
+  }
+  @media (max-width: 429px) {
+    .hdr-gh {
+      display: none;
+    }
+    .hdr-menu__foot.hdr-menu__gh {
+      display: block;
+    }
+    .hdr-menu__gh + .hdr-menu__foot {
+      margin-top: 0;
+      border-top: 0;
+    }
+  }
 
   /* the way in: lit, a light running round its edge */
   .hdr-cta {

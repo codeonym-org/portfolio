@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, BookOpen, IdCard, Keyboard, Mic, NotebookPen, Volume2, VolumeX } from "lucide-react";
+import { GithubMark } from "@/components/system/brand-marks";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { useWorldStore } from "@/store/world-store";
 import { useInterview, type InterviewMode } from "./interview-store";
+import { useTable } from "./table-store";
 import { TranscriptBarButton } from "./transcript-button";
 
 const copy = world.interview;
@@ -62,6 +64,7 @@ export function TopBar() {
   const toggleHistory = useInterview((s) => s.toggleHistory);
   const level = useInterview((s) => s.level);
   const card = useWorldStore((s) => s.cardOpen);
+  const github = useTable((t) => t.laid.some((l) => l.kind === "github"));
 
   const choose = (next: InterviewMode) => {
     if (next === mode) return;
@@ -116,6 +119,22 @@ export function TopBar() {
         >
           <IdCard />
           <span className="hud-label hidden xl:inline">{copy.card.open}</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={github}
+          aria-label={world.github.label}
+          title={world.github.label}
+          onClick={() => {
+            play(github ? "close" : "click", { volume: 0.4 });
+            if (github) useTable.getState().take("github");
+            else useWorldStore.getState().openGithub();
+          }}
+          className="hud-btn"
+          style={{ ["--tone" as string]: "oklch(0.83 0.14 168)" }}
+        >
+          <GithubMark />
+          <span className="hud-label hidden xl:inline">{world.github.short}</span>
         </button>
         <button
           type="button"

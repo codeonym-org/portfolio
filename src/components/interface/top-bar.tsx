@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { GithubMark } from "@/components/system/brand-marks";
 import { ArrowRight, FileText, IdCard, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { familyName } from "@/components/interview/vcard";
 import { player } from "@/config/player.config";
@@ -19,8 +20,8 @@ const fullName = `${player.firstName} ${familyName(player.name, player.firstName
  * On the left, who this is: the mark, the name codeonym, and his own
  * name and title under it. Beside it, the six sections of the
  * record (`section-nav.tsx`). On the right, one bar of tools (the
- * index when the middle has no room for it, his business card, the
- * plain record, sound, fullscreen) and, apart from
+ * index when the middle has no room for it, his business card, his
+ * GitHub live, the plain record, sound, fullscreen) and, apart from
  * it and lit, the way into the interview: his face with a live dot,
  * "Interview me", a light running round its edge.
  */
@@ -30,6 +31,7 @@ export function TopBar() {
   const closeFocus = useWorldStore((s) => s.closeFocus);
   const ready = useWorldStore((s) => s.ready);
   const card = useWorldStore((s) => s.cardOpen);
+  const github = useWorldStore((s) => s.github);
   const immersive = useImmersive();
   const canImmerse = useCanImmerse();
   return (
@@ -38,7 +40,7 @@ export function TopBar() {
       <button type="button" onClick={closeFocus} className="hdr-brand pointer-events-auto flex min-w-0 shrink-0 items-center gap-3 text-left" aria-label={`${player.handle}: back to orbit`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB local SVG mark */}
         <img src="/brand/mark-small.svg" alt="" className="size-9 shrink-0" />
-        <span className="hidden min-w-0 min-[430px]:block">
+        <span className="hidden min-w-0 min-[800px]:block">
           <span className="block font-display text-[13px] leading-none tracking-[0.34em] text-white">{player.handle.toUpperCase()}</span>
           <span className="mt-1.5 flex items-center gap-2 truncate text-[11px] leading-none text-white/55">
             <span className="text-white/80">{fullName}</span>
@@ -73,6 +75,23 @@ export function TopBar() {
           >
             <IdCard className="size-4" />
             <span className="hdr-label">{hud.card}</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={github}
+            data-on={github}
+            aria-label={world.github.label}
+            title={world.github.label}
+            onClick={() => {
+              const s = useWorldStore.getState();
+              play(github ? "close" : "click", { volume: 0.4 });
+              if (github) s.closeFocus();
+              else s.openGithub();
+            }}
+            className="hdr-tool hdr-gh"
+          >
+            <GithubMark className="size-4" />
+            <span className="hdr-label">{world.github.short}</span>
           </button>
           <Link href="/record" aria-label="The plain record: the same content as one page of text" title="The plain record (text only)" className="hdr-tool hdr-record">
             <FileText className="size-4" />
@@ -113,7 +132,7 @@ export function TopBar() {
             <i className="hdr-cta__live" aria-hidden />
           </span>
           <span className="flex flex-col leading-none">
-            <span className="font-display text-[10px] tracking-[0.26em] text-white uppercase">{hud.interview}</span>
+            <span className="font-display text-[10px] tracking-[0.26em] text-white uppercase max-[429px]:tracking-[0.18em] max-[379px]:tracking-[0.1em]">{hud.interview}</span>
             <span className="mt-1.5 hidden text-[11px] text-white/60 sm:block">{hud.interviewSub}</span>
           </span>
           <ArrowRight className="hidden size-4 text-white/70 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white sm:block" />

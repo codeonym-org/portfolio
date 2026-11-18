@@ -344,6 +344,9 @@ export const world = {
   /** my GitHub activity (`interface/github-activity.tsx`), live from GitHub */
   github: {
     title: "My GitHub",
+    /** the button in both top bars */
+    short: "GitHub",
+    label: "My GitHub, live: contributions, streaks, languages",
     kicker: "Live from GitHub",
     /** over the home window's title, where the view's own kicker already says live */
     eyebrow: "My work in the open",

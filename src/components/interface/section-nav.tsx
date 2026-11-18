@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { ArrowUpRight, Check, LayoutGrid } from "lucide-react";
 import { toneColor } from "@/components/scene/view";
+import { GithubMark } from "@/components/system/brand-marks";
 import { sectors, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -193,6 +194,21 @@ export function SectionMenu() {
                 </button>
               </li>
             ))}
+            {/* on a narrow phone my GitHub has no key of its own in the header either */}
+            <li className="hdr-menu__foot hdr-menu__gh">
+              <button
+                type="button"
+                onClick={() => {
+                  play("open", { volume: 0.3 });
+                  useWorldStore.getState().openGithub();
+                  setOpen(false);
+                }}
+                className="hdr-menu__item text-[12px] text-white/60"
+              >
+                <GithubMark className="size-3.5" /> {world.github.title}, live
+                <ArrowUpRight className="ml-auto size-3.5" />
+              </button>
+            </li>
             {/* on a phone the plain record has no key of its own in the header */}
             <li className="hdr-menu__foot">
               <Link href="/record" className="hdr-menu__item text-[12px] text-white/60">
