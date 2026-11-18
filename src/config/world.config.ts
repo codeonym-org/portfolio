@@ -105,7 +105,8 @@ export const world = {
   },
 
   hud: {
-    indexLabel: "INDEX",
+    indexLabel: "The record's sections",
+    index: "Index",
     traceLabel: "RUN TRACE",
     traceIdle: "idle — nothing running",
     paletteHint: "Search the record or run a command…",

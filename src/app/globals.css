@@ -305,6 +305,185 @@
     transform: scale(0.96);
   }
 
+  /* the six sections, centred in the header (interface/section-nav.tsx) */
+  .hdr-dock {
+    display: flex;
+    align-items: center;
+    height: 2.75rem;
+    padding: 0 0.3rem;
+    gap: 0.1rem;
+    background: oklch(0.16 0.02 285 / 45%);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 5%);
+  }
+  .hdr-dock__item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.125rem;
+    padding: 0 0.65rem;
+    border-radius: 3px;
+    font-size: 12.5px;
+    letter-spacing: 0.01em;
+    color: oklch(0.8 0.02 290);
+    outline: none;
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+  .hdr-dock__dot {
+    width: 5px;
+    height: 5px;
+    rotate: 45deg;
+    background: var(--hue);
+    opacity: 0.55;
+    transition:
+      opacity 0.2s,
+      box-shadow 0.2s;
+  }
+  /* seen: a hairline of its colour under it */
+  .hdr-dock__item[data-seen="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0.65rem;
+    right: 0.65rem;
+    bottom: 3px;
+    height: 1px;
+    background: var(--hue);
+    opacity: 0.45;
+  }
+  .hdr-dock__item:hover,
+  .hdr-dock__item:focus-visible {
+    background: oklch(1 0 0 / 6%);
+    color: white;
+  }
+  .hdr-dock__item:focus-visible {
+    box-shadow: 0 0 0 1px var(--hue);
+  }
+  .hdr-dock__item:hover .hdr-dock__dot,
+  .hdr-dock__item:focus-visible .hdr-dock__dot,
+  .hdr-dock__item[aria-current="page"] .hdr-dock__dot {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--hue);
+  }
+  .hdr-dock__item[aria-current="page"] {
+    color: white;
+    background: color-mix(in oklch, var(--hue) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--hue) 45%, transparent);
+  }
+  .hdr-dock__item[aria-current="page"]::after {
+    opacity: 0;
+  }
+  .hdr-dock__tip {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    white-space: nowrap;
+    font-size: 11.5px;
+    background: oklch(0.14 0.02 285 / 92%);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    box-shadow: 0 10px 30px -12px oklch(0 0 0 / 80%);
+    backdrop-filter: blur(14px);
+    pointer-events: none;
+    opacity: 0;
+    translate: -50% -4px;
+    transition:
+      opacity 0.16s,
+      translate 0.16s;
+  }
+  .hdr-dock__item:hover .hdr-dock__tip,
+  .hdr-dock__item:focus-visible .hdr-dock__tip {
+    opacity: 1;
+    translate: -50% 0;
+    transition-delay: 0.12s;
+  }
+
+  /* the same six, listed under the header where it has no room for them */
+  .hdr-menu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: -0.3rem;
+    z-index: 40;
+    width: min(320px, calc(100vw - 1.5rem));
+    padding: 0.35rem;
+    background: oklch(0.14 0.02 285 / 94%);
+    border: 1px solid var(--hair);
+    border-radius: 6px;
+    box-shadow: 0 24px 60px -20px oklch(0 0 0 / 90%);
+    backdrop-filter: blur(18px) saturate(140%);
+    transform-origin: top left;
+  }
+  .hdr-menu__item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 4px;
+    text-align: left;
+    outline: none;
+    transition: background 0.15s;
+  }
+  .hdr-menu__item:hover,
+  .hdr-menu__item:focus-visible {
+    background: oklch(1 0 0 / 6%);
+  }
+  .hdr-menu__item[aria-current="page"] {
+    background: color-mix(in oklch, var(--hue) 14%, transparent);
+  }
+
+  /* what shows at which width: the six in the header from 1360px, else the Index key; labels on the tools only where they fit */
+  .hdr-dock,
+  .hdr-tool,
+  .hdr-menu {
+    font-family: var(--font-sans);
+  }
+  .hdr-wide,
+  .hdr-label {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .hdr-label {
+      display: inline;
+    }
+  }
+  @media (min-width: 1360px) {
+    .hdr-wide {
+      display: block;
+    }
+    .hdr-narrow,
+    .hdr-label {
+      display: none;
+    }
+  }
+  @media (min-width: 1800px) {
+    .hdr-label {
+      display: inline;
+    }
+  }
+  .hdr-menu__foot {
+    display: none;
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--hair);
+  }
+  @media (max-width: 639px) {
+    .hdr-record {
+      display: none;
+    }
+    .hdr-menu__foot {
+      display: block;
+    }
+  }
+
   /* the way in: lit, a light running round its edge */
   .hdr-cta {
     position: relative;

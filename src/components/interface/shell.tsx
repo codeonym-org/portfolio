@@ -11,7 +11,6 @@ import { hasNode } from "@/record/nodes";
 import { useWorldStore } from "@/store/world-store";
 import { Boot } from "./boot";
 import { Console } from "./console";
-import { IndexWheel } from "./index-wheel";
 import { BusinessCard } from "@/components/interview/business-card";
 import { CvModal, InspectCard } from "./inspect";
 import { Palette } from "./palette";
@@ -138,7 +137,6 @@ export function Shell() {
       <div className="scrim z-10" aria-hidden />
       <TopBar />
       <Trace />
-      <IndexWheel />
       <Console />
       <FocusWindow />
       <Toasts />

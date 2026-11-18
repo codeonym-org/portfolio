@@ -9,6 +9,7 @@ import { play } from "@/lib/audio";
 import { toggleImmersion, useCanImmerse, useImmersive } from "@/lib/immersion";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
+import { SectionDock, SectionMenu } from "./section-nav";
 
 const hud = world.hud;
 const fullName = `${player.firstName} ${familyName(player.name, player.firstName)}`;
@@ -16,8 +17,10 @@ const fullName = `${player.firstName} ${familyName(player.name, player.firstName
 /**
  * ── THE TOP OF THE RECORD ─────────────────────────────────────
  * On the left, who this is: the mark, the name codeonym, and his own
- * name and title under it. On the right, one bar of tools (his
- * business card, the plain record, sound, fullscreen) and, apart from
+ * name and title under it. Beside it, the six sections of the
+ * record (`section-nav.tsx`). On the right, one bar of tools (the
+ * index when the middle has no room for it, his business card, the
+ * plain record, sound, fullscreen) and, apart from
  * it and lit, the way into the interview: his face with a live dot,
  * "Interview me", a light running round its edge.
  */
@@ -31,6 +34,7 @@ export function TopBar() {
   const canImmerse = useCanImmerse();
   return (
     <header className={cn("hdr pointer-events-none fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-3 px-3 pt-3 transition-opacity duration-1000 sm:px-[4vw] sm:pt-5", !ready && "opacity-0")}>
+      <div className="flex min-w-0 items-center gap-5">
       <button type="button" onClick={closeFocus} className="hdr-brand pointer-events-auto flex min-w-0 shrink-0 items-center gap-3 text-left" aria-label={`${player.handle}: back to orbit`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB local SVG mark */}
         <img src="/brand/mark-small.svg" alt="" className="size-9 shrink-0" />
@@ -43,9 +47,17 @@ export function TopBar() {
           </span>
         </span>
       </button>
+      {/* the six sections, beside the name, where there is room for them */}
+      <div className="hdr-wide pointer-events-auto">
+        <SectionDock />
+      </div>
+      </div>
 
       <div className="pointer-events-auto flex shrink-0 items-center gap-2 sm:gap-3">
         <nav aria-label="Tools" className="hdr-bar">
+          <div className="hdr-narrow">
+            <SectionMenu />
+          </div>
           <button
             type="button"
             data-cta="card"
@@ -60,11 +72,11 @@ export function TopBar() {
             className="hdr-tool"
           >
             <IdCard className="size-4" />
-            <span className="hidden lg:inline">{hud.card}</span>
+            <span className="hdr-label">{hud.card}</span>
           </button>
-          <Link href="/record" aria-label="The plain record: the same content as one page of text" title="The plain record (text only)" className="hdr-tool">
+          <Link href="/record" aria-label="The plain record: the same content as one page of text" title="The plain record (text only)" className="hdr-tool hdr-record">
             <FileText className="size-4" />
-            <span className="hidden lg:inline">{hud.plain}</span>
+            <span className="hdr-label">{hud.plain}</span>
           </Link>
           <i className="hdr-bar__sep" aria-hidden />
           <button
