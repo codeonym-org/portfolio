@@ -145,6 +145,11 @@ thread id (the turns shown, the text agent's AG-UI messages, what was said aloud
 first message. The link (`components/agent/agent-bridge.tsx`) runs the agent under the current thread id and starts it
 from the saved messages, and AG-UI sends the whole message list with every run, so a thread the server has forgotten
 continues with its context. The voice agent starts over in a resumed conversation; the text agent holds what was said.
+Only the interview (`/interview`) is kept this way. The home page talks in a thread of its own, held in memory for the
+visit and never saved; going between the two pages switches threads, each found where it was left. On the home page, a
+stranger who keeps asking about the work is invited into the interview room once a visit (`inviteToInterview` in
+`system-commands.ts`): the agent may propose it itself (`propose_action` → `open_interview`), and by the second real
+question the page does, in place of any other proposal for that answer.
 
 ## Environment
 

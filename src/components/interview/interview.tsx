@@ -18,6 +18,8 @@ import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
 import { TopBar } from "./top-bar";
 import { TurnCanvas, useStage } from "./turn-canvas";
+import { AgentDevBridge } from "@/agent/dev-bridge";
+import { followTable, useTable } from "./table-store";
 import { followTurns } from "./use-turns";
 import { followVoice } from "./voice-log";
 
@@ -31,17 +33,17 @@ const copy = world.interview;
 function RoomContext() {
   const mode = useInterview((s) => s.mode);
   const replies = useInterview((s) => s.replies);
-  const sector = useWorldStore((s) => s.sector);
-  const caseFile = useWorldStore((s) => s.caseFile);
-  const brief = useWorldStore((s) => s.brief);
-  const inspect = useWorldStore((s) => s.inspect);
-  const onTable = [sector && `the ${sector} section`, caseFile && `the case file "${caseFile.title}"`, brief && "the one-minute brief", inspect && `the ${inspect.kind === "quest" ? "project" : inspect.kind} ${inspect.id}`].filter(Boolean);
+  const laid = useTable((s) => s.laid);
+  // oldest first, as the stranger sees them on the rail
+  const onTable = laid.map((l) =>
+    l.kind === "sector" ? `the ${l.sector} section` : l.kind === "case" ? `the case file "${l.file.title}"` : l.kind === "brief" ? "the one-minute brief" : `the ${l.target.kind === "quest" ? "project" : l.target.kind} ${l.target.id}`,
+  );
   useAgentContext({
     description: "Where the stranger is",
     value: {
       page: "the interview (/interview): your avatar sits behind a desk in an office (a laptop and your papers on it), facing the stranger as in a real job interview. There is no Monolith and no shards here.",
       screen:
-        "The conversation is a panel on your left: every question, the steps you take for it (each tool call, in plain words), and your answer as you write it; the stranger can scroll back through it, so do not repeat what you already said. Everything you open or show lands on the table, a panel on your right, one thing at a time behind tabs, the newest in front: open what helps the answer, and say in a few words what you put there rather than describing it all. On a phone the table is a sheet that slides up over the conversation.",
+        "The conversation is a panel on your left: every question, the steps you take for it (each tool call, in plain words), and your answer as you write it; the stranger can scroll back through it, so do not repeat what you already said. Everything you open or show lands on the table, a panel on your right, and stays there for the rest of the conversation: the newest in front, the others on a rail beside it by the question that brought them, so opening several things in one answer is fine (they all stay). Open what helps the answer, never reopen what is already on the table, and say in a few words what you put there rather than describing it all. On a phone the table is a sheet that slides up over the conversation.",
       onTheTable: onTable.length ? onTable : "nothing",
       answering: mode === "audio" ? "by voice" : "by text",
       yourReplies:
@@ -93,6 +95,8 @@ export function Interview() {
   const mapOpen = useWorldStore((s) => s.mapOpen);
 
   useEffect(() => {
+    // the interview has its own thread, kept; the home page's waits for the stranger's return
+    useHistory.getState().enter("interview");
     useInterview.getState().restore();
     void useWorldStore.persist.rehydrate();
     const mq = window.matchMedia("(pointer: coarse), (max-width: 820px)");
@@ -113,13 +117,16 @@ export function Interview() {
     window.addEventListener("keydown", unlock, true);
     const unfollowVoice = followVoice();
     const unfollowTurns = followTurns();
+    const unfollowTable = followTable();
     // a conversation left in progress comes back: say so
     const { conversations, current } = useHistory.getState();
     const resumed = conversations.find((c) => c.id === current);
     if (resumed) useSession.getState().set({ notice: copy.diary.resumed(new Date(resumed.updatedAt).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })) });
     return () => {
+      useHistory.getState().enter("home");
       unfollowVoice();
       unfollowTurns();
+      unfollowTable();
       stopReplies();
       useVoiceStore.getState().set({ spoken: true, speakTyped: false });
       voiceControl.hush();
@@ -149,6 +156,8 @@ export function Interview() {
       {ready && (
         <SystemLink>
           <RoomContext />
+          {/* the same console bench as on the home page: window.system */}
+          <AgentDevBridge />
         </SystemLink>
       )}
     </main>

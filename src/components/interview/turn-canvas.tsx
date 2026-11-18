@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { BadgeCheck, BriefcaseBusiness, FileText, FolderGit2, Mail, MapPin, Scale, Sparkles, Timer, UserRound, Wrench, type LucideIcon } from "lucide-react";
 import { executeSystemCommand } from "@/agent/system-commands";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { BriefPanel } from "@/components/interface/brief-panel";
@@ -20,8 +21,9 @@ import { useWorldStore, type SystemPrompt } from "@/store/world-store";
 import { describe, stepsFor } from "./activity";
 import { Conversation, type ShownRef, type Tone } from "./conversation";
 import { useInterview, type InterviewMode } from "./interview-store";
-import { DOCK_HEIGHT, stage, type Stage } from "./stage";
+import { DOCK_HEIGHT, RAIL, stage, type Stage } from "./stage";
 import { Table, type Exhibit } from "./table";
+import { useTable } from "./table-store";
 import { nextQuestions, type InterviewTurn } from "./turns";
 import { useTurns } from "./use-turns";
 
@@ -39,6 +41,24 @@ const SECTOR_BODY: Record<SectorId, () => ReactNode> = {
 
 const NONE: never[] = [];
 
+const SECTOR_ICON: Record<SectorId, LucideIcon> = {
+  status: UserRound,
+  experience: BriefcaseBusiness,
+  projects: FolderGit2,
+  skills: Wrench,
+  inventory: FileText,
+  contact: Mail,
+};
+const KIND_ICON: Record<"skills" | "map" | "case" | "brief" | "project" | "document" | "skill", LucideIcon> = {
+  skills: BadgeCheck,
+  map: MapPin,
+  case: Scale,
+  brief: Timer,
+  project: FolderGit2,
+  document: FileText,
+  skill: Sparkles,
+};
+
 const viewport = {
   subscribe: (then: () => void) => {
     window.addEventListener("resize", then);
@@ -52,11 +72,12 @@ const viewport = {
 export function useStage(mode: InterviewMode): Stage | null {
   const size = useSyncExternalStore(viewport.subscribe, viewport.read, viewport.server);
   const face = useInterview((s) => s.face);
+  const railed = useInterview((s) => s.railed);
   return useMemo(() => {
     if (!size) return null;
     const [w, h] = size.split("x").map(Number);
-    return stage(w, h, face, DOCK_HEIGHT[mode]);
-  }, [size, face, mode]);
+    return stage(w, h, face, DOCK_HEIGHT[mode], railed ? RAIL : 0);
+  }, [size, face, mode, railed]);
 }
 
 /** his question to the stranger, with its two answers */
@@ -134,60 +155,61 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
   const notice = useSession((st) => st.notice);
   const tasks = useVoiceStore((st) => st.tasks);
   const phase = useVoiceStore((st) => st.phase);
-  const sector = useWorldStore((st) => st.sector);
-  const caseFile = useWorldStore((st) => st.caseFile);
-  const brief = useWorldStore((st) => st.brief);
-  const inspect = useWorldStore((st) => st.inspect);
   const prompt = useWorldStore((st) => st.prompt);
   const toasts = useWorldStore((st) => st.toasts);
+  const laid = useTable((t) => t.laid);
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
-  /** when each thing on the table first came, and in which turn */
-  const [seen, setSeen] = useState<{ order: readonly string[]; turn: Readonly<Record<string, string | null>> }>({ order: [], turn: {} });
+  /** what has come onto the table so far (by its id and when it came) */
+  const [seen, setSeen] = useState<ReadonlySet<string>>(new Set());
 
   const hide = (id: string) => setHidden((h) => new Set(h).add(id));
 
-  // ── the table ──
-  const world$ = useWorldStore.getState();
+  // ── the table: the cards drawn under each answer, and everything he opened ──
+  const owner = (at: number) => turns.findLast((t) => t.at <= at)?.id ?? null;
   const items: Exhibit[] = [];
-  active?.cards.forEach((card, n) => {
-    const id = `card:${active.id}:${n}`;
-    if (hidden.has(id)) return;
-    const title = card.type === "skills" ? (card.title ?? copy.diary.shownWhat.skills) : card.type === "map" ? copy.diary.shownWhat.map : card.file.title;
-    items.push({ id, kind: kinds[card.type === "skills" ? "skills" : card.type === "map" ? "map" : "case"], title, body: <Cards cards={[card]} />, close: () => hide(id) });
-  });
-  if (sector) {
-    const def = sectorById[sector];
-    const Body = SECTOR_BODY[sector];
-    items.push({ id: `sector:${sector}`, kind: kinds.sector, title: def.name, body: <Body />, close: world$.closeFocus });
-  }
-  if (caseFile) items.push({ id: `case:${caseFile.title}`, kind: kinds.case, title: caseFile.title, body: <CasePanel file={caseFile} />, close: world$.closeFocus });
-  if (brief) items.push({ id: "brief", kind: kinds.brief, title: world.agent.brief, body: <BriefPanel />, close: world$.closeFocus });
-  if (inspect)
-    items.push({
-      id: `inspect:${inspect.kind}:${inspect.id}`,
-      kind: inspect.kind === "quest" ? kinds.project : inspect.kind === "item" ? kinds.document : kinds.skill,
-      title: inspected(inspect.kind, inspect.id),
-      body: <InspectBody target={inspect} />,
-      close: () => world$.setInspect(null),
+  for (const turn of turns)
+    turn.cards.forEach((card, n) => {
+      const id = `card:${turn.id}:${n}`;
+      if (hidden.has(id)) return;
+      const skills = card.type === "skills";
+      const title = skills ? (card.title ?? copy.diary.shownWhat.skills) : card.type === "map" ? copy.diary.shownWhat.map : card.file.title;
+      const kind = skills ? "skills" : card.type === "map" ? "map" : "case";
+      items.push({ id, kind: kinds[kind], icon: KIND_ICON[kind], title, body: <Cards cards={[card]} />, turn: turn.id, at: turn.at + 1 + n, close: () => hide(id) });
     });
+  for (const l of laid) {
+    const close = () => useTable.getState().take(l.id);
+    const base = { id: l.id, turn: owner(l.at), at: l.at, close };
+    if (l.kind === "sector") {
+      const Body = SECTOR_BODY[l.sector];
+      items.push({ ...base, kind: kinds.sector, icon: SECTOR_ICON[l.sector], title: sectorById[l.sector].name, body: <Body /> });
+    } else if (l.kind === "case") items.push({ ...base, kind: kinds.case, icon: KIND_ICON.case, title: l.file.title, body: <CasePanel file={l.file} /> });
+    else if (l.kind === "brief") items.push({ ...base, kind: kinds.brief, icon: KIND_ICON.brief, title: world.agent.brief, body: <BriefPanel /> });
+    else {
+      const k = l.target.kind === "quest" ? "project" : l.target.kind === "item" ? "document" : "skill";
+      items.push({ ...base, kind: kinds[k], icon: KIND_ICON[k], title: inspected(l.target.kind, l.target.id), body: <InspectBody target={l.target} /> });
+    }
+  }
+  items.sort((a, b) => a.at - b.at);
+
+  // several things on the table: it widens for their rail
+  const railed = items.length > 1;
+  useEffect(() => {
+    useInterview.getState().set({ railed });
+    return () => useInterview.getState().set({ railed: false });
+  }, [railed]);
 
   // what is new on the table comes to the front (and, on a phone, brings the sheet up)
-  const fresh = items.filter((i) => !(i.id in seen.turn));
+  const fresh = items.filter((i) => !seen.has(`${i.id}@${i.at}`));
   if (fresh.length) {
-    setSeen({ order: [...seen.order, ...fresh.map((f) => f.id)], turn: { ...seen.turn, ...Object.fromEntries(fresh.map((f) => [f.id, active?.id ?? null])) } });
+    setSeen(new Set([...seen, ...fresh.map((i) => `${i.id}@${i.at}`)]));
     setSelected(fresh.at(-1)!.id);
     if (!s.wide) setSheet(true);
   }
-  const rank = (id: string) => {
-    const at = seen.order.indexOf(id);
-    return at < 0 ? Infinity : at;
-  };
-  items.sort((a, b) => rank(a.id) - rank(b.id));
 
   // what each turn showed, for its chips: rebuilt only when the table changes
-  const shownKey = items.map((i) => [i.id, i.title, seen.turn[i.id] ?? ""].join("\u0001")).join("\u0002");
+  const shownKey = items.map((i) => [i.id, i.title, i.turn ?? ""].join("\u0001")).join("\u0002");
   const shownBy = useMemo(() => {
     const by = new Map<string, ShownRef[]>();
     if (!shownKey) return by;
@@ -199,6 +221,10 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
     return by;
   }, [shownKey]);
   const shownOf = useCallback((t: InterviewTurn) => shownBy.get(t.id) ?? NONE, [shownBy]);
+  const asked = (turn: string) => {
+    const n = turns.findIndex((t) => t.id === turn);
+    return n < 0 ? undefined : { n: n + 1, you: turns[n].you };
+  };
 
   const show = (id: string) => {
     setSelected(id);
@@ -229,21 +255,25 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
 
   const suggestions = useMemo(() => nextQuestions(turns, world.agent.suggestions, turns.length ? 3 : 4), [turns]);
 
-  // Escape puts away everything on the table, and his question
+  // Escape puts away his question, or else what is in front on the table (on a phone, first the sheet)
+  const front = items.find((i) => i.id === selected) ?? items.at(-1);
+  const latest = useRef({ front, sheet });
+  useEffect(() => {
+    latest.current = { front, sheet };
+  });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       const w = useWorldStore.getState();
       if (w.mapOpen || w.cvOpen || w.cardOpen || useInterview.getState().transcript) return;
-      if (active) setHidden((h) => new Set([...h, ...active.cards.map((_, n) => `card:${active.id}:${n}`)]));
-      if (w.sector || w.caseFile || w.brief) w.closeFocus();
-      if (w.inspect) w.setInspect(null);
-      if (w.prompt) w.ignore();
-      setSheet(false);
+      if (w.prompt) return w.ignore();
+      const { front, sheet } = latest.current;
+      if (!s.wide && sheet) return setSheet(false);
+      front?.close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active]);
+  }, [s.wide]);
 
   // ── notes from the room ──
   const leave = (id: string) => {
@@ -292,7 +322,17 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
         onDiary={() => useInterview.getState().toggleTranscript()}
       />
 
-      <Table place={s.table} wide={s.wide} items={items} selected={selected} onSelect={setSelected} open={sheet} onDismiss={() => setSheet(false)} />
+      <Table
+        place={s.table}
+        wide={s.wide}
+        items={items}
+        selected={selected}
+        onSelect={setSelected}
+        open={sheet}
+        onDismiss={() => setSheet(false)}
+        current={active?.id ?? null}
+        asked={asked}
+      />
     </div>
   );
 }

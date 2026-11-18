@@ -51,6 +51,8 @@ interface InterviewState {
   replies: Replies;
   /** the avatar's head and beard, in CSS pixels; null until the scene has framed it */
   face: Rect | null;
+  /** the table holds several things, and their rail */
+  railed: boolean;
   /** the avatar has loaded */
   present: boolean;
   /** the book of diaries is open */
@@ -64,7 +66,7 @@ interface InterviewState {
   setLevel: (level: SpaceLevel) => void;
   setMode: (mode: InterviewMode) => void;
   setReplies: (replies: Replies) => void;
-  set: (patch: Partial<Pick<InterviewState, "face" | "present">>) => void;
+  set: (patch: Partial<Pick<InterviewState, "face" | "present" | "railed">>) => void;
   /** read the saved choices, once on mount */
   restore: () => void;
 }
@@ -73,6 +75,7 @@ export const useInterview = create<InterviewState>((set) => ({
   mode: "text",
   replies: "voice",
   face: null,
+  railed: false,
   present: false,
   transcript: false,
   level: "turns",

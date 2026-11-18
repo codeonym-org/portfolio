@@ -31,6 +31,17 @@ test("a phone, or a room too narrow for two panels, has one sheet under his face
   }
 });
 
+test("a rail widens the table toward his face, never into it, and the input moves to stay between the panels", () => {
+  const plain = stage(1440, 900, face, DOCK_HEIGHT.text);
+  const railed = stage(1440, 900, face, DOCK_HEIGHT.text, 82);
+  assert.equal(railed.table.width, plain.table.width + 82);
+  assert.equal(railed.talk.width, plain.talk.width);
+  assert.ok(railed.table.left >= face.x + face.w + 28);
+  assert.ok(railed.dock.x + railed.dock.w / 2 < railed.table.left);
+  const tight = stage(1440, 900, { x: 600, y: 200, w: 300, h: 170 }, DOCK_HEIGHT.text, 82);
+  assert.ok(tight.table.left >= 900 + 28);
+});
+
 test("a face framed off centre narrows both panels alike", () => {
   const s = stage(1280, 800, { x: 520, y: 160, w: 150, h: 170 }, DOCK_HEIGHT.audio);
   assert.equal(s.wide, true);

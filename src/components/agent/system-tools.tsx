@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
+import { usePathname } from "next/navigation";
 import { mayOffer, unseen } from "@/agent/guide";
-import { systemCommands, type SystemCommand } from "@/agent/system-commands";
+import { inviteToInterview, systemCommands, type SystemCommand } from "@/agent/system-commands";
 import { findSkill, skills } from "@/config/skills.config";
+import { useSession } from "@/store/session-store";
 import { focusLabel, useWorldStore } from "@/store/world-store";
 
 /**
@@ -74,11 +76,15 @@ function RecordContext() {
   const touch = useWorldStore((s) => s.touch);
   const inspected = useWorldStore((s) => s.inspected);
   const offers = useWorldStore((s) => s.offers);
+  const home = !usePathname().startsWith("/interview");
+  const asked = useSession((s) => s.turns.filter((t) => t.role === "visitor").length);
 
   const value = useMemo(() => {
     const left = unseen({ visited, briefRead, cvRead, inspected });
     const allowed = mayOffer({ offers });
     return {
+      // the home page's conversation lasts the visit; the interview room keeps each one as a diary
+      room: home ? "home page: this conversation is not kept. open_interview can be proposed (see THE INTERVIEW ROOM)" : "the interview room: this conversation is kept",
       broughtForward: focusLabel({ sector, caseFile }),
       cvViewerOpen: cvOpen,
       inspecting: inspect ? { kind: inspect.kind, id: inspect.id } : null,
@@ -92,12 +98,33 @@ function RecordContext() {
           ? left.map((n) => `${n.id}: ${n.command.name}${Object.entries(n.command.args).map(([k, v]) => ` ${k}=${v}`).join("")}`)
           : "nothing: the visitor has seen the whole record. Propose nothing unless a specific entry answers their question.",
         proposedThisVisit: offers.log.length ? offers.log.map((p) => `${p.key} → ${p.outcome}`) : "nothing yet",
+        // the home page invites an interested stranger into the interview room, once (see the prompt, THE INTERVIEW ROOM)
+        interviewRoom: !home
+          ? "you are in it"
+          : offers.log.some((p) => p.key.startsWith("open_interview"))
+            ? "already proposed this visit: never again"
+            : asked >= 2
+              ? "due: if their questions are about your work, a role or hiring you, this reply's proposal is open_interview and nothing else, even right after another proposal was refused or ignored"
+              : "not yet: wait for their second question",
       },
       settings: { soundMuted: muted, graphics: quality, device: touch ? "touch/mobile" : "desktop" },
     };
-  }, [sector, caseFile, cvOpen, inspect, visited, briefRead, cvRead, muted, quality, touch, inspected, offers]);
+  }, [home, asked, sector, caseFile, cvOpen, inspect, visited, briefRead, cvRead, muted, quality, touch, inspected, offers]);
 
   useAgentContext({ description: "Live state of the record (what is brought forward, what is open, what the visitor has seen)", value });
+  return null;
+}
+
+/** on the home page: once an answer is done, an interested stranger is invited into the interview room */
+function InterviewInvitation() {
+  const home = !usePathname().startsWith("/interview");
+  useEffect(() => {
+    if (!home) return;
+    return useSession.subscribe((s, prev) => {
+      if (s.running || !prev.running) return;
+      inviteToInterview(s.turns.filter((t) => t.role === "visitor").map((t) => t.text));
+    });
+  }, [home]);
   return null;
 }
 
@@ -109,6 +136,7 @@ export function SystemTools() {
       ))}
       <PresentationTools />
       <RecordContext />
+      <InterviewInvitation />
     </>
   );
 }

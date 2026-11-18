@@ -296,12 +296,16 @@ export const systemCommands: SystemCommand[] = [
       "Propose ONE action to the visitor in a System window they can accept, refuse or ignore. Accepting runs the action for them. OPTIONAL: call it only when a specific action clearly follows from what the visitor just asked and would show them something they have not seen (see THE VISITOR in your instructions); most replies need none. It returns at once — the visitor answers in their own time, and the App Context (guide.proposedThisVisit) shows how they answered. At most one per reply, after your other tools. Never propose what is already open, already seen, or already proposed during this visit.",
     parameters: z.object({
       message: z.string().min(8).max(170).describe("What you propose, in the first person, one or two short sentences ending with a question, in the stranger's language. Only facts from the record."),
-      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map"]).describe("What accepting does."),
+      action: z.enum(["open_brief", "open_sector", "inspect_entity", "open_cv", "download_cv", "open_map", "open_interview"]).describe("What accepting does. open_interview (home page only) takes them to the interview room."),
       sector: SECTOR.optional().describe("For open_sector."),
       kind: z.enum(["quest", "skill", "item"]).optional().describe("For inspect_entity."),
       id: z.string().optional().describe("For inspect_entity: the exact id from the dossier."),
     }),
     handler: ({ message, action, sector, kind, id }) => {
+      if (action !== "open_interview" && interviewDue()) {
+        inviteToInterview();
+        return "Proposal shown in a System window (the interview room, which comes first now). Finish your reply now: it must NOT contain another invitation, question or next step.";
+      }
       const s = store();
       if (s.offers.declinedInARow >= MAX_DECLINED)
         return `Skipped: the visitor refused ${s.offers.declinedInARow} proposals in a row, so no more proposals until they ask what to see next. That is fine. Now answer the visitor normally in one to three sentences, with no invitation.`;
@@ -310,6 +314,7 @@ export const systemCommands: SystemCommand[] = [
       const parsed = target?.parameters.safeParse(args);
       if (!target || !parsed?.success) return `Not shown: invalid arguments for ${action}${parsed && !parsed.success ? ` (${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")})` : ""}.`;
       if (action === "inspect_entity" && !hasNode(`${kind}:${id}`)) return `Not shown: there is no ${kind} "${id}" in the record.`;
+      if (action === "open_interview" && window.location.pathname.startsWith("/interview")) return "Not shown: the visitor is already in the interview room. Now answer the visitor normally, with no invitation.";
       const key = proposalKey(action, args);
       const before = s.offers.log.find((p) => p.key === key);
       if (before) return `Not shown: you already proposed this during this visit (the visitor ${before.outcome === "waiting" ? "has not answered yet" : before.outcome + " it"}). Do not propose it again. Now answer the visitor normally, with no invitation.`;
@@ -364,6 +369,48 @@ function afterTheReply(show: () => void) {
 }
 
 /** the visitor moved on before the proposal appeared: it was never seen, so it counts as ignored */
+/** small talk is not interest: a greeting, thanks, an ok or a goodbye */
+const SMALL_TALK = /^\s*(hi|hello|hey|yo|salut|bonjour|merci|thanks?( you)?|thx|ok(ay)?|cool|nice|great|bye|goodbye|good (morning|evening|night)|السلام عليكم|مرحبا|شكرا)\b[\s!.?,]*$/i;
+
+/**
+ * On the home page, a stranger who keeps asking about the work is invited into the interview room,
+ * once a visit: the replica may propose it itself (propose_action → open_interview); if it has not by
+ * their second real question, the page does, in the same window, once the answer is on screen.
+ */
+const INVITE = proposalKey("open_interview");
+const visitorQuestions = () => useSession.getState().turns.filter((t) => t.role === "visitor").map((t) => t.text);
+
+/** the invitation is due: on the home page, not made yet this visit, and a second real question asked */
+export function interviewDue(questions: readonly string[] = visitorQuestions()): boolean {
+  if (typeof window === "undefined" || window.location.pathname.startsWith("/interview")) return false;
+  if (store().offers.log.some((p) => p.key === INVITE)) return false;
+  return questions.filter((q) => !SMALL_TALK.test(q)).length >= 2;
+}
+
+/** the invitation outranks any other proposal: one the replica made for this answer gives way to it */
+export function inviteToInterview(questions?: readonly string[]) {
+  if (!interviewDue(questions)) return;
+  // a window already on screen, from an earlier answer, is not taken from the stranger
+  if (store().prompt) return;
+  dropPendingProposal();
+  const s = store();
+  s.raiseOffer(INVITE);
+  afterTheReply(() => {
+    if (store().prompt) return store().settleOffer("ignored");
+    store().ask({
+      id: "offer",
+      heading: world.prompts.offerHeading,
+      body: world.prompts.interview,
+      accept: world.prompts.accept,
+      decline: world.prompts.refuse,
+      tone: "system",
+      command: { name: "open_interview", args: {} },
+      onAnswer: (accepted) => store().settleOffer(accepted ? "accepted" : "refused"),
+      onIgnore: () => store().settleOffer("ignored"),
+    });
+  });
+}
+
 export function dropPendingProposal() {
   if (waiting === null) return;
   window.clearInterval(waiting);

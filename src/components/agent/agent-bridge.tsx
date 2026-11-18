@@ -27,6 +27,7 @@ import { live, pulse } from "@/store/world-store";
  * The conversation is the one the history store calls current: the
  * agent runs under its thread id, starts from its saved messages, and
  * everything said is written back into it (`store/history-store.ts`).
+ * The home page and the interview each have their own.
  */
 
 function textOf(m: Message): string {
@@ -190,8 +191,8 @@ export function AgentBridge() {
     useHistory.getState().load();
     let applying = false;
     const apply = () => {
-      const { current, conversations } = useHistory.getState();
-      const saved = conversations.find((c) => c.id === current);
+      const { current, conversations, room, passing } = useHistory.getState();
+      const saved = room === "home" ? (passing.id === current ? passing : undefined) : conversations.find((c) => c.id === current);
       const messages = (saved?.messages ?? []) as Message[];
       applying = true;
       try {

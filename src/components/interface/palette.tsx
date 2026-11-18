@@ -69,7 +69,7 @@ function buildEntries(): Entry[] {
     {
       id: "action:new-conversation",
       label: "Start a new conversation",
-      sub: "the one in progress is kept seven days",
+      sub: "on the interview, each one is kept seven days",
       group: "Commands",
       color: toneColor.system,
       search: "start a new conversation fresh reset clear chat history thread again",

@@ -42,23 +42,27 @@ export const UNDER_BAR = 76;
 const CLEAR = 28;
 /** a panel narrower than this does not fit beside him */
 const NARROWEST = 290;
+/** how much wider the table grows, room allowing, when it holds several things and their rail */
+export const RAIL = 82;
 /** how much room the input takes at the bottom, by how the stranger asks */
 export const DOCK_HEIGHT = { text: 124, audio: 232 } as const;
 
 const snap = (v: number) => Math.floor(v / 16) * 16;
 
-export function stage(vw: number, vh: number, face: Rect | null, dockHeight: number): Stage {
+export function stage(vw: number, vh: number, face: Rect | null, dockHeight: number, rail = 0): Stage {
   const head = face ?? { x: vw / 2 - 110, y: vh * 0.2, w: 220, h: 240 };
   // his head moves a little as he breathes and looks: steps of 16 px keep the panels from following it
   const side = snap(Math.min(440, Math.max(300, vw * 0.27), head.x - CLEAR - EDGE, vw - head.x - head.w - CLEAR - EDGE));
   const wide = vw >= 960 && vw / vh >= 1 && side >= NARROWEST;
 
   if (wide) {
-    const inner = { left: EDGE + side + 16, right: vw - EDGE - side - 16 };
+    // the rail takes what room there is between the table and his face, never closer than the rest
+    const table = Math.max(side, Math.min(side + rail, vw - EDGE - (head.x + head.w + CLEAR)));
+    const inner = { left: EDGE + side + 16, right: vw - EDGE - table - 16 };
     return {
       wide,
       talk: { left: EDGE, width: side, top: UNDER_BAR, bottom: EDGE },
-      table: { left: vw - EDGE - side, width: side, top: UNDER_BAR, bottom: EDGE },
+      table: { left: vw - EDGE - table, width: table, top: UNDER_BAR, bottom: EDGE },
       dock: { x: (inner.left + inner.right) / 2, w: Math.min(620, inner.right - inner.left) },
     };
   }
