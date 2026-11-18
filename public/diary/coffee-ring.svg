@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <filter id="w" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="5"/>
+      <feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.6"/>
+    </filter>
+    <radialGradient id="pool">
+      <stop offset="0.7" stop-color="#a06a32" stop-opacity="0.07"/>
+      <stop offset="0.95" stop-color="#8a5422" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#6e3d14" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g filter="url(#w)">
+    <circle cx="112" cy="118" r="78" fill="url(#pool)"/>
+    <circle cx="112" cy="118" r="78" fill="none" stroke="#6b3a12" stroke-opacity="0.5" stroke-width="2.6"/>
+    <circle cx="112" cy="118" r="74" fill="none" stroke="#8a5422" stroke-opacity="0.16" stroke-width="6"/>
+    <!-- where the cup was set down a second time, a little aside: fainter, and broken where it dried thin -->
+    <circle cx="128" cy="106" r="77" fill="none" stroke="#6b3a12" stroke-opacity="0.13" stroke-width="1.8"/>
+    <circle cx="128" cy="106" r="77" fill="none" stroke="#6b3a12" stroke-opacity="0.24" stroke-width="2" stroke-dasharray="210 274" transform="rotate(-70 128 106)"/>
+    <circle cx="206" cy="40" r="6" fill="#7a4518" fill-opacity="0.3"/>
+    <circle cx="222" cy="58" r="3" fill="#7a4518" fill-opacity="0.3"/>
+    <circle cx="24" cy="210" r="4.5" fill="#7a4518" fill-opacity="0.28"/>
+  </g>
+</svg>

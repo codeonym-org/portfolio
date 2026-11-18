@@ -2066,8 +2066,11 @@
     position: absolute;
     top: calc(var(--fs) * 0.12);
     bottom: calc(var(--fs) * 0.12);
-    background: repeating-linear-gradient(to right, #efe3c8 0 1px, #b7a27d 1px 2px);
-    box-shadow: inset 0 0 calc(var(--fs) * 0.3) rgb(80 50 20 / 0.45);
+    /* the page edges, browned with age */
+    background:
+      linear-gradient(to bottom, rgb(60 30 10 / 0.45), transparent 6%, transparent 94%, rgb(60 30 10 / 0.45)),
+      repeating-linear-gradient(to right, #d2bb92 0 1px, #94784f 1px 2px);
+    box-shadow: inset 0 0 calc(var(--fs) * 0.3) rgb(70 40 15 / 0.5);
   }
   .db-stack--right {
     left: 100%;
@@ -2174,8 +2177,17 @@
     font-family: var(--font-hand), cursive;
     line-height: var(--lh);
   }
+  /* each page burnt along its outer edges: the shape the fire left (a mask) and the scorch on it */
   .db-paper {
+    --burn: url("/diary/burn-recto-0.svg");
+    --char: url("/diary/char-recto-0.svg");
+    -webkit-mask: var(--burn) 0 0 / 100% 100% no-repeat;
+    mask: var(--burn) 0 0 / 100% 100% no-repeat;
     background:
+      var(--char) 0 0 / 100% 100% no-repeat,
+      radial-gradient(circle at calc(30% + var(--luck, 0.3) * 40%) calc(30% + var(--luck, 0.3) * 35%), rgb(140 90 40 / 0.1), transparent calc(var(--fs) * 0.35)),
+      radial-gradient(circle at calc(72% - var(--luck, 0.3) * 30%) calc(66% - var(--luck, 0.3) * 20%), rgb(140 90 40 / 0.13), transparent calc(var(--fs) * 0.25)),
+      radial-gradient(ellipse 60% 50% at calc(40% + var(--luck, 0.3) * 30%) 60%, rgb(170 120 60 / 0.1), transparent 70%),
       radial-gradient(circle at calc(18% + var(--luck, 0.3) * 60%) calc(84% - var(--luck, 0.3) * 50%), rgb(150 100 45 / 0.16), transparent calc(var(--fs) * 0.9)),
       radial-gradient(circle at calc(78% - var(--luck, 0.3) * 40%) calc(14% + var(--luck, 0.3) * 30%), rgb(150 100 45 / 0.12), transparent calc(var(--fs) * 0.6)),
       radial-gradient(ellipse 75% 70% at 50% 48%, transparent 55%, rgb(150 105 50 / 0.28) 100%),
@@ -2187,9 +2199,27 @@
       inset calc(var(--fs) * -0.1) 0 calc(var(--fs) * 0.3) rgb(120 80 30 / 0.25);
   }
   .db-paper--verso {
+    --burn: url("/diary/burn-verso-0.svg");
+    --char: url("/diary/char-verso-0.svg");
     box-shadow:
       inset calc(var(--fs) * -1.6) 0 calc(var(--fs) * 1.4) calc(var(--fs) * -0.9) rgb(70 40 15 / 0.45),
       inset calc(var(--fs) * 0.1) 0 calc(var(--fs) * 0.3) rgb(120 80 30 / 0.25);
+  }
+  .db-paper--recto[data-burn="1"] {
+    --burn: url("/diary/burn-recto-1.svg");
+    --char: url("/diary/char-recto-1.svg");
+  }
+  .db-paper--recto[data-burn="2"] {
+    --burn: url("/diary/burn-recto-2.svg");
+    --char: url("/diary/char-recto-2.svg");
+  }
+  .db-paper--verso[data-burn="1"] {
+    --burn: url("/diary/burn-verso-1.svg");
+    --char: url("/diary/char-verso-1.svg");
+  }
+  .db-paper--verso[data-burn="2"] {
+    --burn: url("/diary/burn-verso-2.svg");
+    --char: url("/diary/char-verso-2.svg");
   }
   .db-paper--ruled::before {
     content: "";
@@ -2299,17 +2329,23 @@
     color: var(--red);
     white-space: nowrap;
   }
+  /* stamped at the end of a question that was spoken */
   .db-aloud {
     display: inline-flex;
     align-items: center;
     gap: 0.15em;
-    margin-top: 0.2em;
-    padding: 0 0.25em;
+    margin-left: 0.6em;
+    padding: 0 0.3em;
     border: 0.08em solid rgb(110 50 140 / 0.7);
     border-radius: 0.2em;
-    rotate: -8deg;
+    rotate: -5deg;
+    vertical-align: 0.15em;
     font-family: var(--font-fell), serif;
-    font-size: 0.62em;
+    font-weight: 400;
+    text-shadow: none;
+    white-space: nowrap;
+    mix-blend-mode: multiply;
+    font-size: 0.42em;
     line-height: 1.5;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2375,15 +2411,23 @@
     border: 0.08em solid #9aa0a8;
     border-radius: 0.2em;
   }
-  .db-ring {
+  /* where a cup stood, and where one was spilled */
+  .db-ring,
+  .db-spill {
     position: absolute;
-    width: calc(var(--fs) * 5.6);
-    height: calc(var(--fs) * 5.6);
     translate: -50% -50%;
-    border-radius: 50%;
     pointer-events: none;
     mix-blend-mode: multiply;
-    background: radial-gradient(circle, transparent 58%, rgb(120 70 30 / 0.3) 61%, rgb(120 70 30 / 0.12) 65%, transparent 69%), radial-gradient(circle, rgb(140 90 40 / 0.06), transparent 60%);
+  }
+  .db-ring {
+    width: calc(var(--fs) * 7);
+    height: calc(var(--fs) * 7);
+    background: url("/diary/coffee-ring.svg") center / contain no-repeat;
+  }
+  .db-spill {
+    width: calc(var(--fs) * 11);
+    height: calc(var(--fs) * 9.5);
+    background: url("/diary/coffee-spill.svg") center / contain no-repeat;
   }
   .db-ribbon {
     position: absolute;
@@ -2452,8 +2496,8 @@
   }
   .db-sticker {
     position: absolute;
-    top: 5%;
-    right: -0.4em;
+    top: 7%;
+    right: 9%;
     padding: 0.15em 0.7em;
     rotate: 7deg;
     background: var(--red);

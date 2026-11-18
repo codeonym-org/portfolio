@@ -47,17 +47,18 @@ const asDiaryTurns = (turns: readonly InterviewTurn[]) => turns.map((t) => ({ id
  * the spine to the edge, each hinged on the one before. The whole leaf
  * turns through 180°, and while it is in the air its edge runs ahead
  * of the spine, so the paper curls; each strip is shaded by how far it
- * faces away from the light. What `register` is given moves it (0 flat on the right … 1
- * flat on the left) without a render.
+ * faces away from the light. A board (the cover) is `stiff`: it turns
+ * in one piece on its hinge, without curling. What `register` is given
+ * moves it (0 flat on the right … 1 flat on the left) without a render.
  */
-function Bend({ front, back, w, register }: { front: ReactNode; back: ReactNode; w: number; register: (move: ((p: number) => void) | null) => void }) {
+function Bend({ front, back, w, stiff, register }: { front: ReactNode; back: ReactNode; w: number; stiff: boolean; register: (move: ((p: number) => void) | null) => void }) {
   const segs = useRef<(HTMLDivElement | null)[]>([]);
   const s = w / SEGS;
 
   useLayoutEffect(() => {
     register((p: number) => {
       const theta = 180 * p;
-      const curl = 62 * Math.sin(Math.PI * p);
+      const curl = stiff ? 0 : 62 * Math.sin(Math.PI * p);
       let before = 0;
       for (let i = 0; i < SEGS; i++) {
         const el = segs.current[i];
@@ -71,7 +72,7 @@ function Bend({ front, back, w, register }: { front: ReactNode; back: ReactNode;
       }
     });
     return () => register(null);
-  }, [register]);
+  }, [register, stiff]);
 
   const strip = (i: number): ReactNode => (
     <div
@@ -153,15 +154,15 @@ function Entry({ b, i }: { b: Block; i: number }) {
         <div className={cn("db-ask", i === 0 && "db-ask--top")}>
           <time className="db-margin" dateTime={new Date(b.at).toISOString()}>
             {clock(b.at)}
+          </time>
+          <p>
+            <span className="sr-only">{b.spoken ? copy.heard : copy.you}: </span>— {b.text}
             {b.spoken && (
-              <span className="db-aloud">
+              <span className="db-aloud" aria-hidden>
                 <Mic />
                 {copy.aloud}
               </span>
             )}
-          </time>
-          <p>
-            <span className="sr-only">{b.spoken ? copy.heard : copy.you}: </span>— {b.text}
           </p>
         </div>
       );
@@ -186,6 +187,7 @@ function PageFace({ n, ink, side }: { n: number; ink: Ink; side: "recto" | "vers
   const luck = seed(`${diary?.id ?? "book"}:${n}`);
 
   let body: ReactNode = null;
+  let ribbon = false;
   if (page.kind === "contents") {
     body = (
       <>
@@ -273,10 +275,9 @@ function PageFace({ n, ink, side }: { n: number; ink: Ink; side: "recto" | "vers
             <Entry key={i} b={b} i={i} />
           ))}
         </div>
-        {luck < 0.2 && <i className="db-ring" style={{ left: `${48 + luck * 120}%`, top: `${58 + luck * 90}%`, rotate: `${luck * 900}deg` }} aria-hidden />}
-        {lastOfHere && <i className={cn("db-ribbon", side === "recto" && "db-ribbon--recto")} aria-hidden />}
       </>
     );
+    ribbon = lastOfHere;
   } else if (page.kind === "fresh") {
     body = (
       <div className="db-fresh">
@@ -294,11 +295,17 @@ function PageFace({ n, ink, side }: { n: number; ink: Ink; side: "recto" | "vers
     );
   }
 
+  // the book has been near a fire and under a cup: each page burnt its own way at the edges, some stained
   return (
-    <div className={cn("db-paper", `db-paper--${side}`, page.kind === "entry" && "db-paper--ruled")} style={{ ["--luck" as string]: luck }}>
-      {body}
-      {folio}
-    </div>
+    <>
+      <div className={cn("db-paper", `db-paper--${side}`, page.kind === "entry" && "db-paper--ruled")} data-burn={Math.floor(luck * 3)} style={{ ["--luck" as string]: luck }}>
+        {luck < 0.22 && <i className="db-ring" style={{ left: `${40 + luck * 160}%`, top: `${56 + luck * 110}%`, rotate: `${luck * 1600}deg` }} aria-hidden />}
+        {luck >= 0.22 && luck < 0.3 && <i className="db-spill" style={{ left: `${30 + (luck - 0.22) * 400}%`, top: `${68 - (luck - 0.22) * 300}%`, rotate: `${luck * 1100}deg` }} aria-hidden />}
+        {body}
+        {folio}
+      </div>
+      {ribbon && <i className={cn("db-ribbon", side === "recto" && "db-ribbon--recto")} aria-hidden />}
+    </>
   );
 }
 
@@ -680,8 +687,9 @@ function Book() {
         <motion.div initial={{ y: 60, rotateX: 18, opacity: 0 }} animate={{ y: 0, rotateX: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 120, damping: 20 }} style={{ transformPerspective: 2000 }}>
           <div className={cn("db-book", spread ? "db-book--spread" : "db-book--single")} style={{ ...style, width: spread ? pw * 2 : pw, transform: `translateX(${shift}px)` }}>
             {/* the boards and the edges of the pages under them */}
-            {spread && turned > 0 && <i className="db-board db-board--left" />}
-            {(turned < total || turning) && <i className="db-board db-board--right" />}
+            {/* while a cover turns, it is itself the board on its side */}
+            {spread && (turning ? turning.leaf > 0 : turned > 0) && <i className="db-board db-board--left" />}
+            {(turning ? turning.leaf < total - 1 : turned < total) && <i className="db-board db-board--right" />}
             {spread && turned > 1 && <i className="db-stack db-stack--left" style={{ width: leftStack }} />}
             {turned < total - 1 && <i className="db-stack db-stack--right" style={{ width: rightStack }} />}
 
@@ -700,7 +708,7 @@ function Book() {
 
             {turning && turningFaces && (
               <div className="db-turning">
-                <Bend register={register} w={pw} front={<FaceView face={turningFaces[0]} ink={ink} side="recto" />} back={<FaceView face={turningFaces[1]} ink={ink} side="verso" />} />
+                <Bend register={register} w={pw} stiff={turningFaces[0].kind === "cover" || turningFaces[1].kind === "back"} front={<FaceView face={turningFaces[0]} ink={ink} side="recto" />} back={<FaceView face={turningFaces[1]} ink={ink} side="verso" />} />
               </div>
             )}
           </div>
