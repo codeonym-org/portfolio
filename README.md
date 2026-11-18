@@ -1,73 +1,144 @@
-# codeonym — the living record
+<p align="center">
+  <img src="public/brand/mark.svg" alt="" width="88" height="88" />
+</p>
 
-**Live:** [portfolio.codeonym.work](https://portfolio.codeonym.work)
+<h1 align="center">codeonym · the living record</h1>
 
-A portfolio with no pages. **THE SYSTEM**, an AI agent, lives in a fractured obsidian Monolith; every entry of the
-CV — each project, skill, job, degree — is a shard in orbit around it. You ask (type, or hold **V** to talk) and the
-agent answers by rearranging the place: it brings the right shards forward, opens the record beside them, and can
-assemble a **case file**, a set of evidence picked for your question that you can share as a link. Its tool calls
-are shown live as a run trace.
+<p align="center">
+  <strong>An agentic portfolio.</strong> An AI agent answers as me, in the first person, by text or by voice,<br />
+  and shows my record while it talks.
+</p>
 
-[`/interview`](https://portfolio.codeonym.work/interview) is the same agent face to face: his avatar at a desk in an
-office, as in a real interview: you ask by text or by voice, and he answers aloud (or in text only, if you choose; or when the browser does not yet let the tab play sound) (it blinks, breathes, looks at you, and its jaw follows the voice),
-the conversation in one panel on his left (each question, the steps he takes for it in plain words, his answer as he writes it, what to ask next) and what he shows on a table on his right, kept for the whole conversation, one thing read at a time with a rail beside it that switches between them by the question that brought them (on a phone a sheet that slides up), a transcript that opens as an old leather book of diaries, one diary for each of your conversations, handwritten and dated, with its contents, notes, stamps and stickers, whose pages bend as they turn and rustle, and his business card: dark metal with the brand mark carved in it, his contact details on the back, saved as a vCard. The avatar (from a photo of the owner seated, in a stylized CG look) and his chair are Hyper3D Rodin models; the avatar is rigged in Rodin (its humanoid skeleton and idle clip, played on his trunk and head), and two shapes made on his face, the jaw open and the eyes shut, let him blink and speak; while he speaks he holds still and looks the stranger in the eyes; the office around him is built from Rodin models too, each at its real size (the oak desk, the laptop, notebook, book, pen cup and plant on it, the back desk and its monitor, the shelf of binders, the fig tree, the lamp), in a plain room with a window.
+<p align="center">
+  <a href="https://portfolio.codeonym.work"><strong>portfolio.codeonym.work</strong></a> ·
+  <a href="https://portfolio.codeonym.work/interview">Interview me</a> ·
+  <a href="https://portfolio.codeonym.work/record">Plain record</a>
+</p>
 
-Conversations are kept for seven days from their first message, in your own browser (`localStorage`) and in the
-server's memory, then forgotten. A conversation left in progress is resumed on the next visit, and the book of diaries
-returns to any other one still kept.
+---
 
-Without the agent (no key, offline, rate-limited) a local index takes over, **⌘K** runs every command by hand, and
-[`/record`](https://portfolio.codeonym.work/record) and `/llms.txt` serve the same record as plain text.
+A portfolio usually asks you to read it. This one is a conversation. You ask what you would ask in an interview
+("what have you built?", "are you a fit for this role?"). The agent answers from my record, in my voice, and shows
+the evidence as it goes: it opens the right section, brings a project forward, or builds a case for you to keep.
+
+## Two ways in
+
+### The living record: `/`
+
+The home page has no pages. An obsidian **Monolith** holds the agent, and every entry of my CV (each project, job,
+skill, degree and document) is a shard in orbit around it, in six sections: Profile, Experience, Projects, Skills,
+Documents and Contact.
+
+- **Ask, and the place answers.** The agent opens sections, inspects entries and lights the shards it is talking
+  about. Every tool call appears live in a run trace, with its arguments and duration. Nothing is staged.
+- **Case files.** For a judgement question, it picks two to seven pieces of evidence from the record and writes one
+  honest line on each. The case lives in the URL, so it can be shared and reopens without the agent.
+- **My GitHub, live:** the year's contribution calendar, streaks, my weeks and years, languages, and the repositories
+  I commit to most. Only public work is named.
+- **The brief:** a one-minute read for hiring teams.
+
+### The interview room: `/interview`
+
+The same agent, face to face. My avatar sits at a desk in an office. It blinks, breathes, looks at you, and its jaw
+follows the voice.
+
+- Type, or **hold V** to talk. It answers aloud (or in text only), in English, French or Arabic.
+- What it shows is laid on a table beside it and stays there for the whole conversation.
+- The **transcript** opens as a leather-bound book of diaries, one for each conversation, and exports as a PDF that
+  ends with my CV and my card.
+- My **business card**, dark metal with the mark carved in it, turns over and saves as a vCard.
+
+## The agent
+
+It is me, answering a stranger the way I would in a job interview.
+
+- **Grounded.** It answers only from the record (`src/config`) and my own answers to common interview questions
+  (`interview.config.ts`).
+- **It knows what is mine to answer.** Salary, start dates, offers, or an opinion the record doesn't state: it
+  doesn't guess. It says I'd rather discuss it directly, and offers my card.
+- **Honest.** Asked sincerely, it never claims to be human, and a line under the console says the answers are
+  generated.
+- **It acts.** A text agent answers *with the page*, through tools. A voice agent talks and hands the work to the text
+  agent in the background, so speech never waits on the screen.
+- **It degrades gracefully.** With no model (offline, no key, rate-limited), a local index answers the same message
+  and says it can't reason. **⌘K** runs every command by hand. `/record` and `/llms.txt` serve the whole record as
+  text.
+
+| Role | Model (via OpenRouter) | Why |
+|---|---|---|
+| Conversation | `anthropic/claude-haiku-5.5`, no reasoning | ~1 s to the first token with tools, on its fastest providers; the fixed prompt is cached |
+| Listening | `mistralai/voxtral-mini-transcribe-3-0` | 0.5–0.7 s, right in English, French and Arabic |
+| Speaking | `x-ai/grok-voice-tts-1.0`, voice `rex` | 0.4 s to the first audio, streamed |
+
+All three are set by environment variables and can change without a code change. The agent's design, its tools,
+the voice pipeline, retention and guards are in [`src/agent/README.md`](src/agent/README.md).
 
 ## Stack
 
-- **Next.js 16** (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui
-- **3D:** three.js via React Three Fiber + drei + postprocessing; the models are generated in Blender
-  ([`scripts/assets`](scripts/assets/README.md))
-- **Agent:** LangChain `createAgent` served in-process through CopilotKit v2 (`/api/copilotkit`), models via
-  OpenRouter, optional LangSmith tracing — see [`src/agent/README.md`](src/agent/README.md)
-- Deployed on Vercel from `main`
+- **Next.js 16** (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS 4
+- **3D:** three.js through React Three Fiber, drei and postprocessing. The Monolith, shards and brand are generated in
+  Blender, and the avatar and office are Hyper3D Rodin models ([`scripts/assets`](scripts/assets/README.md)).
+- **Agent:** LangChain `createAgent`, served in-process through CopilotKit v2 (`/api/copilotkit`), models through
+  OpenRouter, traces in LangSmith
+- **State:** zustand · **Motion:** motion · **PDF:** React-PDF
+- Deployed on **Vercel** from `main`
 
 ## Run it
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in the keys (OpenRouter is required for the agent)
+cp .env.example .env.local   # OPEN_ROUTER_API_KEY is the one required key
 pnpm dev                     # http://localhost:3000
 ```
 
 | Command | Does |
 |---|---|
-| `pnpm dev` | Dev server |
+| `pnpm dev` | Development server |
 | `pnpm build && pnpm start` | Production build |
 | `pnpm lint` | ESLint |
-| `pnpm test` | Node test runner (`src/**/*.test.ts`) |
+| `pnpm test` | Unit tests (Node's test runner, `src/**/*.test.ts`) |
 
-Content (profile, skills, projects, documents) lives in `src/config/*.config.ts`
-([`src/config/README.md`](src/config/README.md)).
+Every variable is listed in [`.env.example`](.env.example) and explained in
+[`src/agent/README.md`](src/agent/README.md#environment). Without a key, the site still works on its local index.
 
-## Controls
+## Where things are
 
-| Key | Action |
+| Path | What |
 |---|---|
-| / or T | Ask THE SYSTEM |
-| hold V | Talk to THE SYSTEM |
-| ⌘K / Ctrl K | Command palette |
-| 1–6 | Open a sector |
-| Drag | Spin the sky |
-| Esc | Close what is open |
-| M | Sound |
-| F | Fullscreen |
+| `src/config/` | The content: profile, experience, projects, skills, documents, interview answers ([README](src/config/README.md)) |
+| `src/agent/` | Both agents, their prompts, tools, voice pipeline and the local index ([README](src/agent/README.md)) |
+| `src/record/` | The record as data: the shards, case files, `/record` and `/llms.txt` |
+| `src/components/scene/` | The Monolith and its orbit |
+| `src/components/interview/` | The interview room: avatar, office, table, transcript, card |
+| `src/components/interface/` | The home page's header, windows, console and run trace |
+| `src/github/` | My GitHub activity, read with a read-only token |
+| `scripts/assets/` | How every model, image and sound was made, and its license |
+
+Edit the content in `src/config` and everything follows: the scene, the windows, the agent's grounding and the
+plain-text routes.
+
+## Keys
+
+| Key | Does |
+|---|---|
+| **/** or **T** | Ask the agent |
+| hold **V** | Talk to it |
+| **⌘K** / **Ctrl K** | Command palette |
+| **1–6** | Open a section |
+| **Q** | Jump to the section bar |
+| **Esc** | Close what is open |
+| **M** | Sound on or off |
+| **F** | Fullscreen |
 
 ## Contributing
 
-`main` is protected: every change goes through a PR. Issues, milestones and labels are on
-[GitHub Issues](https://github.com/codeonym-org/portfolio/issues) — see
-[`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) for the workflow.
+`main` is protected: every change goes through a pull request named after its issue. Issues, milestones and labels
+are on [GitHub Issues](https://github.com/codeonym-org/portfolio/issues), and the workflow is in
+[`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
 
 ## License
 
-**All rights reserved.** The source is public to be read, not reused: no part of the code, design, content or assets
+**All rights reserved.** The source is public to be read, not reused. No part of the code, design, content or assets
 may be copied, modified, redistributed or used to build another site or product without written permission. See
 [`LICENSE`](LICENSE). Third-party assets keep their own licenses
 ([`scripts/assets/README.md`](scripts/assets/README.md)).
