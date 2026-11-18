@@ -175,10 +175,12 @@ can name one or two. Without the token the view says GitHub did not answer and l
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | yes | OpenRouter key; without it the route answers 503 |
-| `MODEL_ID` | no | OpenRouter model id for both agents, default `openai/gpt-oss-120b` (the voice agent uses low reasoning effort) |
-| `STT_MODEL_ID` | no | OpenRouter speech-to-text model, default `openai/gpt-4o-mini-transcribe` (steady ~0.8 s, multilingual incl. Arabic, ~$0.0001 per utterance) |
-| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `mistralai/voxtral-mini-tts-2603` (~1 s to first byte, mp3) |
-| `TTS_VOICE` | no | voice id for the TTS model, default `gb_oliver_confident` (Voxtral voices: `en_paul_*`, `gb_oliver_*`, `gb_jane_*`, `fr_marie_*`) |
+| `MODEL_ID` | no | OpenRouter model id for both agents, default `anthropic/claude-haiku-5.5` (~1 s to the first token, every tool call right in the 2026-11 run, ~$0.0004 a turn) |
+| `MODEL_PROVIDERS` | no | OpenRouter providers to try first, comma-separated; falls back to the others. Default for Claude models: `claude-on-aws,anthropic,google-vertex` (the fastest measured, same price) |
+| `MODEL_REASONING` | no | `low`, `medium` or `high`; unset sends no reasoning setting at all (Haiku answers straight). The voice agent uses at most `low`. Set it if you switch to a model that always thinks, such as gpt-oss |
+| `STT_MODEL_ID` | no | OpenRouter speech-to-text model, default `mistralai/voxtral-mini-transcribe-3-0` (0.5–0.7 s, English, French and Arabic, ~$0.0003 per utterance) |
+| `TTS_MODEL_ID` | no | OpenRouter text-to-speech model, default `elevenlabs/eleven-flash-v2.5` (0.4–0.7 s to first byte, mp3, multilingual) |
+| `TTS_VOICE` | no | voice id for the TTS model, default `JBFqnCBsd6RMkjVDRZzb` (ElevenLabs "George"); any ElevenLabs voice id |
 | `EDGE_CONFIG` | no | Vercel Edge Config connection string. When set, the `MODEL_ID` **item** in Edge Config overrides the env var. |
 | `SITE_URL` | no | sent to OpenRouter as `HTTP-Referer` |
 | `GITHUB_TOKEN` | no | fine-grained, public repositories only, no permissions: live project data (anonymous without it) and "My GitHub" (needs it) |

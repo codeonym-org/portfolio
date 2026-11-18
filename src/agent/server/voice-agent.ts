@@ -11,7 +11,7 @@ import { TASK_EVENT, TASK_MAX } from "../voice/protocol";
 import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
 import { appContextNote, historyWindow } from "./middleware";
-import { createChatModel } from "./model";
+import { createChatModel, reasoningEffort } from "./model";
 
 /**
  * ── AYOUB, ALOUD (voice agent) ────────────────────────────────
@@ -94,8 +94,8 @@ const agents = new Map<string, ReturnType<typeof build>>();
 function build(modelId: string) {
   return createAgent({
     name: "system-voice",
-    // short, fast turns: little reasoning, few tokens
-    model: createChatModel(modelId, { temperature: 0.6, maxTokens: 500, reasoningEffort: "low" }),
+    // short, fast turns: few tokens, and at most a little reasoning
+    model: createChatModel(modelId, { temperature: 0.6, maxTokens: 500, reasoningEffort: reasoningEffort() && "low" }),
     tools: [delegateTask],
     systemPrompt: VOICE_PROMPT,
     // same state as the text agent so the AG-UI adapter can hand context in

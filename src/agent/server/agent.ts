@@ -8,7 +8,7 @@ import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
 import { handedToTheOwner } from "../interview-grounding";
 import { historyWindow } from "./middleware";
-import { createChatModel } from "./model";
+import { createChatModel, reasoningEffort } from "./model";
 import { backendTools } from "./tools";
 
 /**
@@ -111,7 +111,7 @@ const agents = new Map<string, ReturnType<typeof build>>();
 function build(modelId: string) {
   return createAgent({
     name: "system",
-    model: createChatModel(modelId),
+    model: createChatModel(modelId, { reasoningEffort: reasoningEffort() }),
     tools: backendTools,
     systemPrompt: SYSTEM_PROMPT,
     // CopilotKit's state: messages + copilotkit.{actions, context, …}
