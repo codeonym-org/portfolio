@@ -14,6 +14,11 @@ import { useWorldStore } from "@/store/world-store";
  * puts it away or another conversation begins. Cards drawn under a
  * reply (skill badges, the map) stay with their turn and are not
  * kept here.
+ *
+ * What the stranger opens from inside a thing on the table (a skill in
+ * the Skills section, a project named by a skill) opens in that same
+ * place, on its trail: a back button returns along it. It is not a
+ * new thing on the table, and belongs to no question.
  */
 
 export type Laid =
@@ -31,6 +36,12 @@ const idOf = (s: Shown): string =>
 interface TableState {
   /** oldest first */
   laid: Laid[];
+  /** by the id of a thing on the table (or of a card): what was opened from it, deepest last */
+  trails: Record<string, InspectTarget[]>;
+  /** open an entry from inside a thing on the table, on its trail */
+  drill: (from: string, target: InspectTarget) => void;
+  /** one step back along its trail */
+  back: (from: string) => void;
   /** put it on the table; again, it comes back to the front with this question */
   lay: (shown: Shown) => void;
   /** put it away (and close it in the record if it is what the record brings forward) */
@@ -38,20 +49,37 @@ interface TableState {
   clear: () => void;
 }
 
+const same = (a: InspectTarget, b: InspectTarget | undefined) => !!b && a.kind === b.kind && a.id === b.id;
+
 export const useTable = create<TableState>((set, get) => ({
   laid: [],
+  trails: {},
+  drill: (from, target) => {
+    const trail = get().trails[from] ?? [];
+    if (same(target, trail.at(-1))) return;
+    // an entry already on the trail: go back to it rather than around in a circle
+    const at = trail.findIndex((t) => same(target, t));
+    set({ trails: { ...get().trails, [from]: at >= 0 ? trail.slice(0, at + 1) : [...trail, target] } });
+  },
+  back: (from) => {
+    const trail = get().trails[from];
+    if (!trail?.length) return;
+    set({ trails: { ...get().trails, [from]: trail.slice(0, -1) } });
+  },
   lay: (shown) => {
     const id = idOf(shown);
     set({ laid: [...get().laid.filter((l) => l.id !== id), { ...shown, id, at: Date.now() } as Laid] });
   },
   take: (id) => {
-    set({ laid: get().laid.filter((l) => l.id !== id) });
+    const trails = { ...get().trails };
+    delete trails[id];
+    set({ laid: get().laid.filter((l) => l.id !== id), trails });
     const w = useWorldStore.getState();
     const front = [w.sector && `sector:${w.sector}`, w.caseFile && `case:${w.caseFile.title}`, w.brief && "brief"].filter(Boolean);
     if (front.includes(id)) w.closeFocus();
     else if (w.inspect && id === `inspect:${w.inspect.kind}:${w.inspect.id}`) w.setInspect(null);
   },
-  clear: () => set({ laid: [] }),
+  clear: () => set({ laid: [], trails: {} }),
 }));
 
 /** lay on the table whatever the record brings forward, for as long as the interview is open; returns how to stop */

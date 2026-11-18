@@ -36,10 +36,14 @@ function RoomContext() {
   const mode = useInterview((s) => s.mode);
   const replies = useInterview((s) => s.replies);
   const laid = useTable((s) => s.laid);
-  // oldest first, as the stranger sees them on the rail
-  const onTable = laid.map((l) =>
-    l.kind === "sector" ? `the ${l.sector} section` : l.kind === "case" ? `the case file "${l.file.title}"` : l.kind === "brief" ? "the one-minute brief" : `the ${l.target.kind === "quest" ? "project" : l.target.kind} ${l.target.id}`,
-  );
+  const trails = useTable((s) => s.trails);
+  // oldest first, as the stranger sees them on the rail; with what the stranger opened from each, in place
+  const onTable = laid.map((l) => {
+    const what =
+      l.kind === "sector" ? `the ${l.sector} section` : l.kind === "case" ? `the case file "${l.file.title}"` : l.kind === "brief" ? "the one-minute brief" : `the ${l.target.kind === "quest" ? "project" : l.target.kind} ${l.target.id}`;
+    const trail = trails[l.id] ?? [];
+    return trail.length ? `${what}, where the stranger then opened ${trail.map((t) => `${t.kind === "quest" ? "project" : t.kind} ${t.id}`).join(" → ")} (now in front)` : what;
+  });
   useAgentContext({
     description: "Where the stranger is",
     value: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useOpenEntry } from "./open-entry";
 import { motion } from "motion/react";
 import { Download, Link2, Mail } from "lucide-react";
 import { achievements, chronicle } from "@/config/chronicle.config";
@@ -48,7 +49,7 @@ function factsOf(e: Evidence): { kind: string; title: string; meta?: string; tag
  */
 export function CasePanel({ file }: { file: CaseFile }) {
   const setHovered = useWorldStore((s) => s.setHovered);
-  const setInspect = useWorldStore((s) => s.setInspect);
+  const setInspect = useOpenEntry();
   const openSector = useWorldStore((s) => s.openSector);
   const [copied, setCopied] = useState(false);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Waypoints } from "lucide-react";
+import { useOpenEntry } from "./open-entry";
 import { findSkill } from "@/config/skills.config";
 import { play } from "@/lib/audio";
 import { MapCard } from "./map-card";
@@ -10,7 +11,7 @@ import type { Card } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
 
 function SkillCard({ ids, title }: { ids: string[]; title?: string }) {
-  const setInspect = useWorldStore((s) => s.setInspect);
+  const setInspect = useOpenEntry();
   const setHovered = useWorldStore((s) => s.setHovered);
   const list = ids.map((id) => findSkill(id)).filter((s): s is NonNullable<typeof s> => !!s);
   if (!list.length) return null;

@@ -2,11 +2,15 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, ChevronLeft, ChevronRight, X, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, X, type LucideIcon } from "lucide-react";
+import { OpenEntry } from "@/components/interface/open-entry";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
+import { EntryExhibit, entryKind } from "./exhibits";
+import { inspected } from "./shown";
 import type { Place } from "./stage";
+import { useTable } from "./table-store";
 
 const copy = world.interview.table;
 
@@ -57,6 +61,12 @@ function grouped(items: readonly Exhibit[]): Group[] {
  * a press. The arrows under the page, or the keys, step through all
  * of them in order. On a phone it is a sheet that slides up over the
  * conversation, the rail a row across its top.
+ *
+ * What is opened from inside the thing in front (a skill in the
+ * Skills section) opens in its place, further along its trail: the
+ * head then shows a way back to where it came from, and the page
+ * slides in from the side it goes, and back. Each place on a trail
+ * keeps where it was scrolled to.
  */
 export function Table({
   place,
@@ -83,7 +93,40 @@ export function Table({
   asked: (turn: string) => Asked | undefined;
 }) {
   const rail = useRef<HTMLElement>(null);
+  const body = useRef<HTMLDivElement>(null);
   const front = items.find((i) => i.id === selected) ?? items.at(-1);
+  const trails = useTable((t) => t.trails);
+  const trail = (front && trails[front.id]) || [];
+  const top = trail.at(-1);
+  const depth = trail.length;
+  // which way the page slides: further along the trail, or back
+  const [way, setWay] = useState<1 | -1>(1);
+  // where each place on a trail was scrolled to
+  const scrolled = useRef(new Map<string, number>());
+  const placeKey = front ? `${front.id}#${depth}` : "";
+  // once the page going away is gone, the new one opens where it was left (or at its top)
+  const arrive = () => {
+    if (body.current) body.current.scrollTop = scrolled.current.get(placeKey) ?? 0;
+  };
+  const leave = () => {
+    if (body.current && placeKey) scrolled.current.set(placeKey, body.current.scrollTop);
+  };
+  const drill = (target: Parameters<ReturnType<typeof useTable.getState>["drill"]>[1]) => {
+    if (!front) return;
+    leave();
+    setWay(1);
+    // the place further along is new: it opens at its top
+    scrolled.current.delete(`${front.id}#${depth + 1}`);
+    useTable.getState().drill(front.id, target);
+  };
+  const back = () => {
+    if (!front || !depth) return;
+    play("close", { volume: 0.3 });
+    leave();
+    setWay(-1);
+    useTable.getState().back(front.id);
+  };
+  const before = depth > 1 ? inspected(trail[depth - 2].kind, trail[depth - 2].id) : front?.title ?? "";
   const at = front ? items.indexOf(front) : -1;
   const visible = items.length > 0 && (wide || open);
   const groups = grouped(items);
@@ -94,7 +137,10 @@ export function Table({
   const shownTurn = unfolded && unfolded.for === front?.id ? unfolded.turn : front?.turn;
 
   const pick = (id: string) => {
-    if (id !== front?.id) play("click", { volume: 0.3 });
+    if (id === front?.id) return;
+    play("click", { volume: 0.3 });
+    leave();
+    setWay(1);
     onSelect(id);
   };
   const step = (by: 1 | -1) => {
@@ -155,17 +201,48 @@ export function Table({
         >
           <div className="table-main">
             <header className="table-head">
-              {Kind && (
-                <span className="table-head__icon" aria-hidden>
-                  <Kind className="size-4" />
-                </span>
-              )}
+              <AnimatePresence initial={false} mode="popLayout">
+                {top ? (
+                  <motion.button
+                    key="back"
+                    type="button"
+                    className="table-back"
+                    aria-label={copy.backTo(before)}
+                    title={copy.backTo(before)}
+                    onClick={back}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <ArrowLeft className="size-4" />
+                  </motion.button>
+                ) : (
+                  Kind && (
+                    <motion.span key="icon" className="table-head__icon" aria-hidden initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.18 }}>
+                      <Kind className="size-4" />
+                    </motion.span>
+                  )
+                )}
+              </AnimatePresence>
               <div className="min-w-0 flex-1">
                 <p className="table-head__kind">
-                  {front.kind}
-                  {front.turn && asked(front.turn) && <span> · {copy.from(asked(front.turn)!.n)}</span>}
+                  {top ? (
+                    <>
+                      <button type="button" className="table-crumb" onClick={back} tabIndex={-1}>
+                        {before}
+                      </button>
+                      <ChevronRight className="table-crumb__sep" aria-hidden />
+                      {entryKind(top)}
+                    </>
+                  ) : (
+                    <>
+                      {front.kind}
+                      {front.turn && asked(front.turn) && <span> · {copy.from(asked(front.turn)!.n)}</span>}
+                    </>
+                  )}
                 </p>
-                <h2 className="table-head__title">{front.title}</h2>
+                <h2 className="table-head__title">{top ? inspected(top.kind, top.id) : front.title}</h2>
               </div>
               <button
                 type="button"
@@ -201,18 +278,26 @@ export function Table({
               </nav>
             )}
 
-            <div id="table-body" role="region" aria-label={front.title} className="table-body">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={front.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6, transition: { duration: 0.12 } }}
-                  transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-                >
-                  {front.body}
-                </motion.div>
-              </AnimatePresence>
+            <div ref={body} id="table-body" role="region" aria-label={top ? inspected(top.kind, top.id) : front.title} className="table-body">
+              <OpenEntry.Provider value={drill}>
+                <AnimatePresence mode="wait" initial={false} custom={way} onExitComplete={arrive}>
+                  <motion.div
+                    key={placeKey}
+                    custom={way}
+                    variants={{
+                      enter: (w: number) => ({ opacity: 0, x: depth || w < 0 ? 22 * w : 0, y: depth || w < 0 ? 0 : 8 }),
+                      at: { opacity: 1, x: 0, y: 0 },
+                      exit: (w: number) => ({ opacity: 0, x: -16 * w, transition: { duration: 0.12 } }),
+                    }}
+                    initial="enter"
+                    animate="at"
+                    exit="exit"
+                    transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
+                  >
+                    {top ? <EntryExhibit target={top} /> : front.body}
+                  </motion.div>
+                </AnimatePresence>
+              </OpenEntry.Provider>
             </div>
 
             {multiple && (

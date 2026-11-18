@@ -8,8 +8,6 @@ import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { BriefPanel } from "@/components/interface/brief-panel";
 import { Cards } from "@/components/interface/cards";
 import { CasePanel } from "@/components/interface/case-panel";
-import { InspectBody } from "@/components/interface/inspect";
-import { ArsenalPanel, ChroniclePanel, GatePanel, ShadowsPanel, StatusPanel, VaultPanel } from "@/components/interface/sector-panels";
 import type { SectorId } from "@/config/types";
 import { sectorById, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -17,6 +15,7 @@ import { useSession } from "@/store/session-store";
 import { useWorldStore, type SystemPrompt } from "@/store/world-store";
 import { describe, stepsFor } from "./activity";
 import { Conversation, type ShownRef, type Tone } from "./conversation";
+import { EntryExhibit, SECTION_EXHIBIT } from "./exhibits";
 import { useInterview, type InterviewMode } from "./interview-store";
 import { inspected } from "./shown";
 import { DOCK_HEIGHT, RAIL, stage, type Stage } from "./stage";
@@ -27,15 +26,6 @@ import { useTurns } from "./use-turns";
 
 const copy = world.interview;
 const kinds = copy.table.kinds;
-
-const SECTOR_BODY: Record<SectorId, () => ReactNode> = {
-  status: StatusPanel,
-  experience: ChroniclePanel,
-  projects: ShadowsPanel,
-  skills: ArsenalPanel,
-  inventory: VaultPanel,
-  contact: GatePanel,
-};
 
 const NONE: never[] = [];
 
@@ -173,13 +163,13 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
     const close = () => useTable.getState().take(l.id);
     const base = { id: l.id, turn: owner(l.at), at: l.at, close };
     if (l.kind === "sector") {
-      const Body = SECTOR_BODY[l.sector];
+      const Body = SECTION_EXHIBIT[l.sector];
       items.push({ ...base, kind: kinds.sector, icon: SECTOR_ICON[l.sector], title: sectorById[l.sector].name, body: <Body /> });
     } else if (l.kind === "case") items.push({ ...base, kind: kinds.case, icon: KIND_ICON.case, title: l.file.title, body: <CasePanel file={l.file} /> });
     else if (l.kind === "brief") items.push({ ...base, kind: kinds.brief, icon: KIND_ICON.brief, title: world.agent.brief, body: <BriefPanel /> });
     else {
       const k = l.target.kind === "quest" ? "project" : l.target.kind === "item" ? "document" : "skill";
-      items.push({ ...base, kind: kinds[k], icon: KIND_ICON[k], title: inspected(l.target.kind, l.target.id), body: <InspectBody target={l.target} /> });
+      items.push({ ...base, kind: kinds[k], icon: KIND_ICON[k], title: inspected(l.target.kind, l.target.id), body: <EntryExhibit target={l.target} /> });
     }
   }
   items.sort((a, b) => a.at - b.at);
@@ -260,6 +250,8 @@ export function TurnCanvas({ stage: s }: { stage: Stage }) {
       if (w.prompt) return w.ignore();
       const { front, sheet } = latest.current;
       if (!s.wide && sheet) return setSheet(false);
+      // first back along what was opened from it, then put it away
+      if (front && useTable.getState().trails[front.id]?.length) return useTable.getState().back(front.id);
       front?.close();
     };
     window.addEventListener("keydown", onKey);
