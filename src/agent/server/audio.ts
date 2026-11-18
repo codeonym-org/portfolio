@@ -52,6 +52,20 @@ export const FALLBACK_STT_MODEL_ID = "openai/gpt-4o-mini-transcribe";
  * error keeps the provider's wording ("429", "auth"…) so CopilotKit's
  * transcribe handler maps it to the right status for the browser.
  */
+/**
+ * The error CopilotKit sees. Its transcribe handler picks the status by
+ * looking for words in the message ("auth", "api key" → 401, "rate" →
+ * 429), and OpenRouter's own bodies say "API key" even when the key is
+ * fine but out of credit (402). So the provider's text is never passed
+ * on: only words that pick the right status.
+ */
+export function sttError(status: number, body: string) {
+  if (status === 401 || status === 403) return new Error("OpenRouter STT 401: unauthorized");
+  if (status === 429) return new Error("OpenRouter STT 429: too many requests");
+  if (status === 402) return new Error("OpenRouter STT 402: out of credit (the key's usage limit or the account balance)");
+  return new Error(`OpenRouter STT ${status || "network"} error${/timeout/i.test(body) ? " (timed out)" : ""}`);
+}
+
 export class OpenRouterTranscriptionService extends TranscriptionService {
   async transcribeFile({ audioFile, mimeType }: TranscribeFileOptions): Promise<string> {
     if (audioFile.size > MAX_AUDIO_BYTES) throw new Error("Recording too long (duration limit).");
@@ -71,10 +85,12 @@ export class OpenRouterTranscriptionService extends TranscriptionService {
         const body = (await res.json()) as { text?: unknown };
         return typeof body.text === "string" ? body.text.trim() : "";
       }
-      const detail = res instanceof Response ? `${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}` : String(res);
-      console.error(`[stt] ${model} failed (${format}, ${audioFile.size} B) — ${detail}`);
-      last = new Error(`OpenRouter STT ${detail}`);
-      if (res instanceof Response && res.status === 429) break;
+      const status = res instanceof Response ? res.status : 0;
+      const body = res instanceof Response ? await res.text().catch(() => "") : String(res);
+      console.error(`[stt] ${model} failed (${format}, ${audioFile.size} B) — ${status || "network"}: ${body.slice(0, 300)}`);
+      last = sttError(status, body);
+      // the same key, the same limits: another model would fail the same way
+      if (status === 402 || status === 429) break;
     }
     throw last ?? new Error("OpenRouter STT failed");
   }

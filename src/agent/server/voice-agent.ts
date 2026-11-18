@@ -10,7 +10,7 @@ import { handedToTheOwner } from "../interview-grounding";
 import { TASK_EVENT, TASK_MAX } from "../voice/protocol";
 import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
-import { appContextNote, historyWindow, promptCache } from "./middleware";
+import { appContextNote, historyWindow, promptCache, typedToolCalls } from "./middleware";
 import { createChatModel, reasoningEffort } from "./model";
 import { cachesPrompt } from "../prompt-cache";
 
@@ -113,6 +113,7 @@ function build(modelId: string) {
         },
       }),
       ...(cachesPrompt(modelId) ? [promptCache(VOICE_PROMPT)] : []),
+      typedToolCalls,
     ],
     checkpointer,
   });

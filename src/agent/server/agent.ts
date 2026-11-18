@@ -7,7 +7,7 @@ import { world } from "@/config/world.config";
 import { BoundedMemorySaver } from "./checkpointer";
 import { dossierDigest } from "./dossier";
 import { handedToTheOwner } from "../interview-grounding";
-import { historyWindow, promptCache } from "./middleware";
+import { historyWindow, promptCache, typedToolCalls } from "./middleware";
 import { createChatModel, reasoningEffort } from "./model";
 import { cachesPrompt } from "../prompt-cache";
 import { backendTools } from "./tools";
@@ -129,6 +129,7 @@ function build(modelId: string) {
         },
       }),
       ...(cachesPrompt(modelId) ? [promptCache(SYSTEM_PROMPT)] : []),
+      typedToolCalls,
     ],
     checkpointer,
   });
