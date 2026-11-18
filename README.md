@@ -64,3 +64,10 @@ Content (profile, skills, projects, documents) lives in `src/config/*.config.ts`
 `main` is protected: every change goes through a PR. Issues, milestones and labels are on
 [GitHub Issues](https://github.com/codeonym-org/portfolio/issues) — see
 [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) for the workflow.
+
+## License
+
+**All rights reserved.** The source is public to be read, not reused: no part of the code, design, content or assets
+may be copied, modified, redistributed or used to build another site or product without written permission. See
+[`LICENSE`](LICENSE). Third-party assets keep their own licenses
+([`scripts/assets/README.md`](scripts/assets/README.md)).
