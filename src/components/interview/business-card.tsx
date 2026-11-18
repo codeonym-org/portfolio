@@ -319,7 +319,7 @@ function Stage({ close }: { close: () => void }) {
  * leans toward the pointer and the light slides over it; pressing it
  * turns it over. Under it: turn it, save it as a contact (a vCard),
  * copy the address, put it down. The stranger takes it from the top
- * bar of the interview or of the record, and the replica hands it over when asked how
+ * bar of the interview or of the record, and the agent hands it over when asked how
  * to reach him (`show_business_card`).
  */
 export function BusinessCard() {

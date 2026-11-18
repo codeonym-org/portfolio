@@ -117,8 +117,6 @@ interface WorldState {
   inspected: string[];
   /** what the System proposed during this visit and how the visitor answered */
   offers: { declinedInARow: number; lastAt: number; log: Proposal[] };
-  /** persisted: the first-visit offer has been made */
-  greeted: boolean;
 
   setReady: () => void;
   setQuality: (q: Quality) => void;
@@ -142,7 +140,6 @@ interface WorldState {
   answer: (accepted: boolean) => void;
   /** closes the prompt without an answer */
   ignore: () => void;
-  setGreeted: () => void;
   /** the System proposed something */
   raiseOffer: (key: string) => void;
   /** the visitor accepted, refused or ignored the proposal that was waiting */
@@ -179,7 +176,6 @@ export const useWorldStore = create<WorldState>()(
       prompt: null,
       inspected: [],
       offers: { declinedInARow: 0, lastAt: 0, log: [] },
-      greeted: false,
 
       setReady: () => set({ ready: true }),
       setQuality: (quality) => set({ quality }),
@@ -242,7 +238,6 @@ export const useWorldStore = create<WorldState>()(
         set({ prompt: null });
         (prompt.onIgnore ?? (() => prompt.onAnswer?.(false)))();
       },
-      setGreeted: () => set({ greeted: true }),
       raiseOffer: (key) => set((s) => ({ offers: { ...s.offers, lastAt: Date.now(), log: [...s.offers.log.slice(-11), { key, outcome: "waiting" }] } })),
       settleOffer: (outcome) =>
         set((s) => ({
@@ -262,9 +257,9 @@ export const useWorldStore = create<WorldState>()(
       version: 2,
       // before version 2 the visitor had quests, XP and risen projects: keep only what was seen
       migrate: (old) => {
-        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality; greeted?: boolean };
+        const o = (old ?? {}) as { visited?: SectorId[]; completed?: string[]; muted?: boolean; quality?: Quality };
         const done = o.completed ?? [];
-        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high", greeted: !!o.greeted };
+        return { visited: o.visited ?? [], briefRead: done.includes("brief"), cvRead: done.includes("license"), muted: !!o.muted, quality: o.quality ?? "high" };
       },
       partialize: (s) => ({
         visited: s.visited,
@@ -272,7 +267,6 @@ export const useWorldStore = create<WorldState>()(
         cvRead: s.cvRead,
         muted: s.muted,
         quality: s.quality,
-        greeted: s.greeted,
       }),
     },
   ),

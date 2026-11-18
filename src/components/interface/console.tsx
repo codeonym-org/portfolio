@@ -198,7 +198,7 @@ export function Console() {
     <div className={cn("console-scrim", focused || !ready ? "opacity-0" : turns.length || speaking ? "opacity-100" : "opacity-60")} aria-hidden />
     <section
       ref={section}
-      aria-label={`${copy.name} — console`}
+      aria-label="The conversation"
       className={cn(
         "pointer-events-none fixed z-30 flex flex-col gap-3 transition-[left,width,transform,opacity] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
         touch

@@ -29,7 +29,7 @@ const HoloMap = dynamic(() => import("@/components/interface/holo-map"), { ssr: 
 
 const copy = world.interview;
 
-/** tells the replica where it is and what the stranger sees: no Monolith here, his face, the conversation and the table */
+/** tells the agent where it is and what the stranger sees: no Monolith here, his face, the conversation and the table */
 function RoomContext() {
   const mode = useInterview((s) => s.mode);
   const replies = useInterview((s) => s.replies);

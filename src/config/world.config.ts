@@ -112,44 +112,34 @@ export const world = {
     paletteHint: "Search the record or run a command…",
     plain: "Plain record",
     card: "Card",
-    cardLabel: "His business card: every way to reach him",
+    cardLabel: "My business card: every way to reach me",
     interview: "Interview me",
     interviewSub: "Talk to my avatar, live",
     interviewLabel: "The interview: talk to my avatar, face to face",
   },
 
-  /** what the System asks in its dialog */
+  /** the window in which the agent offers a next step, when it judges one helps (`propose_action`) */
   prompts: {
-    heading: "SYSTEM",
-    accept: "Accept",
-    decline: "Later",
+    accept: "Yes, please",
     refuse: "Not now",
-    keys: "Y to accept · N or Esc for later",
+    keys: "Y to accept · N or Esc to close",
     offerKeys: "Y to accept · N to refuse · Esc to ignore",
-    offerHeading: "THE SYSTEM PROPOSES",
-    interview: "You seem curious about my work. Shall we continue in my interview room? I answer face to face there, by text or voice, and you keep our conversation.",
-    greeting: {
-      heading: "A STRANGER HAS ENTERED",
-      body: "This is the record of Ayoub Bouarour. I am his AI replica: I answer as he would. Shall I brief you on myself in one minute?",
-    },
+    offerHeading: "A SUGGESTION",
   },
 
   toasts: {
     sectorOpened: "SECTION OPENED",
   },
 
-  /** The replica: an AI that answers as the owner, inside the System */
+  /** the agent: the owner himself, answering in the first person */
   agent: {
-    name: "THE SYSTEM",
-    /** how the System addresses whoever is visiting */
+    /** how he addresses whoever is visiting */
     visitor: "Stranger",
-    /** the project the System leads a new visitor to first (a project id) */
+    /** his strongest project, first among what is left to see (a project id) */
     flagship: "pharma-mas",
-    epithet: "Ayoub's AI replica",
-    greeting:
-      "I am Ayoub's AI replica: I answer as he would, from his record. Ask me what you would ask him in an interview, or tell me what to show you.",
+    greeting: "I'm Ayoub, an AI agent engineer. Ask me what you would ask me in an interview, or tell me what to show you.",
     placeholder: "Ask me anything…",
-    thinking: "The System is processing…",
+    thinking: "Thinking…",
     brief: "One-minute brief",
     suggestions: [
       "Tell me about yourself",
@@ -159,23 +149,23 @@ export const world = {
       "Walk me through your experience",
       "How do I reach you?",
     ],
-    offline: "My replica is unreachable. The local index answers instead: it can open anything in the record, but it does not speak for Ayoub.",
+    offline: "I can't answer right now. The local index answers instead: it opens anything in the record, but it does not speak for me.",
     /** the permanent label: always visible under the console */
-    footer: "AI replica of Ayoub · answers as he would, and can be wrong. The real Ayoub confirms anything binding.",
-    /** hold-to-talk: the System's voice (a second agent that delegates to this one) */
+    footer: "Answers are generated from my record and can be wrong · anything binding, I confirm in person.",
+    /** hold-to-talk: his voice (a second agent that delegates to this one) */
     voice: {
       key: "V",
       hold: "Hold to speak",
       listening: "LISTENING",
       decoding: "DECODING VOICE",
-      thinking: "THE SYSTEM CONSIDERS",
-      speaking: "THE SYSTEM SPEAKS",
-      nothingHeard: "The System heard only silence. Hold the key while you speak.",
-      micBlocked: "The System cannot hear you — allow the microphone for this site.",
+      thinking: "THINKING",
+      speaking: "SPEAKING",
+      nothingHeard: "I heard only silence. Hold the key while you speak.",
+      micBlocked: "I can't hear you: allow the microphone for this site.",
       unsupported: "This browser cannot record your voice.",
-      muted: "Sound is off — the System answers in captions.",
-      textOnly: "His replies are set to text only — he answers in captions.",
-      soundBlocked: "No sound allowed yet: tap anywhere and he speaks.",
+      muted: "Sound is off: I answer in captions.",
+      textOnly: "My replies are set to text only: I answer in captions.",
+      soundBlocked: "No sound allowed yet: tap anywhere and I speak.",
       tasks: "DELEGATED TASKS",
     },
   },
@@ -192,8 +182,8 @@ export const world = {
     replies: {
       voice: "Voice",
       text: "Text only",
-      label: "His replies: spoken aloud, or text only",
-      blocked: "This tab may not play sound yet: his replies are in text until you click or press a key",
+      label: "My replies: spoken aloud, or text only",
+      blocked: "This tab may not play sound yet: my replies are in text until you click or press a key",
     },
     transcript: "Transcript",
     /** the transcript and the history: a book of diaries, one for each conversation (`interview/diary-book.tsx`) */
@@ -205,7 +195,7 @@ export const world = {
       coverName: "Ayoub Bouarour",
       contents: "Contents",
       contentsMore: "Contents, continued",
-      none: "No diary yet. Ask him something: each conversation is written here, and kept seven days in this browser.",
+      none: "No diary yet. Ask me something: each conversation is written here, and kept seven days in this browser.",
       no: "Diary No.",
       begun: "Begun",
       last: "Last written",
@@ -240,7 +230,7 @@ export const world = {
       label: "The conversation",
       name: "Ayoub",
       initials: "AB",
-      badge: "AI replica",
+      badge: "AI Agent Engineer",
       status: {
         waiting: "Waiting for your first question",
         ready: "Ready for your next question",
@@ -261,7 +251,7 @@ export const world = {
       diary: "Read this conversation in your diary",
       fold: "Fold the conversation",
       unfold: "Unfold the conversation",
-      shown: "What he shows",
+      shown: "What I show",
     },
     /** what he shows, on his right (`interview/table.tsx`) */
     table: {
@@ -276,7 +266,7 @@ export const world = {
       prev: "The one before",
       next: "The next one",
     },
-    card: { open: "Card", label: "His business card", hint: "Press the card to turn it", flip: "Turn", save: "Save contact", copy: "Copy email", copied: "Copied", close: "Close" },
+    card: { open: "Card", label: "My business card", hint: "Press the card to turn it", flip: "Turn", save: "Save contact", copy: "Copy email", copied: "Copied", close: "Close" },
     input: "Your question",
     send: "Enter to send",
     placeholder: "Ask me anything…",
@@ -287,10 +277,10 @@ export const world = {
 
   /** the holographic map (`interface/holo-map.tsx`) */
   map: {
-    title: "The System · where he is based",
+    title: "Where I am based",
     open: "Open the hologram",
     level: "Level",
-    time: "His local time",
+    time: "My local time",
     hint: "Drag to turn · wheel or pinch to zoom · ← → to change level · Esc to close",
     rings: "Rings at 2, 5 and 10 km. Main roads of the city.",
     noRoads: "Rings at 2, 5 and 10 km.",

@@ -7,11 +7,11 @@ import type { InterviewEntry } from "../config/types";
  */
 
 export const INTERVIEW_RULES = [
-  "His answers to common HR questions. Each entry has a state:",
-  "· [confirmed]: his own words, chosen on purpose. Say them as they are: you may join or shorten sentences, but add no reason, downside, example or claim they do not state, even when the question seems to ask for more.",
-  "· [from the record]: drafted from the record, not yet confirmed by him. Answer with it; it states nothing the record does not.",
-  "· [no answer on file]: do not answer and do not guess. Say the real Ayoub has to answer that, and offer his business card.",
-  "· (binding): never agree to or settle it on his behalf. With an answer on file, share it as information, then say the real Ayoub confirms the terms himself.",
+  "My answers to common HR questions. Each entry has a state:",
+  "· [confirmed]: my own words, chosen on purpose. Say them as they are: you may join or shorten sentences, but add no reason, downside, example or claim they do not state, even when the question seems to ask for more.",
+  "· [from the record]: drafted from my record, not yet confirmed by me. Answer with it; it states nothing the record does not.",
+  "· [no answer on file]: do not answer and do not guess. Hand it over to a direct conversation, as your instructions say.",
+  "· (binding): never agree to or settle it here. With an answer on file, share it as information, then hand the terms over to a direct conversation, as your instructions say.",
 ].join("\n");
 
 const STATE: Record<InterviewEntry["status"], string> = {
@@ -29,7 +29,7 @@ export function interviewGrounding(entries: readonly InterviewEntry[]): string {
   return [INTERVIEW_RULES, ...entries.map(interviewLine)].join("\n");
 }
 
-/** the questions with no answer on file: the replica hands them to the real owner, whatever the wording */
+/** the questions with no answer on file: handed over to a direct conversation, whatever the wording */
 export function handedToTheOwner(entries: readonly InterviewEntry[]): string {
   return entries
     .filter((e) => e.status === "open")

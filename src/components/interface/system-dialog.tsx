@@ -10,26 +10,9 @@ import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
 
 const copy = world.prompts;
-/** how long after the scene is up the first-visit offer waits */
-const GREETING_DELAY_MS = 2600;
 /** how long an unanswered proposal stays on screen */
 const PROPOSAL_STAYS_MS = 40_000;
 
-/** a first-time visitor is offered the one-minute brief, once */
-function useGreeting() {
-  const ready = useWorldStore((s) => s.ready);
-  useEffect(() => {
-    if (!ready) return;
-    const timer = window.setTimeout(() => {
-      const s = useWorldStore.getState();
-      // not for a returning visitor, a shared case link, or someone already reading
-      if (s.greeted || s.visited.length || s.briefRead || s.cvRead || window.location.hash || s.sector || s.caseFile || s.brief || s.prompt) return;
-      s.setGreeted();
-      s.ask({ id: "greeting", heading: copy.greeting.heading, body: copy.greeting.body, accept: copy.accept, decline: copy.decline, tone: "system", command: { name: "open_brief" } });
-    }, GREETING_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [ready]);
-}
 
 /**
  * The System's question: a window in the middle of the stage with a
@@ -46,7 +29,6 @@ export function SystemDialog() {
   const proposal = prompt?.id === "offer";
   const focused = useWorldStore((s) => !!s.sector || !!s.caseFile || s.brief);
   const acceptButton = useRef<HTMLButtonElement>(null);
-  useGreeting();
 
   const reply = useCallback(
     (accepted: boolean) => {

@@ -5,8 +5,7 @@ import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 import type { Message, ToolCall } from "@ag-ui/client";
 import { SYSTEM_AGENT_ID } from "@/agent/constants";
 import { runLocally } from "@/agent/converse";
-import { cleanReply, withDisclosure, withoutRepeatedDisclosure } from "@/agent/reply-hygiene";
-import { player } from "@/config/player.config";
+import { besideAnOffer, cleanReply, joinPieces, withoutPreamble } from "@/agent/reply-hygiene";
 import { parseVoiceTask } from "@/agent/voice/protocol";
 import { isSectorId, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -70,39 +69,47 @@ function cardOf(name: string, args: Record<string, unknown>): Card | null {
 }
 
 /** every assistant message between two visitor messages is one turn: its cards, then its words */
-function toTurns(messages: Message[], settled: Set<string>, running: boolean): Turn[] {
+/** the tools that raise an offer window */
+const OFFERS = new Set(["hand_over", "propose_action"]);
+
+function toTurns(messages: Message[], settled: Set<string>): Turn[] {
   const turns: Turn[] = [];
+  /** turn id → the message of the offer made in it */
+  const offered = new Map<string, string>();
   let open: Turn | null = null;
+  /** the offer made in the answer being read */
+  let offering: string | null = null;
   for (const m of messages) {
     if (m.role === "user") {
       const task = parseVoiceTask(textOf(m));
       turns.push({ id: m.id, role: "visitor", text: task ? task.task : textOf(m), voice: !!task });
       open = null;
+      offering = null;
     } else if (m.role === "assistant") {
       const calls = (m as { toolCalls?: ToolCall[] }).toolCalls ?? [];
       // a card appears once its tool call's arguments have fully arrived
       const cards = calls.filter((c) => settled.has(c.id)).map((c) => cardOf(c.function.name, parseArgs(c))).filter((c): c is Card => !!c);
       // tool calls written out as text, or a run of "… … …" from a model that lost the thread, are never shown
-      const text = cleanReply(textOf(m));
-      if (!text && !cards.length) continue;
+      // what comes before a tool call in the same message is shown only if it is a finished sentence
+      const text = calls.length ? withoutPreamble(cleanReply(textOf(m))) : cleanReply(textOf(m));
+      const offerCall = calls.find((c) => OFFERS.has(c.function.name));
+      if (offerCall) offering = String(parseArgs(offerCall).message ?? "");
+      if (offering !== null && open) offered.set(open.id, offering);
+      // an answer that is only an offer still gets its words, from the offer
+      if (!text && !cards.length && offering === null) continue;
       if (!open) {
         open = { id: m.id, role: "system", text, cards };
         turns.push(open);
+        if (offering !== null) offered.set(open.id, offering);
       } else {
-        open.text = [open.text, text].filter(Boolean).join("\n\n");
+        // an unfinished fragment left before a tool call gives way to what follows it, and nothing is said twice
+        open.text = joinPieces(withoutPreamble(open.text), text);
         open.cards = [...(open.cards ?? []), ...cards];
       }
     }
   }
-  // the first answer to the stranger discloses the replica, and only that one. The prompt asks the model
-  // for it; the model does not always comply, so the console makes sure. The first answer is checked once
-  // complete, so a disclosure still streaming in is not doubled.
-  const first = turns.findIndex((t) => t.role === "visitor" && !t.voice);
-  turns.forEach((t, i) => {
-    if (t.role !== "system" || i <= first) return;
-    if (i !== first + 1) t.text = withoutRepeatedDisclosure(t.text);
-    else if (!running || turns.slice(i + 1).some((n) => n.role === "visitor")) t.text = withDisclosure(t.text, player.firstName);
-  });
+  // the window asks the question: the words beside it end on a statement
+  for (const t of turns) if (offered.has(t.id)) t.text = besideAnOffer(t.text, offered.get(t.id));
   return turns;
 }
 
@@ -251,7 +258,7 @@ export function AgentBridge() {
         }
       }
     }
-    session.upsertTurns(toTurns(messages, settled, running));
+    session.upsertTurns(toTurns(messages, settled));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `tail`, `calls` and `running` are the change signals for the mutable message list
   }, [tail, calls, running]);
 

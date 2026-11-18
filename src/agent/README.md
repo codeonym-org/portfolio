@@ -1,28 +1,32 @@
-# THE SYSTEM — the portfolio's agent
+# The portfolio's agent
 
-The Monolith at the centre of the page is two LangChain agents. Both are
-**Ayoub's replica**: an AI that answers in his place, in the first person, as
-he would in an interview. Its rules:
+Two LangChain agents, and both are **Ayoub**: they answer a stranger in the
+first person, as he would in a job interview. Their rules:
 
-- The first reply says once that it is his AI replica; a label under the
-  console says so at all times.
 - It answers only from the record and the interview file
-  (`src/config/interview.config.ts`). A question with no answer on file gets
-  "I'd rather answer that myself" and his business card, never a guess.
-- It never settles anything binding (salary, start date, offer, contract): the
-  real Ayoub confirms it.
+  (`src/config/interview.config.ts`).
+- What it does not answer here (a question with no answer on file, an opinion
+  or plan the record does not state, anything binding: salary, start date,
+  offer, contract) it never guesses or settles: it says it would rather discuss
+  it directly and offers his business card in a window (`propose_action` →
+  `show_business_card`); accepting hands the card over.
+- Every offer is the agent's own judgement, and rare. The page never offers
+  anything on its own: no greeting window, no scripted invitation.
+- Asked sincerely whether the stranger is talking to a person, it never claims
+  to be human. A line under the console says the answers are generated from
+  the record.
 - The local index, used when the model is unreachable, does not speak as him.
 
 The two agents:
 
-- **the text System** (`system`): visitors type to it (the prompt at the
+- **the text agent** (`system`): strangers type to it (the prompt at the
   bottom, **/** or **T** to focus it). It answers from Ayoub's record and
-  answers *with the page*: it opens sections, inspects entries,
-  pushes notifications, and assembles a **case file** — a set of evidence
-  picked from the record by id, each with one line on why it matters.
-- **the voice System** (`system-voice`): visitors **hold V** (or the mic
+  answers *with the page*: it opens sections, inspects entries, hands over his
+  card, and assembles a **case file** — a set of evidence picked from the
+  record by id, each with one line on why it matters.
+- **the voice agent** (`system-voice`): strangers **hold V** (or the mic
   button) and talk. It answers out loud, and its only tool hands work to the
-  text System in the background.
+  text agent in the background.
 
 ```
 browser                                   server (one Next.js route)
@@ -79,7 +83,7 @@ hold V ─► MediaRecorder ─► runtime `transcribe` (OpenRouter STT, STT_MOD
 - A finished task comes back as a `[TASK REPORT]` message once the voice is
   free (not while the visitor is holding the key). Reports that pile up are
   sent as one message.
-- Barge-in: pressing V while the System speaks stops the audio, cancels the
+- Barge-in: pressing V while he speaks stops the audio, cancels the
   pending TTS requests and aborts the voice run. Queued tasks keep running.
 - The voice agent runs on its AG-UI agent directly (`agent.runAgent`), and the
   text agent through `copilotkit.runAgent`. They never share CopilotKit's run
@@ -129,7 +133,8 @@ Pure modules have unit tests: `pnpm test`.
 | `server/system-agent.ts` | AG-UI agents (text + voice); route app context into CopilotKit state |
 | `server/middleware.ts` | history window + app-context note (shared by both agents) |
 | `server/rate-limit.ts` | per-IP sliding windows for the public routes |
-| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut, the disclosure on the first reply only |
+| `reply-hygiene.ts` | what the console shows of a reply: leaked tool calls and degenerate tails cut |
+| `next-step.ts`, `guide.ts` | what the stranger has not seen yet, and whether offers may still be made: context for the agent's own judgement |
 | `../components/agent/` | provider, frontend tools, the bridge to the session store |
 | `../store/session-store.ts` | turns, cards and the run trace the interface renders |
 
@@ -146,10 +151,9 @@ first message. The link (`components/agent/agent-bridge.tsx`) runs the agent und
 from the saved messages, and AG-UI sends the whole message list with every run, so a thread the server has forgotten
 continues with its context. The voice agent starts over in a resumed conversation; the text agent holds what was said.
 Only the interview (`/interview`) is kept this way. The home page talks in a thread of its own, held in memory for the
-visit and never saved; going between the two pages switches threads, each found where it was left. On the home page, a
-stranger who keeps asking about the work is invited into the interview room once a visit (`inviteToInterview` in
-`system-commands.ts`): the agent may propose it itself (`propose_action` → `open_interview`), and by the second real
-question the page does, in place of any other proposal for that answer.
+visit and never saved; going between the two pages switches threads, each found where it was left. On the home page,
+the agent may offer a stranger who wants to go further its interview room (`propose_action` → `open_interview`), once a
+visit, when it judges it fits.
 
 ## Environment
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cleanReply, withDisclosure, withoutDegenerateTail, withoutRepeatedDisclosure } from "./reply-hygiene.ts";
+import { besideAnOffer, cleanReply, joinPieces, withoutDegenerateTail, withoutPreamble, withoutTrailingQuestion } from "./reply-hygiene.ts";
 
 test("a degenerate tail is cut, and a leftover fragment dropped", () => {
   assert.equal(withoutDegenerateTail("I will \u200b … \u200b … ... ... … …"), "");
@@ -21,18 +21,13 @@ test("a tool call written as text is never shown", () => {
   assert.equal(cleanReply("Braces in prose {like this} stay."), "Braces in prose {like this} stay.");
 });
 
-test("the first reply is disclosed even when the model forgot", () => {
-  assert.equal(withDisclosure("After my notice period.", "Ayoub"), "I'm Ayoub's AI replica, and I answer as he would. After my notice period.");
-  assert.equal(withDisclosure("Je suis la réplique IA d'Ayoub. Bonjour.", "Ayoub"), "Je suis la réplique IA d'Ayoub. Bonjour.");
-  assert.equal(withDisclosure("", "Ayoub"), "");
-});
 
 test("other leak shapes seen live are cleaned too", () => {
   assert.equal(cleanReply("I am based in Oujda, Morocco. show_map<|constrain|>json<|message|>{}"), "I am based in Oujda, Morocco.");
   assert.equal(cleanReply("I am based in Oujda, Morocco. [show_map]"), "I am based in Oujda, Morocco.");
   assert.equal(cleanReply("I am based in Oujda, Morocco.\n\nshow_map"), "I am based in Oujda, Morocco.");
   assert.equal(cleanReply('I am based in Oujda, Morocco. { "tools": [, ] }'), "I am based in Oujda, Morocco.");
-  assert.equal(cleanReply('{ "response": "I\'m Ayoub\'s AI replica.\\nAfter my notice period." }'), "I'm Ayoub's AI replica.\nAfter my notice period.");
+  assert.equal(cleanReply('{ "response": "I\'m Ayoub.\\nAfter my notice period." }'), "I'm Ayoub.\nAfter my notice period.");
   // still streaming in: no closing quote yet
   assert.equal(cleanReply('{ "response": "After my notice'), "After my notice");
   assert.equal(cleanReply("Done.<|return|>"), "Done.");
@@ -40,12 +35,41 @@ test("other leak shapes seen live are cleaned too", () => {
   assert.equal(cleanReply("See [the brief] first."), "See [the brief] first.");
 });
 
-test("a later reply does not repeat the disclosure", () => {
-  assert.equal(withoutRepeatedDisclosure("I'm Ayoub's AI replica, and I answer as he would. I am based in Oujda."), "I am based in Oujda.");
-  assert.equal(withoutRepeatedDisclosure("Je suis la réplique IA d'Ayoub. Je vis à Oujda."), "Je vis à Oujda.");
-  assert.equal(withoutRepeatedDisclosure("I am based in Oujda. I built a replica of the catalog."), "I am based in Oujda. I built a replica of the catalog.");
-});
 
 test("a call opened like a tag is cut with everything after it", () => {
   assert.equal(cleanReply('Shall I show you a map? <proposeaction{ "message":"Shall I show you a map?", "a'), "Shall I show you a map?");
+});
+
+test("an unfinished fragment written before a tool call is dropped, a sentence is kept", () => {
+  assert.equal(withoutPreamble("I will the the ..."), "");
+  assert.equal(withoutPreamble("Let me open"), "");
+  assert.equal(withoutPreamble("Opening my projects now."), "Opening my projects now.");
+  assert.equal(withoutPreamble("I would rather discuss that with you directly."), "I would rather discuss that with you directly.");
+});
+
+test("a reply with an offer window does not ask the question again", () => {
+  assert.equal(withoutTrailingQuestion("That one I'd rather discuss with you directly. Shall I give you my card?"), "That one I'd rather discuss with you directly.");
+  assert.equal(withoutTrailingQuestion("I'd prefer to discuss it directly. Shall ?"), "I'd prefer to discuss it directly.");
+  assert.equal(withoutTrailingQuestion("I am based in Oujda."), "I am based in Oujda.");
+  // nothing would be left: kept as it is
+  assert.equal(withoutTrailingQuestion("Shall I give you my card?"), "Shall I give you my card?");
+});
+
+test("what is said again after a tool call is shown once", () => {
+  const said = "These answers are generated from my record. That one I’d rather discuss with you directly.";
+  assert.equal(joinPieces(said, "These answers are generated from my record. That one I'd rather discuss with you directly."), said);
+  assert.equal(joinPieces("I am based in Oujda.", "I am based in Oujda. It is 3 pm here."), "I am based in Oujda. It is 3 pm here.");
+  assert.equal(joinPieces("Opening my projects.", "AiCA is the one to read first."), "Opening my projects.\n\nAiCA is the one to read first.");
+  assert.equal(joinPieces("", "Done."), "Done.");
+});
+
+test("broken words beside an offer give way to the statement in the offer", () => {
+  const offer = "That one I'd rather discuss with you directly. Shall I give you my card?";
+  assert.equal(besideAnOffer(cleanReply("I’m \u200b \u200b \u200b ?"), offer), "That one I'd rather discuss with you directly.");
+  assert.equal(besideAnOffer("I'd rather discuss salary with you directly. Shall I?", offer), "I'd rather discuss salary with you directly.");
+  assert.equal(besideAnOffer("", offer), "That one I'd rather discuss with you directly.");
+  // an offer worded as a statement stands in as it is
+  assert.equal(besideAnOffer("I … … This ... The", "You might also explore my experience timeline."), "You might also explore my experience timeline.");
+  // words that are whole stay
+  assert.equal(besideAnOffer("Salary is something I discuss directly.", offer), "Salary is something I discuss directly.");
 });

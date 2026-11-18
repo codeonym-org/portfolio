@@ -27,8 +27,6 @@ export interface BrainAction {
 export interface BrainReply {
   text: string;
   actions: BrainAction[];
-  /** the reply was about reaching him: nothing more is proposed after it */
-  contact?: boolean;
   /** show the map card under the reply */
   map?: boolean;
 }
@@ -102,7 +100,7 @@ export function answerLocally(input: string, index: BrainIndex): BrainReply {
   }
 
   if (has(text, ...SECTOR_WORDS.contact)) {
-    return { text: `Here is ${p.name}'s card: every channel on it reaches him directly.`, actions: [{ name: "show_business_card", args: {} }], contact: true };
+    return { text: `Here is ${p.name}'s card: every channel on it reaches him directly.`, actions: [{ name: "show_business_card", args: {} }] };
   }
 
   const quest = mention(text, index.quests);

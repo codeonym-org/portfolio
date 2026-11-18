@@ -4,7 +4,7 @@ import type { Turn } from "@/store/session-store";
 
 /**
  * ── THE CONVERSATIONS KEPT IN THIS BROWSER ────────────────────
- * Every interview with the replica is saved here, in `localStorage`,
+ * Every interview is saved here, in `localStorage`,
  * under its thread id, for seven days from its first message
  * (`agent/history.ts`). `current` is the thread in progress: the link
  * (`components/agent/agent-bridge.tsx`) runs the agent under it and

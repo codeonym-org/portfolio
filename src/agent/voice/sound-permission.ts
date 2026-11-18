@@ -2,7 +2,7 @@
  * ── MAY THIS TAB MAKE SOUND? ──────────────────────────────────
  * A browser plays sound from a page only once the stranger has done
  * something on it (a press, a key), or when they allowed it for the
- * site. Before the replica speaks a reply it asks here; when the
+ * site. Before the agent speaks a reply it asks here; when the
  * answer is no, the reply stays in text.
  *
  * Where the browser says outright (`navigator.getAutoplayPolicy`,

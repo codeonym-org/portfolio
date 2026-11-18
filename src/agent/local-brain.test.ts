@@ -47,7 +47,6 @@ test("asking where he is shows the map", () => {
 test("contact hands over the business card and shows the channels", () => {
   const reply = answerLocally("How do I reach him?", index);
   assert.deepEqual(reply.actions, [{ name: "show_business_card", args: {} }]);
-  assert.equal(reply.contact, true);
 });
 
 test("a named project or skill is inspected, not just its sector", () => {
