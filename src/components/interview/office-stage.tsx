@@ -6,15 +6,12 @@ import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
 import {
   AdditiveAnimationBlendMode,
-  AnimationAction,
   AnimationClip,
   AnimationMixer,
   AnimationUtils,
   Bone,
-  LoopOnce,
   LoopRepeat,
   Box3,
-  Group,
   Mesh,
   MeshStandardMaterial,
   NeutralToneMapping,
@@ -25,7 +22,6 @@ import {
 } from "three";
 import { useVoiceStore, voiceLive } from "@/components/agent/voice/voice-store";
 import { useWorldStore } from "@/store/world-store";
-import { headUniforms, JAW, rigHead } from "./head-shader";
 import { mouthLive, useInterview } from "./interview-store";
 import { Office, prepare } from "./office-world";
 
@@ -34,26 +30,33 @@ import { Office, prepare } from "./office-world";
  * A bright office. He sits behind a desk (a laptop and his
  * papers on it) facing the stranger, who sits where the camera is,
  * like the panel in a real interview. He is one Rodin model made from
- * a photo of him seated, rigged by Rodin (a full humanoid skeleton)
- * with a few of its clips: an idle, a calmer idle while he listens,
- * the movement of a man talking, and now and then a gesture. On top of
- * them, by hand: his gaze following the stranger, glances at the
- * laptop, leaning in to listen, nods as he speaks, blinks, and the jaw
- * with his voice.
+ * a photo of him seated, rigged in Rodin (its humanoid skeleton and
+ * its idle clip), with two shapes of his face made on the mesh: the jaw
+ * open (the lips part, his mouth and teeth behind them) and the eyes
+ * shut.
+ * While he listens or waits he breathes, his head moves a little and
+ * now and then he glances at his laptop. While he speaks every clip
+ * stops and he looks the stranger in the eyes. He blinks, and the jaw
+ * follows his voice.
  * The room and its furniture are in office-world.
  */
 
 const MODELS = { avatar: "/models/office/avatar.glb" };
 const DRACO = "/draco/";
 
-/** how the scan sits in the room: its size, where it is, and the head's rest pitch (the scan looks up a little) */
-const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const, chin: 0.04 };
-/** the model's feet are at 0; the room was laid out for the bust with its middle at 0 */
-const ORIGIN_DROP = 0.949;
+/** how the model sits in the room: its size and where it is */
+const SEAT = { scale: 0.48, position: [0, 0.16, 0.08] as const };
 /** his face in the model, in model units: for the windows that keep clear of his face */
-const FACE = { centre: new Vector3(-0.03, 1.559, -0.14), half: new Vector3(0.26, 0.34, 0.3) };
+const FACE = { centre: new Vector3(-0.06, 0.62, -0.14), half: new Vector3(0.26, 0.34, 0.3) };
+/** between his eyes, and the way his face points, in the model at rest (his head is turned a little in the model) */
+const EYES = { between: new Vector3(-0.068, 0.596, 0.038), forward: new Vector3(-0.165, 0, 0.986).normalize() };
 /** the face centre, carried by the head bone (set once the model is loaded) */
 const faceInHead = new Vector3();
+
+/** his face's two shapes, made on the mesh: the jaw open as wide as he opens it to speak, the eyes shut */
+const SHAPES = { jaw: "jawOpen", blink: "blink" } as const;
+/** how far the jaw opens for the loudest syllable */
+const JAW_MAX = 0.75;
 
 const X = new Vector3(1, 0, 0);
 const Y = new Vector3(0, 1, 0);
@@ -65,30 +68,19 @@ function turn(bone: Object3D, world: Quaternion) {
   bone.parent?.getWorldQuaternion(parent);
   const local = parent.clone().invert().multiply(world).multiply(parent);
   bone.quaternion.premultiply(local);
+  bone.updateMatrixWorld(true);
 }
 
 const euler = (pitch: number, yaw: number, roll: number) =>
   new Quaternion().setFromAxisAngle(Y, yaw).multiply(new Quaternion().setFromAxisAngle(X, pitch)).multiply(new Quaternion().setFromAxisAngle(Z, roll));
 
 /**
- * His clips, from Rodin's humanoid set, all made for a man standing. He
- * sits with his arms on the desk, so each clip plays as a change from its
- * own first frame, added to the pose he was made in: the clip's motion
- * without its stance. His hands are joined on the desk in the mesh, so
- * only the trunk, the neck and the head take a clip; the arms ride along.
+ * His idle, from Rodin's humanoid set, made for a man standing. He sits
+ * with his hands on the desk, so it plays as a change from its first
+ * frame on the trunk, the neck and the head only: the breathing and the
+ * sway without the stance.
  */
-const CLIPS = {
-  idle: "human_000093",
-  calm: "human_000025",
-  talk: "human_000055",
-  point: "human_000041",
-  salute: "human_000052",
-  stretch: "human_000000",
-  wrist: "human_000063",
-} as const;
-type Clip = keyof typeof CLIPS;
-/** how much of each clip he plays: a seated man moves less than a standing one */
-const WEIGHT: Record<Clip, number> = { idle: 1, calm: 0.7, talk: 0.6, point: 0.6, salute: 0.6, stretch: 0.5, wrist: 0.6 };
+const IDLE = "human_000093";
 const TRUNK = /^(Spine|Spine1|Spine2|Neck|Head)\.quaternion$/;
 
 function seated(clip: AnimationClip) {
@@ -98,86 +90,80 @@ function seated(clip: AnimationClip) {
   return c;
 }
 
+const _q = new Quaternion();
+const _a = new Vector3();
+const _b = new Vector3();
+const _c = new Vector3();
+
 function Avatar() {
   const gltf = useGLTF(MODELS.avatar, DRACO);
-  const group = useRef<Group>(null);
-  const pointer = useRef({ x: 0, y: 0 });
-  /** a life: when he next blinks, where he looks when nobody moves, when he next moves his arms */
-  const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, shiftAt: 9, shift: 0, shiftTarget: 0, gestureAt: 14, greeted: false, wasSpeaking: false });
+  const camera = useThree((s) => s.camera);
+  /** a life: when he next blinks, when he glances at his laptop, a slow drift of his head */
+  const life = useRef({ nextBlink: 1.5, blinkAt: -1, double: false, glanceAt: 6, glanceUntil: 0, driftAt: 4, drift: { x: 0, y: 0 }, driftTarget: { x: 0, y: 0 } });
   const bones = useMemo(() => {
     const find = (name: string) => gltf.scene.getObjectByName(name) as Bone | undefined;
-    return { head: find("Head"), neck: find("Neck"), chest: find("Spine2"), spine: find("Spine1") };
+    return {
+      head: find("Head"),
+      neck: find("Neck"),
+      chest: find("Spine2"),
+    };
   }, [gltf.scene]);
-  /** where each of those bones rests: every frame starts from there */
-  const rest = useMemo(() => new Map(Object.values(bones).filter((b): b is Bone => !!b).map((b) => [b, b.quaternion.clone()])), [bones]);
-  const motion = useRef({ yaw: 0, pitch: 0, roll: 0, lean: 0 });
+  /** where each bone he moves by hand rests: every frame starts from there */
+  const rest = useMemo(() => {
+    const all = [bones.head, bones.neck, bones.chest].filter((b): b is Bone => !!b);
+    return new Map(all.map((b) => [b, b.quaternion.clone()]));
+  }, [bones]);
+  /** between his eyes and the way his face points, in the head bone (set once the model is loaded) */
+  const gaze = useRef({ eyes: new Vector3(), forward: new Vector3(), weight: 0 });
+  const motion = useRef({ yaw: 0, pitch: 0, roll: 0 });
+  /** the body mesh and where its two shapes are (found once the model is loaded) */
+  const face = useRef({ influences: null as number[] | null, jaw: -1, blink: -1 });
   const mixer = useMemo(() => new AnimationMixer(gltf.scene), [gltf.scene]);
-  const actions = useMemo(() => {
-    const out = {} as Partial<Record<Clip, AnimationAction>>;
-    for (const [key, name] of Object.entries(CLIPS) as [Clip, string][]) {
-      const clip = gltf.animations.find((a) => a.name === name);
-      if (!clip) continue;
-      const action = mixer.clipAction(seated(clip));
-      action.blendMode = AdditiveAnimationBlendMode;
-      action.setEffectiveWeight(0);
-      out[key] = action;
-    }
-    return out;
+  const idle = useMemo(() => {
+    const clip = gltf.animations.find((a) => a.name === IDLE);
+    if (!clip) return null;
+    const action = mixer.clipAction(seated(clip));
+    action.blendMode = AdditiveAnimationBlendMode;
+    return action;
   }, [gltf.animations, mixer]);
 
   useEffect(() => {
-    // the loops run always, faded in or out; the gestures play once when asked
-    for (const key of ["idle", "calm", "talk"] as const) {
-      const a = actions[key];
-      if (!a) continue;
-      a.setLoop(LoopRepeat, Infinity).play();
-      a.setEffectiveWeight(key === "idle" ? WEIGHT.idle : 0);
-    }
-    for (const key of ["point", "salute", "stretch", "wrist"] as const) actions[key]?.setLoop(LoopOnce, 1);
+    idle?.setLoop(LoopRepeat, Infinity).play();
     return () => void mixer.stopAllAction();
-  }, [actions, mixer]);
-
-  /** one gesture, faded in and out over its clip */
-  const gesture = (key: "point" | "salute" | "stretch" | "wrist") => {
-    const a = actions[key];
-    if (!a || a.isRunning()) return;
-    a.reset().setEffectiveWeight(WEIGHT[key]).fadeIn(0.5).play();
-    const d = a.getClip().duration;
-    window.setTimeout(() => a.fadeOut(0.6), Math.max(0, d - 0.6) * 1000);
-  };
+  }, [idle, mixer]);
 
   useEffect(() => {
     prepare(gltf.scene);
-    const body = gltf.scene.getObjectByProperty("type", "SkinnedMesh") as Mesh | undefined;
+    const body = gltf.scene.getObjectByName("model") as Mesh | undefined;
+    const dict = body?.morphTargetDictionary;
+    face.current = { influences: body?.morphTargetInfluences ?? null, jaw: dict?.[SHAPES.jaw] ?? -1, blink: dict?.[SHAPES.blink] ?? -1 };
+    gltf.scene.traverse((o) => void ((o as Mesh).isMesh && (o.frustumCulled = false)));
+    // the inside of his mouth takes no shadow from the lips: it is dark already
+    const mouth = gltf.scene.getObjectByName("mouth") as Mesh | undefined;
+    if (mouth) mouth.castShadow = mouth.receiveShadow = false;
+    // he casts his shadow on the desk but takes none: on his face the shadow map draws the mesh's triangles
+    if (body) body.receiveShadow = false;
     const material = body?.material as MeshStandardMaterial | undefined;
-    if (body) body.frustumCulled = false;
     if (material) {
-      // nothing on him is metal, and the generated roughness is too glossy for wool and skin under the room's lights
+      // skin, wool and cotton: nothing on him is metal, and nothing glossy
       material.metalnessMap = null;
       material.metalness = 0;
-      material.roughness = 1.15;
-      rigHead(material);
+      material.roughness = 1;
     }
+    gltf.scene.updateMatrixWorld(true);
     if (bones.head) {
-      gltf.scene.updateMatrixWorld(true);
       faceInHead.copy(bones.head.worldToLocal(gltf.scene.localToWorld(FACE.centre.clone())));
+      gaze.current.eyes.copy(bones.head.worldToLocal(gltf.scene.localToWorld(EYES.between.clone())));
+      const toHead = bones.head.getWorldQuaternion(new Quaternion()).invert();
+      gaze.current.forward.copy(EYES.forward).transformDirection(gltf.scene.matrixWorld).applyQuaternion(toHead);
     }
     useInterview.getState().set({ present: true });
     useWorldStore.getState().setReady();
     const params = new URLSearchParams(window.location.search);
     const forced = params.get("mouth");
     mouthLive.forced = forced === null ? null : Math.min(1, Math.max(0, Number(forced) || 0));
-    const blink = params.get("blink");
-    if (blink !== null) life.current.nextBlink = Infinity;
-    if (blink !== null) headUniforms.uBlink.value = Math.min(1, Math.max(0, Number(blink) || 0));
-    const onMove = (e: PointerEvent) => {
-      pointer.current = { x: (e.clientX / window.innerWidth) * 2 - 1, y: (e.clientY / window.innerHeight) * 2 - 1 };
-    };
-    window.addEventListener("pointermove", onMove);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-    };
-  }, [gltf, life, bones]);
+    if (params.get("blink") !== null) life.current.nextBlink = Infinity;
+  }, [gltf, bones]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -190,89 +176,78 @@ function Avatar() {
     const listening = phase === "listening" || phase === "decoding";
     const thinking = phase === "thinking";
 
-    // ── his body: the idle always; his hands talk while he speaks; calmer while he listens ──
-    const fade = (key: "calm" | "talk", target: number) => {
-      const a = actions[key];
-      if (!a) return;
-      const w = a.getEffectiveWeight();
-      a.setEffectiveWeight(w + (target - w) * Math.min(1, dt * 2));
-    };
-    fade("talk", speaking ? WEIGHT.talk : 0);
-    fade("calm", listening || thinking ? WEIGHT.calm : 0);
-    if (!L.greeted && t > 1.2) {
-      L.greeted = true;
-      gesture("salute");
-    }
-    // a pointed word when he starts an answer, now and then
-    if (speaking && !L.wasSpeaking && Math.random() < 0.4) gesture("point");
-    L.wasSpeaking = speaking;
-    // nobody sits still for long: a stretch, a look at his watch
-    if (t > L.gestureAt) {
-      L.gestureAt = t + 18 + Math.random() * 16;
-      if (!speaking && !listening) gesture(thinking ? "wrist" : Math.random() < 0.5 ? "stretch" : "wrist");
+    // ── his body: the idle while he waits; still while he speaks ──
+    if (idle) {
+      const w = idle.getEffectiveWeight();
+      idle.setEffectiveWeight(w + ((speaking ? 0 : 1) - w) * Math.min(1, dt * 3));
     }
     mixer.update(dt);
     gltf.scene.updateMatrixWorld(true);
 
+    // ── where he looks: a little here and there, at his laptop now and then; at the stranger as he speaks ──
+    if (t > L.glanceAt) {
+      if (!speaking && !listening) L.glanceUntil = t + 1.1 + Math.random() * 0.9;
+      L.glanceAt = t + 8 + Math.random() * 9;
+    }
+    const glancing = t < L.glanceUntil && !speaking;
+    if (t > L.driftAt) {
+      L.driftTarget = { x: (Math.random() - 0.5) * 0.14, y: (Math.random() - 0.5) * 0.06 };
+      L.driftAt = t + 3 + Math.random() * 5;
+    }
+    L.drift.x += (L.driftTarget.x - L.drift.x) * Math.min(1, dt * 0.9);
+    L.drift.y += (L.driftTarget.y - L.drift.y) * Math.min(1, dt * 0.9);
+
+    const m = motion.current;
+    const k = Math.min(1, dt * (glancing ? 4 : 2.4));
+    const yaw = speaking ? 0 : glancing ? -0.12 : L.drift.x + (thinking ? 0.12 * Math.sin(t * 0.5) : 0);
+    const pitch = speaking ? Math.sin(t * 5.3) * level * 0.04 : glancing ? 0.36 : L.drift.y + (thinking ? -0.06 : 0);
+    const roll = listening ? -0.06 : speaking ? 0 : Math.sin(t * 0.37) * 0.015;
+    m.yaw += (yaw - m.yaw) * k;
+    m.pitch += (pitch - m.pitch) * k;
+    m.roll += (roll - m.roll) * k;
+
+    // first his face is turned to the stranger: fully while he speaks, mostly while he listens
+    const g = gaze.current;
+    const target = speaking ? 1 : glancing ? 0 : 0.85;
+    g.weight += (target - g.weight) * Math.min(1, dt * (speaking ? 4 : 2));
+    if (bones.head && bones.neck) {
+      for (const [bone, share] of [[bones.neck, 0.4], [bones.head, 1]] as const) {
+        const eyes = bones.head.localToWorld(_a.copy(g.eyes));
+        const facing = _b.copy(g.forward).transformDirection(bones.head.matrixWorld);
+        const toCamera = _c.copy(camera.position).sub(eyes).normalize();
+        turn(bone, _q.setFromUnitVectors(facing, toCamera).slerp(new Quaternion(), 1 - g.weight * share));
+      }
+    }
+    // then the small moves on top
+    if (bones.neck) turn(bones.neck, euler(m.pitch * 0.4, m.yaw * 0.4, m.roll * 0.4));
+    if (bones.head) turn(bones.head, euler(m.pitch * 0.6, m.yaw * 0.6, m.roll * 0.6));
+
     // ── blinks: every 2–6 s, sometimes twice; a blink takes 150 ms ──
+    let lid = 0;
     if (Number.isFinite(L.nextBlink)) {
       if (t >= L.nextBlink && L.blinkAt < 0) L.blinkAt = t;
       if (L.blinkAt >= 0) {
-        const k = (t - L.blinkAt) / 0.15;
-        headUniforms.uBlink.value = k < 0.4 ? k / 0.4 : Math.max(0, 1 - (k - 0.4) / 0.6);
-        if (k >= 1) {
+        const b = (t - L.blinkAt) / 0.15;
+        lid = b < 0.4 ? b / 0.4 : Math.max(0, 1 - (b - 0.4) / 0.6);
+        if (b >= 1) {
           L.blinkAt = -1;
-          headUniforms.uBlink.value = 0;
           L.double = !L.double && Math.random() < 0.18;
           L.nextBlink = t + (L.double ? 0.18 : 2 + Math.random() * 4 + (listening ? 1 : 0));
         }
       }
-    }
+    } else lid = 1;
+    const F = face.current;
+    if (F.influences && F.blink >= 0) F.influences[F.blink] = lid;
 
     // ── the jaw follows his voice ──
-    const target = mouthLive.forced ?? (speaking ? Math.min(1, Math.max(0, (level - 0.04) * 1.9)) : 0);
-    mouthLive.open += (target - mouthLive.open) * Math.min(1, dt * (target > mouthLive.open ? 28 : 16));
-    headUniforms.uJaw.value = mouthLive.open * JAW.angle;
-
-    // ── where he looks: at the stranger (the pointer), now and then at his laptop ──
-    if (t > L.glanceAt && !speaking && !listening) {
-      L.glanceUntil = t + 1.1 + Math.random() * 0.9;
-      L.glanceAt = t + 7 + Math.random() * 8;
-    }
-    const glancing = t < L.glanceUntil;
-    if (t > L.shiftAt) {
-      L.shiftTarget = (Math.random() - 0.5) * 0.12;
-      L.shiftAt = t + 6 + Math.random() * 7;
-    }
-    L.shift += (L.shiftTarget - L.shift) * Math.min(1, dt * 0.8);
-
-    const m = motion.current;
-    const k = Math.min(1, dt * (glancing ? 4 : 2.4));
-    const yaw = glancing ? -0.12 : pointer.current.x * 0.3 + L.shift + (thinking ? 0.18 * Math.sin(t * 0.5) : 0);
-    const pitch =
-      (glancing ? 0.38 : pointer.current.y * 0.12) + (thinking ? -0.08 : 0) + (speaking ? Math.sin(t * 5.3) * level * 0.06 + Math.sin(t * 1.7) * 0.02 : 0);
-    const roll = listening ? -0.07 : speaking ? Math.sin(t * 0.9) * 0.03 : Math.sin(t * 0.37) * 0.015;
-    const lean = listening ? 0.1 : speaking ? 0.05 + level * 0.03 : thinking ? -0.02 : 0;
-    m.yaw += (yaw - m.yaw) * k;
-    m.pitch += (pitch - m.pitch) * k;
-    m.roll += (roll - m.roll) * k;
-    m.lean += (lean - m.lean) * Math.min(1, dt * 1.5);
-
-    const breath = Math.sin(t * 1.25);
-    // nobody sits still: a slow sway of the whole trunk
-    const sway = Math.sin(t * 0.31) * 0.012 + Math.sin(t * 0.83) * 0.005;
-    if (bones.spine) turn(bones.spine, euler(m.lean * 0.5 + breath * 0.008, m.yaw * 0.12, sway));
-    if (bones.chest) turn(bones.chest, euler(m.lean * 0.5 - breath * 0.012, m.yaw * 0.18, m.roll * 0.2));
-    if (bones.neck) turn(bones.neck, euler(m.pitch * 0.4, m.yaw * 0.3, m.roll * 0.4));
-    if (bones.head) turn(bones.head, euler(SEAT.chin + m.pitch * 0.6, m.yaw * 0.45, m.roll * 0.6 - sway * 0.6));
+    const open = mouthLive.forced ?? (speaking ? Math.min(1, Math.max(0, (level - 0.04) * 1.9)) : 0);
+    mouthLive.open += (open - mouthLive.open) * Math.min(1, dt * (open > mouthLive.open ? 28 : 16));
+    if (F.influences && F.jaw >= 0) F.influences[F.jaw] = mouthLive.open * (mouthLive.forced === null ? JAW_MAX : 1);
   });
 
   return (
-    <group ref={group} scale={SEAT.scale} position={SEAT.position}>
-      {/* the model stands at its feet; the room was laid out for its middle */}
-      <group position={[0, -ORIGIN_DROP, 0]}>
-        <primitive object={gltf.scene} />
-      </group>
+    <group scale={SEAT.scale} position={SEAT.position}>
+      <primitive object={gltf.scene} />
     </group>
   );
 }
