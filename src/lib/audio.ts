@@ -126,3 +126,62 @@ export function holdMusicDuck(on: boolean) {
   g.cancelScheduledValues(ctx.currentTime);
   g.setTargetAtTime(on ? MUSIC_DUCKED : MUSIC_LEVEL, ctx.currentTime, on ? 0.12 : 0.9);
 }
+
+/**
+ * A page of paper turned: no sample, made each time from noise. A
+ * rustle that sweeps up as the page lifts and falls as it lands, with
+ * the crackle of the paper in it, then the soft slap of the page on
+ * the others. `quick` is a page riffled past, lighter and shorter.
+ */
+export function pageTurn(opts: { volume?: number; quick?: boolean } = {}) {
+  const ac = context();
+  if (!ac || !master || useWorldStore.getState().muted) return;
+  const quick = !!opts.quick;
+  const length = quick ? 0.22 : 0.5;
+  const rate = ac.sampleRate;
+  const buffer = ac.createBuffer(1, Math.ceil(rate * (length + 0.12)), rate);
+  const data = buffer.getChannelData(0);
+  // the paper's crackle: noise whose loudness itself flickers
+  let flicker = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (i % 64 === 0) flicker = 0.35 + Math.random() * 0.65 * (Math.random() < 0.18 ? 1.6 : 1);
+    data[i] = (Math.random() * 2 - 1) * flicker;
+  }
+  const t = ac.currentTime;
+  const volume = (opts.volume ?? 0.5) * (quick ? 0.55 : 1);
+
+  const src = ac.createBufferSource();
+  src.buffer = buffer;
+  src.playbackRate.value = 0.9 + Math.random() * 0.2;
+  const band = ac.createBiquadFilter();
+  band.type = "bandpass";
+  band.Q.value = 0.8;
+  band.frequency.setValueAtTime(1400, t);
+  band.frequency.exponentialRampToValueAtTime(quick ? 4200 : 3600, t + length * 0.45);
+  band.frequency.exponentialRampToValueAtTime(1800, t + length);
+  const high = ac.createBiquadFilter();
+  high.type = "highpass";
+  high.frequency.value = 500;
+  const gain = ac.createGain();
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(volume, t + length * 0.3);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.5, t + length * 0.7);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
+  src.connect(band).connect(high).connect(gain).connect(master);
+  src.start(t);
+  src.stop(t + length + 0.1);
+
+  // the page lands
+  const slap = ac.createBufferSource();
+  slap.buffer = buffer;
+  const low = ac.createBiquadFilter();
+  low.type = "lowpass";
+  low.frequency.value = quick ? 900 : 650;
+  const thud = ac.createGain();
+  const land = t + length * 0.82;
+  thud.gain.setValueAtTime(0.0001, land);
+  thud.gain.exponentialRampToValueAtTime(volume * (quick ? 0.5 : 0.9), land + 0.012);
+  thud.gain.exponentialRampToValueAtTime(0.0001, land + 0.09);
+  slap.connect(low).connect(thud).connect(master);
+  slap.start(land, 0.05, 0.12);
+}

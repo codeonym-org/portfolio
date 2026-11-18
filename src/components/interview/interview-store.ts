@@ -53,13 +53,13 @@ interface InterviewState {
   face: Rect | null;
   /** the avatar has loaded */
   present: boolean;
-  /** the space of the transcript is open */
+  /** the book of diaries is open */
   transcript: boolean;
-  /** what it shows: the turns of this conversation along their thread, or every conversation kept, along time */
+  /** where it opens: at the last page of this conversation's diary, or at the contents */
   level: SpaceLevel;
-  /** open the transcript on the thread, or close it */
+  /** open the book at this conversation, or close it */
   toggleTranscript: () => void;
-  /** open it on the history, or close it if the history is what is shown */
+  /** open it at the contents, or close it if that is how it was opened */
   toggleHistory: () => void;
   setLevel: (level: SpaceLevel) => void;
   setMode: (mode: InterviewMode) => void;

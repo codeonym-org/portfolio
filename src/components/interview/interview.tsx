@@ -13,9 +13,9 @@ import { useSession } from "@/store/session-store";
 import { useWorldStore } from "@/store/world-store";
 import { AirInput } from "./air-input";
 import { BusinessCard } from "./business-card";
+import { DiaryBook } from "./diary-book";
 import { useInterview } from "./interview-store";
 import { MicButton } from "./mic-button";
-import { SpaceTime } from "./space-time";
 import { TopBar } from "./top-bar";
 import { TurnCanvas } from "./turn-canvas";
 import { followTurns } from "./use-turns";
@@ -72,9 +72,9 @@ function Arrival() {
  * way out, how he answers, the TEXT / AUDIO switch, the transcript), the input at the
  * bottom (a pane to type on, or a microphone to hold), the turn in
  * progress laid out around his face (`turn-canvas`), the turn before
- * kept small in a corner, and the transcript: every turn on one
- * thread through space-time, with the history of the conversations
- * kept in this browser behind it (`space-time.tsx`). The same agent
+ * kept small in a corner, and the transcript: an old leather book of
+ * diaries, one for each conversation kept in this browser, written by
+ * hand, whose pages turn (`diary-book.tsx`). The same agent
  * as the record answers, through the same link. A conversation left
  * in progress is resumed.
  */
@@ -107,7 +107,7 @@ export function Interview() {
     // a conversation left in progress comes back: say so
     const { conversations, current } = useHistory.getState();
     const resumed = conversations.find((c) => c.id === current);
-    if (resumed) useSession.getState().set({ notice: copy.space.resumed(new Date(resumed.updatedAt).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })) });
+    if (resumed) useSession.getState().set({ notice: copy.diary.resumed(new Date(resumed.updatedAt).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })) });
     return () => {
       unfollowVoice();
       unfollowTurns();
@@ -128,7 +128,7 @@ export function Interview() {
       <Arrival />
       <TurnCanvas />
       <TopBar />
-      <SpaceTime />
+      <DiaryBook />
       <BusinessCard />
       <AnimatePresence mode="wait">{mode === "text" ? <AirInput key="text" /> : <MicButton key="audio" />}</AnimatePresence>
       <CvModal />

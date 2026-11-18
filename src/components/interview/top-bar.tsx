@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, History, IdCard, Keyboard, Mic, Volume2, VolumeX, Waypoints } from "lucide-react";
+import { ArrowLeft, BookOpen, IdCard, Keyboard, Mic, NotebookPen, Volume2, VolumeX } from "lucide-react";
 import { useVoiceStore } from "@/components/agent/voice/voice-store";
 import { world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -140,8 +140,8 @@ export function TopBar() {
         <button
           type="button"
           aria-pressed={transcript && level === "time"}
-          aria-label={copy.space.historyLabel}
-          title={copy.space.historyLabel}
+          aria-label={copy.diary.label}
+          title={copy.diary.label}
           onClick={() => {
             play(transcript && level === "time" ? "close" : "click", { volume: 0.4 });
             toggleHistory();
@@ -149,8 +149,8 @@ export function TopBar() {
           className="air pointer-events-auto hidden h-11 items-center gap-2 !rounded-full px-3.5 text-white/75 transition hover:text-white sm:flex lg:px-4"
           style={{ ["--air-tint" as string]: "oklch(0.86 0.1 215)" }}
         >
-          <History className="size-4" />
-          <span className="hidden font-display text-[10px] tracking-[0.3em] xl:inline">{copy.space.history.toUpperCase()}</span>
+          <BookOpen className="size-4" />
+          <span className="hidden font-display text-[10px] tracking-[0.3em] xl:inline">{copy.diary.history.toUpperCase()}</span>
         </button>
         <button
           type="button"
@@ -164,7 +164,7 @@ export function TopBar() {
           className={cn("air pointer-events-auto flex h-11 items-center gap-2 !rounded-full px-3.5 transition lg:px-4", transcript ? "text-white" : "text-white/75 hover:text-white")}
           style={{ ["--air-tint" as string]: "oklch(0.74 0.17 300)" }}
         >
-          <Waypoints className={cn("size-4 transition-transform", transcript && "rotate-90")} />
+          <NotebookPen className={cn("size-4 transition-transform", transcript && "-rotate-12")} />
           <span className="hidden font-display text-[10px] tracking-[0.3em] lg:inline">{copy.transcript.toUpperCase()}</span>
         </button>
       </div>
