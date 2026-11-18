@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
-import { useAgentContext } from "@copilotkit/react-core/v2";
+import { z } from "zod";
+import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
 import { useVoiceStore, voiceControl } from "@/components/agent/voice/voice-store";
 import { CvModal } from "@/components/interface/inspect";
 import { world } from "@/config/world.config";
@@ -20,6 +21,7 @@ import { TopBar } from "./top-bar";
 import { TurnCanvas, useStage } from "./turn-canvas";
 import { AgentDevBridge } from "@/agent/dev-bridge";
 import { followTable, useTable } from "./table-store";
+import { downloadTranscript } from "./transcript-download";
 import { followTurns } from "./use-turns";
 import { followVoice } from "./voice-log";
 
@@ -51,6 +53,18 @@ function RoomContext() {
           ? "spoken aloud by a synthesized voice, and shown as text: write plain sentences a voice can say (no lists, no markdown, no links)"
           : "shown as text only",
     },
+  });
+  return null;
+}
+
+/** the interview room's own tool: the stranger takes the conversation away as a PDF */
+function TranscriptTool() {
+  useFrontendTool({
+    name: "download_transcript",
+    description:
+      "Download the transcript of this interview for the stranger: a designed PDF with every question so far, numbered and timed, my answers, what I showed and how to reach me. Use when the stranger asks for the transcript, a copy, a record or a summary file of this conversation, or to download or keep it. It saves the file in their browser at once; then say so in one short line.",
+    parameters: z.object({}),
+    handler: async () => downloadTranscript(),
   });
   return null;
 }
@@ -156,6 +170,7 @@ export function Interview() {
       {ready && (
         <SystemLink>
           <RoomContext />
+          <TranscriptTool />
           {/* the same console bench as on the home page: window.system */}
           <AgentDevBridge />
         </SystemLink>

@@ -155,6 +155,13 @@ visit and never saved; going between the two pages switches threads, each found 
 the agent may offer a stranger who wants to go further its interview room (`propose_action` → `open_interview`), once a
 visit, when it judges it fits.
 
+In the interview room the stranger can take the conversation away as a designed PDF: the PDF button in the top bar, the
+card at the end of the conversation, or by asking for it (the room's own frontend tool, `download_transcript`, which
+the voice reaches through its text twin). The browser makes the file (`components/interview/transcript*.ts(x)`, with
+`@react-pdf/renderer` loaded only then): a cover with the facts and the contents, then every question answered so far,
+numbered and timed, with the answer, what it showed and the steps it took, and the ways to reach the owner. A question
+still being answered is left out.
+
 ## Environment
 
 | Variable | Required | Purpose |

@@ -9,6 +9,7 @@ import { play } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 import { useWorldStore } from "@/store/world-store";
 import { useInterview, type InterviewMode } from "./interview-store";
+import { TranscriptBarButton } from "./transcript-button";
 
 const copy = world.interview;
 const MODES: { id: InterviewMode; icon: typeof Mic }[] = [
@@ -22,7 +23,7 @@ const MODES: { id: InterviewMode; icon: typeof Mic }[] = [
  * it (aloud, or text only; a dot when the tab may not play sound), how
  * the stranger asks in the middle (TEXT / AUDIO, a thumb that slides
  * to the side chosen), and his business card, the history and the
- * transcript on the right.
+ * transcript on the right, and the transcript to take away as a PDF.
  */
 function RepliesSwitch() {
   const replies = useInterview((s) => s.replies);
@@ -167,6 +168,7 @@ export function TopBar() {
           <NotebookPen className={cn("size-4 transition-transform", transcript && "-rotate-12")} />
           <span className="hidden font-display text-[10px] tracking-[0.3em] lg:inline">{copy.transcript.toUpperCase()}</span>
         </button>
+        <TranscriptBarButton />
       </div>
     </motion.nav>
   );

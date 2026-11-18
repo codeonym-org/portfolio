@@ -186,6 +186,18 @@ export const world = {
       blocked: "This tab may not play sound yet: my replies are in text until you click or press a key",
     },
     transcript: "Transcript",
+    /** the transcript as a PDF to keep (`interview/transcript-pdf.tsx`): from the top bar, or asked of the agent */
+    pdf: {
+      open: "PDF",
+      label: "Download the transcript of this interview as a PDF",
+      making: "Preparing the PDF…",
+      done: "Transcript downloaded",
+      failed: "The PDF could not be made",
+      empty: "Ask a question first: the transcript is still empty",
+      keep: "Take this interview with you",
+      keepSub: (n: number) => `PDF · ${n === 1 ? "1 question" : `${n} questions`}, numbered and timed, with my answers`,
+      action: "Download PDF",
+    },
     /** the transcript and the history: a book of diaries, one for each conversation (`interview/diary-book.tsx`) */
     diary: {
       label: "Your diaries: every conversation of the last seven days",

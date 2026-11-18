@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import type { TraceStep } from "@/store/session-store";
 import { describe, duration, took } from "./activity";
 import type { Place } from "./stage";
+import { TranscriptIconButton, TranscriptKeep } from "./transcript-button";
 import type { InterviewTurn } from "./turns";
 
 const copy = world.interview.talk;
@@ -313,6 +314,7 @@ export function Conversation(p: ConversationProps) {
         <button type="button" className="talk-icon" title={copy.diary} aria-label={copy.diary} onClick={p.onDiary}>
           <BookOpen className="size-4" />
         </button>
+        <TranscriptIconButton />
         {wide && (
           <button type="button" className="talk-icon" title={folded ? copy.unfold : copy.fold} aria-label={folded ? copy.unfold : copy.fold} aria-expanded={!folded} onClick={() => setFolded(!folded)}>
             <ChevronDown className={cn("size-4 transition-transform", folded && "rotate-180")} />
@@ -354,6 +356,7 @@ export function Conversation(p: ConversationProps) {
               );
             })}
             {turns.length > 0 && !live && <Ask questions={p.suggestions} label={copy.next} />}
+            {turns.length > 0 && !live && <TranscriptKeep count={turns.length} />}
           </div>
         </div>
       )}

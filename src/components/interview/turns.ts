@@ -17,14 +17,16 @@ export interface InterviewTurn {
   spoken: boolean;
   /** when the question was asked (ms since the epoch) */
   at: number;
+  /** when his answer began (ms since the epoch); 0 before it does */
+  answeredAt: number;
 }
 
 export function buildTurns(session: readonly SessionTurn[], voice: readonly VoiceEntry[]): InterviewTurn[] {
   const spoken: InterviewTurn[] = [];
   for (const [i, e] of voice.entries()) {
     if (e.kind !== "heard") continue;
-    const answer = voice[i + 1]?.kind === "voice" ? voice[i + 1].text : "";
-    spoken.push({ id: e.id, you: e.text, him: answer, cards: [], spoken: true, at: e.at });
+    const reply = voice[i + 1]?.kind === "voice" ? voice[i + 1] : undefined;
+    spoken.push({ id: e.id, you: e.text, him: reply?.text ?? "", cards: [], spoken: true, at: e.at, answeredAt: reply?.at ?? 0 });
   }
   const out = spoken.slice();
 
@@ -34,7 +36,7 @@ export function buildTurns(session: readonly SessionTurn[], voice: readonly Voic
     const answer = session[i + 1]?.role === "system" ? session[i + 1] : undefined;
     const cards = (answer?.cards ?? []).filter((c) => c.type === "skills" || c.type === "map");
     if (!t.voice) {
-      out.push({ id: t.id, you: t.text, him: answer?.text ?? "", cards, spoken: false, at });
+      out.push({ id: t.id, you: t.text, him: answer?.text ?? "", cards, spoken: false, at, answeredAt: answer?.at ?? 0 });
       continue;
     }
     // handed over by the voice: the voice speaks the answer, what was shown belongs to the spoken turn of that moment

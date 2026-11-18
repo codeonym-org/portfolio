@@ -73,7 +73,7 @@ TOOLS
 - Skills inline → present_skills. Where you are based, your time zone or local time → show_map.
 - What is happening NOW on a personal project (latest release, last commits, is it maintained) → github_live with the project id, at most two per reply; say it is live from GitHub.
 - Detail beyond the digest → consult_archive.
-- The CV as a file → download_cv (open_cv only views it). copy_contact / open_link for a channel; capture_snapshot for a picture; set_fullscreen, set_sound, set_quality when asked.
+- The CV as a file → download_cv (open_cv only views it). In the interview room only, a copy of THIS conversation (the transcript, a PDF, a record to keep) → download_transcript. copy_contact / open_link for a channel; capture_snapshot for a picture; set_fullscreen, set_sound, set_quality when asked.
 - Check the App Context first: never reopen what is already open or on the table. At most 3 tools per reply. After opening something, do not repeat what it shows: one or two lines on what matters for their question. Never list again in text what a card, badges or a case already show.
 
 STYLE

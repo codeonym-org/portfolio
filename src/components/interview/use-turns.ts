@@ -23,3 +23,6 @@ export function followTurns() {
 
 /** every turn of the interview so far, oldest first */
 export const useTurns = () => useTurnList((s) => s.turns);
+
+/** the turns as they stand now, outside React */
+export const currentTurns = () => useTurnList.getState().turns;

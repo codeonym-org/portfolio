@@ -10,9 +10,6 @@ import { Cards } from "@/components/interface/cards";
 import { CasePanel } from "@/components/interface/case-panel";
 import { InspectBody } from "@/components/interface/inspect";
 import { ArsenalPanel, ChroniclePanel, GatePanel, ShadowsPanel, StatusPanel, VaultPanel } from "@/components/interface/sector-panels";
-import { findItem } from "@/config/inventory.config";
-import { quests } from "@/config/quests.config";
-import { findSkill } from "@/config/skills.config";
 import type { SectorId } from "@/config/types";
 import { sectorById, world } from "@/config/world.config";
 import { play } from "@/lib/audio";
@@ -21,6 +18,7 @@ import { useWorldStore, type SystemPrompt } from "@/store/world-store";
 import { describe, stepsFor } from "./activity";
 import { Conversation, type ShownRef, type Tone } from "./conversation";
 import { useInterview, type InterviewMode } from "./interview-store";
+import { inspected } from "./shown";
 import { DOCK_HEIGHT, RAIL, stage, type Stage } from "./stage";
 import { Table, type Exhibit } from "./table";
 import { useTable } from "./table-store";
@@ -127,13 +125,6 @@ function Note({ id, children, leave }: { id: string; children: ReactNode; leave:
       {children}
     </motion.div>
   );
-}
-
-/** the name of what is inspected */
-function inspected(kind: "skill" | "item" | "quest", id: string): string {
-  if (kind === "skill") return findSkill(id)?.name ?? id;
-  if (kind === "item") return findItem(id)?.name ?? id;
-  return quests.find((q) => q.id === id)?.name ?? id;
 }
 
 /**

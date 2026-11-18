@@ -59,6 +59,7 @@ const WORDS: Record<string, [now: string, done: string, takesArg?: boolean]> = {
   set_quality: ["Changing the quality", "Changed the quality"],
   set_fullscreen: ["Going full screen", "Went full screen"],
   open_interview: ["Opening the interview", "Opened the interview"],
+  download_transcript: ["Preparing the transcript", "Prepared the transcript"],
 };
 
 /** a step in plain words, in the present while it runs and in the past once it is done */
